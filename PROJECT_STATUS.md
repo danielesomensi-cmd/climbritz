@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 28 Marzo 2026
+## 🗓️ Ultimo Aggiornamento: 30 Marzo 2026
 
 ---
 
@@ -25,7 +25,7 @@
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
 | BoardLib integration | ⏳ Da fare | Phase 3 — climb search, contextual analysis |
 | Training logs | ⏳ Da fare | Phase 6 |
-| Deploy (Railway + Vercel) | ⏳ Da fare | Phase 7 |
+| Deploy (Railway) | ✅ Partial | Backend live on Railway (SQLite), Alembic in startCommand. Frontend + PostgreSQL + S3 still TODO |
 
 ---
 
@@ -152,6 +152,19 @@ for frame in frames:
 
 ---
 
+## 📋 BACKLOG — Technical Debt
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| Migrate `google.generativeai` → `google.genai` | Medium | FutureWarning on import. Package is deprecated. |
+| `gemini_service.py` API key → pydantic Settings | Low | Uses `os.getenv()` instead of `Settings` object |
+| Recreate API_SPECIFICATION.md | After Phase 3 | Archived — was heavily outdated |
+| Recreate DATABASE_SCHEMA.sql | After Phase 3 | Archived — was heavily outdated |
+| Frontend deploy to Vercel | Phase 7 | Backend is live, frontend still local |
+| PostgreSQL on Railway | Phase 7 | Currently using SQLite on Railway |
+
+---
+
 ## 🗺️ ROADMAP
 
 ### ✅ Phase 1 — Foundation (Done)
@@ -240,5 +253,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 28 Marzo 2026*
+*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 30 Marzo 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*
