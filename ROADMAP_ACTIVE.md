@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: March 2026
+> Updated: 30 March 2026
 > Strategy: AI CLIMBING COACH via Video Analysis (3-Level System)
 
 ---
@@ -130,11 +130,25 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 ## Phase 7 — Deploy & Polish
 
-- [ ] Deploy: Railway (backend) + Vercel (frontend)
-- [ ] PostgreSQL on Railway
-- [ ] S3 for video storage
+- [x] Deploy backend to Railway (FastAPI + SQLite)
+- [x] Alembic migrations in Railway startCommand (`alembic upgrade head && uvicorn ...`)
+- [x] Health check endpoint (`/health`)
+- [ ] Deploy frontend to Vercel
+- [ ] Switch Railway DB from SQLite to PostgreSQL
+- [ ] S3 for video storage (currently local filesystem)
 - [ ] Mobile responsive polish
 - [ ] Dashboard: aggregate stats, streaks, grade progression
+
+---
+
+## Backlog — Technical Debt
+
+Items to address before or during the next major phase:
+
+- [ ] **Migrate `google.generativeai` → `google.genai`** — current package is deprecated with a FutureWarning. Switch to the new `google.genai` SDK before it stops working. See: https://github.com/google-gemini/deprecated-generative-ai-python
+- [ ] **`gemini_service.py`: migrate API key to pydantic Settings** — currently reads via `os.getenv()` instead of the project's `Settings` object in `core/config.py`. Align with the rest of the codebase.
+- [ ] **Recreate API_SPECIFICATION.md** — archived due to heavy drift. Recreate after Phase 3 endpoints are stable.
+- [ ] **Recreate DATABASE_SCHEMA.sql** — archived due to heavy drift. Recreate after Phase 3 schema is stable.
 
 ---
 
