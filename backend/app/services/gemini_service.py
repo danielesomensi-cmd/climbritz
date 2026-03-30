@@ -1,9 +1,11 @@
 """
 Gemini client wrapper for climbing video analysis.
-Uses google.genai SDK with gemini-2.5-pro to analyze climbing technique.
+Uses google.genai SDK with gemini-2.5-flash to analyze climbing technique.
 """
 
+import json
 import os
+import re
 import time
 import logging
 from typing import Any
@@ -121,6 +123,55 @@ def upload_video_to_gemini(file_path: str) -> str:
     return uploaded_file.name  # e.g. "files/abc123xyz"
 
 
+def _try_repair_json(text: str) -> dict[str, Any] | None:
+    """Attempt to repair truncated JSON by closing open structures."""
+    repaired = text.rstrip()
+
+    # Try as-is first
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy: try multiple repair approaches, return the first that works
+    attempts = [repaired]
+
+    # 1. Close unterminated string, then close brackets/braces
+    r = repaired
+    if r.count('"') % 2 != 0:
+        r += '"'
+    for open_ch, close_ch in [('[', ']'), ('{', '}')]:
+        diff = r.count(open_ch) - r.count(close_ch)
+        if diff > 0:
+            r += close_ch * diff
+    attempts.append(r)
+
+    # 2. Close brackets/braces only (no unterminated string)
+    r = repaired
+    for open_ch, close_ch in [('[', ']'), ('{', '}')]:
+        diff = r.count(open_ch) - r.count(close_ch)
+        if diff > 0:
+            r += close_ch * diff
+    attempts.append(r)
+
+    # 3. Strip trailing partial value, then close
+    r = re.sub(r',\s*"[^"]*$', '', repaired)  # remove trailing `, "partial_key...`
+    r = re.sub(r',\s*$', '', r)                # remove trailing comma
+    for open_ch, close_ch in [('[', ']'), ('{', '}')]:
+        diff = r.count(open_ch) - r.count(close_ch)
+        if diff > 0:
+            r += close_ch * diff
+    attempts.append(r)
+
+    for attempt in attempts:
+        try:
+            return json.loads(attempt)
+        except json.JSONDecodeError:
+            continue
+
+    return None
+
+
 def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
     """
     Run climbing-form analysis on a previously uploaded Gemini file.
@@ -136,8 +187,6 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
     Raises:
         RuntimeError: If the Gemini API call fails or returns unparseable output.
     """
-    import json
-
     client = _get_client()
     settings = get_settings()
 
@@ -156,7 +205,8 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
             contents=[file_ref, CLIMBING_ANALYSIS_PROMPT],
             config=types.GenerateContentConfig(
                 temperature=0.3,
-                max_output_tokens=2048,
+                max_output_tokens=8192,
+                response_mime_type="application/json",
             ),
         )
     except Exception as exc:
@@ -175,9 +225,18 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
     try:
         analysis: dict[str, Any] = json.loads(raw_text)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            f"Gemini returned non-JSON response: {exc}\n\nRaw output:\n{raw_text}"
-        ) from exc
+        logger.warning(
+            "JSON parse failed for %s, attempting repair. Error: %s\nRaw output:\n%s",
+            gemini_file_id, exc, raw_text,
+        )
+        repaired = _try_repair_json(raw_text)
+        if repaired is not None:
+            logger.info("Repaired truncated JSON for file: %s", gemini_file_id)
+            analysis = repaired
+        else:
+            raise RuntimeError(
+                f"Gemini returned non-JSON response: {exc}\n\nRaw output:\n{raw_text}"
+            ) from exc
 
     logger.info("Climbing analysis complete for file: %s", gemini_file_id)
     return analysis

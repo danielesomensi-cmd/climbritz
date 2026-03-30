@@ -543,11 +543,46 @@ class TestGeminiService:
         client.files.get.return_value = mock_file
 
         mock_response = MagicMock()
-        mock_response.text = "not valid json"
+        mock_response.text = "not valid json at all"
         client.models.generate_content.return_value = mock_response
 
         with pytest.raises(RuntimeError, match="non-JSON"):
             analyze_climbing_form("files/abc123")
+
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_repairs_truncated_json(self, mock_get_client):
+        from app.services.gemini_service import analyze_climbing_form
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+
+        mock_file = MagicMock()
+        client.files.get.return_value = mock_file
+
+        # Truncated JSON — missing closing brace
+        truncated = '{"overall_grade_estimate": "V4", "technique_score": 7'
+        mock_response = MagicMock()
+        mock_response.text = truncated
+        client.models.generate_content.return_value = mock_response
+
+        result = analyze_climbing_form("files/abc123")
+        assert result["overall_grade_estimate"] == "V4"
+        assert result["technique_score"] == 7
+
+    def test_try_repair_json(self):
+        from app.services.gemini_service import _try_repair_json
+
+        # Missing closing brace
+        assert _try_repair_json('{"a": 1') == {"a": 1}
+
+        # Unterminated string + missing braces
+        assert _try_repair_json('{"a": "hello') == {"a": "hello"}
+
+        # Missing array closer
+        assert _try_repair_json('{"a": [1, 2') == {"a": [1, 2]}
+
+        # Completely invalid
+        assert _try_repair_json("not json") is None
 
     def test_get_client_raises_without_key(self):
         from app.services.gemini_service import _get_client
