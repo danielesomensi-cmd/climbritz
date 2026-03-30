@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     environment: str = "development"
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-pro"
     upload_dir: str = "uploads"
     max_file_size_mb: int = 500
 

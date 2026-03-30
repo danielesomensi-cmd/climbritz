@@ -1,6 +1,6 @@
 """
-Gemini File API wrapper for climbing video analysis.
-Uses gemini-2.0-flash to analyze climbing technique from uploaded videos.
+Gemini client wrapper for climbing video analysis.
+Uses google.genai SDK with gemini-2.5-pro to analyze climbing technique.
 """
 
 import os
@@ -8,28 +8,30 @@ import time
 import logging
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
+
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_configured = False
+_client: genai.Client | None = None
 
 
-def _ensure_configured():
-    """Configure Gemini SDK on first use (not at import time)."""
-    global _configured
-    if _configured:
-        return
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+def _get_client() -> genai.Client:
+    """Lazy-initialize the Gemini client on first use."""
+    global _client
+    if _client is not None:
+        return _client
+    settings = get_settings()
+    if not settings.gemini_api_key:
         raise RuntimeError(
             "GEMINI_API_KEY environment variable is not set. "
             "Add it to backend/.env to enable video analysis."
         )
-    genai.configure(api_key=api_key)
-    _configured = True
+    _client = genai.Client(api_key=settings.gemini_api_key)
+    return _client
 
-MODEL_NAME = "gemini-2.0-flash"
 
 CLIMBING_ANALYSIS_PROMPT = """
 You are an expert climbing coach with deep knowledge of sport climbing, bouldering, and movement technique.
@@ -76,7 +78,7 @@ def upload_video_to_gemini(file_path: str) -> str:
         FileNotFoundError: If the file does not exist at the given path.
         RuntimeError: If the upload fails or the file never reaches ACTIVE state.
     """
-    _ensure_configured()
+    client = _get_client()
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Video file not found: {file_path}")
@@ -84,9 +86,9 @@ def upload_video_to_gemini(file_path: str) -> str:
     logger.info("Uploading video to Gemini File API: %s", file_path)
 
     try:
-        uploaded_file = genai.upload_file(
-            path=file_path,
-            mime_type="video/mp4",
+        uploaded_file = client.files.upload(
+            file=file_path,
+            config=types.UploadFileConfig(mime_type="video/mp4"),
         )
     except Exception as exc:
         raise RuntimeError(f"Gemini file upload failed: {exc}") from exc
@@ -96,7 +98,7 @@ def upload_video_to_gemini(file_path: str) -> str:
     poll_interval = 5
     elapsed = 0
 
-    while uploaded_file.state.name == "PROCESSING":
+    while uploaded_file.state == "PROCESSING":
         if elapsed >= max_wait_seconds:
             raise RuntimeError(
                 f"Gemini file {uploaded_file.name} still PROCESSING after "
@@ -107,12 +109,12 @@ def upload_video_to_gemini(file_path: str) -> str:
         )
         time.sleep(poll_interval)
         elapsed += poll_interval
-        uploaded_file = genai.get_file(uploaded_file.name)
+        uploaded_file = client.files.get(name=uploaded_file.name)
 
-    if uploaded_file.state.name != "ACTIVE":
+    if uploaded_file.state != "ACTIVE":
         raise RuntimeError(
             f"Gemini file {uploaded_file.name} ended in unexpected state: "
-            f"{uploaded_file.state.name}"
+            f"{uploaded_file.state}"
         )
 
     logger.info("File uploaded and ACTIVE: %s", uploaded_file.name)
@@ -136,24 +138,24 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
     """
     import json
 
-    _ensure_configured()
+    client = _get_client()
+    settings = get_settings()
 
     logger.info("Requesting climbing analysis for file: %s", gemini_file_id)
 
     try:
-        file_ref = genai.get_file(gemini_file_id)
+        file_ref = client.files.get(name=gemini_file_id)
     except Exception as exc:
         raise RuntimeError(
             f"Could not retrieve Gemini file '{gemini_file_id}': {exc}"
         ) from exc
 
-    model = genai.GenerativeModel(model_name=MODEL_NAME)
-
     try:
-        response = model.generate_content(
-            [file_ref, CLIMBING_ANALYSIS_PROMPT],
-            generation_config=genai.GenerationConfig(
-                temperature=0.3,  # Low temp for consistent structured output
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=[file_ref, CLIMBING_ANALYSIS_PROMPT],
+            config=types.GenerateContentConfig(
+                temperature=0.3,
                 max_output_tokens=2048,
             ),
         )
