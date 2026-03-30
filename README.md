@@ -31,6 +31,11 @@ cd backend && pytest -v
 - **AI:** Gemini 2.0 Flash (File API)
 - **DB:** SQLite (dev) / PostgreSQL (prod)
 
+## Deployment
+- **Backend:** Railway (FastAPI + SQLite, auto-migrates on deploy)
+- **Frontend:** localhost (Vercel deploy planned)
+- **CI:** Alembic migrations run automatically via `startCommand` in `railway.toml`
+
 ## API Endpoints
 - `POST /api/videos/upload` — Upload video for analysis (202 Accepted)
 - `GET /api/videos/{id}` — Get video status and results
