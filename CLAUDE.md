@@ -35,7 +35,7 @@
 
 ---
 
-## 📦 Current State (B001 Cleanup Complete — 28 March 2026)
+## 📦 Current State (B003 Complete — 30 March 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -51,9 +51,7 @@
 
 **Deploy:** Backend live on Railway (SQLite). Alembic runs in startCommand. Health check at `/health`.
 
-**Backlog:**
-- Migrate `google.generativeai` → `google.genai` (deprecated)
-- `gemini_service.py` API key → pydantic `Settings` object
+**Gemini:** google.genai SDK, model gemini-2.5-flash, JSON repair fallback, response_mime_type=application/json
 
 ---
 

@@ -17,10 +17,10 @@
 | Backend FastAPI | ✅ Done | Auth JWT + video pipeline, SQLite, Python 3.11 |
 | Auth (JWT) | ✅ Done | Register, login, /me |
 | VideoUpload model | ✅ Done | Consolidated — form_analysis JSON, processing_status |
-| Gemini Video Service | ✅ Done | File API, lazy init, gemini-2.0-flash |
+| Gemini Video Service | ✅ Done | google.genai SDK, lazy init, gemini-2.5-flash, JSON repair |
 | Video endpoints | ✅ Done | POST upload (202), GET /{id}, GET list, DELETE |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 46 passed, 5 skipped (DB-dependent) |
+| Tests | ✅ Done | 48 passed, 5 skipped (DB-dependent) |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
 | BoardLib integration | ⏳ Da fare | Phase 3 — climb search, contextual analysis |
@@ -156,8 +156,8 @@ for frame in frames:
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| Migrate `google.generativeai` → `google.genai` | Medium | FutureWarning on import. Package is deprecated. |
-| `gemini_service.py` API key → pydantic Settings | Low | Uses `os.getenv()` instead of `Settings` object |
+| ~~Migrate `google.generativeai` → `google.genai`~~ | ✅ Done | B003 — migrated to google.genai SDK + gemini-2.5-flash |
+| ~~`gemini_service.py` API key → pydantic Settings~~ | ✅ Done | B003 — reads from `get_settings().gemini_api_key` |
 | Recreate API_SPECIFICATION.md | After Phase 3 | Archived — was heavily outdated |
 | Recreate DATABASE_SCHEMA.sql | After Phase 3 | Archived — was heavily outdated |
 | Frontend deploy to Vercel | Phase 7 | Backend is live, frontend still local |

@@ -25,7 +25,7 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 ### Phase 2 — Video Upload + Basic Analysis ✅
 - Video upload endpoint (POST /api/videos/upload)
-- Gemini 2.0 Flash via File API (NOT frame-by-frame)
+- Gemini 2.5 Flash via google.genai SDK (NOT frame-by-frame)
 - Async processing with BackgroundTasks
 - Frontend: drag-drop upload, progress bar, mobile-first
 
