@@ -1,0 +1,213 @@
+# Kilter-Up — Architecture
+
+> Updated: March 2026
+
+---
+
+## System Overview
+
+Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload climbing videos, and the system provides structured coaching feedback using Google's Gemini 2.0 Flash model.
+
+---
+
+## High-Level Architecture
+
+```
+┌─────────────────┐     ┌──────────────────────────┐     ┌─────────────────┐
+│   Next.js 14    │────▶│    FastAPI Backend        │────▶│  Gemini 2.0     │
+│   (Frontend)    │◀────│    (Python 3.11)          │◀────│  Flash File API │
+│   Port 3000     │     │    Port 8001 (dev)        │     │                 │
+│   localhost (dev)│    │    Railway (prod)         │     │                 │
+└─────────────────┘     └──────────┬───────────────┘     └─────────────────┘
+                                   │
+                        ┌──────────┴───────────────┐
+                        │   SQLite (dev + prod*)    │
+                        │   users + video_uploads   │
+                        │   *PostgreSQL planned     │
+                        └──────────────────────────┘
+```
+
+---
+
+## Request Flow — Video Analysis
+
+```
+1. User uploads video via drag-drop UI
+   │
+2. POST /api/videos/upload (JWT auth required)
+   │  → File saved to local filesystem (dev) / S3 (prod, planned)
+   │  → VideoUpload record created (status: "pending")
+   │  → Returns 202 Accepted immediately
+   │
+3. FastAPI BackgroundTask starts
+   │  → Status: "pending" → "processing"
+   │  → Upload video to Gemini File API
+   │  → Wait for Gemini to process the file
+   │  → Send analysis prompt + video reference to Gemini
+   │  → Parse structured coaching response
+   │  → Store results in form_analysis JSON column
+   │  → Status: "processing" → "completed" (or "failed")
+   │
+4. Frontend polls GET /api/videos/{id}
+   │  → Shows progress indicator while processing
+   │  → Displays structured coaching feedback when completed
+```
+
+---
+
+## Component Map
+
+### Backend (`backend/app/`)
+
+| Component | Path | Responsibility |
+|-----------|------|----------------|
+| **Auth API** | `api/auth.py` | Register, login, /me (JWT) |
+| **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
+| **Gemini Service** | `services/gemini_service.py` | File API upload + analysis prompt (lazy init) |
+| **Storage Service** | `services/storage_service.py` | Local filesystem (dev), S3 planned (prod) |
+| **Auth Service** | `services/auth_service.py` | Password hashing, token generation |
+| **Video Service** | `services/video_service.py` | ffmpeg utilities |
+| **Config** | `core/config.py` | Pydantic Settings (env vars) |
+| **Database** | `core/database.py` | SQLAlchemy engine + SessionLocal |
+| **Security** | `core/security.py` | JWT encode/decode |
+| **Dependencies** | `core/deps.py` | FastAPI dependency injection (get_db, get_current_user) |
+
+### Frontend (`app/`)
+
+| Page | Path | What it does |
+|------|------|-------------|
+| Homepage | `page.tsx` | Landing page |
+| Login | `login/page.tsx` | Auth form |
+| Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
+| Dashboard | `dashboard/page.tsx` | User overview |
+| Video detail | `videos/[id]/page.tsx` | Analysis results display |
+
+### Database (SQLite / PostgreSQL)
+
+| Table | Key Columns | Notes |
+|-------|-------------|-------|
+| `users` | id, username, email, password_hash, skill_level | UUID as String(36) |
+| `video_uploads` | id, user_id, filename, file_path, processing_status, form_analysis, gemini_file_id | form_analysis is JSON |
+
+Processing statuses: `pending` → `processing` → `completed` / `failed`
+
+---
+
+## Deployment Topology (Current)
+
+```
+┌──────────────────────────────────────────┐
+│               Railway                     │
+│  ┌────────────────────────────────────┐  │
+│  │  FastAPI (uvicorn)                 │  │
+│  │  Port: $PORT (8080)                │  │
+│  │  startCommand:                     │  │
+│  │    alembic upgrade head &&         │  │
+│  │    uvicorn app.main:app            │  │
+│  │    --host 0.0.0.0 --port $PORT    │  │
+│  │  Health: GET /health → 200         │  │
+│  ├────────────────────────────────────┤  │
+│  │  SQLite (file-based, on Railway)   │  │
+│  │  ⚠️ Ephemeral — will lose data    │  │
+│  │     on redeploy without volume     │  │
+│  └────────────────────────────────────┘  │
+└──────────────────────────────────────────┘
+
+Frontend: localhost:3000 (Vercel deploy planned)
+Video storage: local filesystem (S3 planned)
+```
+
+**⚠️ Known limitation:** SQLite on Railway is ephemeral. Data is lost on each redeploy unless a persistent volume is attached. Migration to PostgreSQL is planned for Phase 7.
+
+---
+
+## AI Pipeline Detail
+
+```
+Video file (MP4, MOV, etc.)
+  │
+  ▼
+Gemini File API: genai.upload_file(path)
+  │  → Returns file reference
+  │  → Polls until state != PROCESSING
+  │
+  ▼
+Gemini 2.0 Flash: model.generate_content([video_file, prompt])
+  │  → ONE API call per video (not frame-by-frame)
+  │  → Prompt asks for structured coaching feedback
+  │  → Model analyzes technique: body position, footwork, etc.
+  │
+  ▼
+Structured response stored as JSON in video_uploads.form_analysis
+```
+
+**Cost:** ~$0.001 per video analyzed (Gemini 2.0 Flash pricing)
+
+---
+
+## Authentication Flow
+
+```
+Register: POST /api/auth/register
+  → bcrypt hash password → store user → return JWT
+
+Login: POST /api/auth/login
+  → verify bcrypt hash → return JWT
+
+Protected routes: Authorization: Bearer <token>
+  → deps.py: get_current_user decodes JWT → injects user
+```
+
+---
+
+## 3-Level Intelligence System (Roadmap)
+
+| Level | Status | What it adds |
+|-------|--------|-------------|
+| **Level 1: Solo Analysis** | ✅ Working | Gemini analyzes video with general climbing knowledge |
+| **Level 2: Contextual Analysis** | 🎯 Phase 3 | + climb data from BoardLib DB (grade, holds, angle) |
+| **Level 3: Expert Comparison** | 🔮 Phase 5 | + expert reference video for side-by-side comparison |
+
+Level 2 architecture (Phase 3):
+```
+BoardLib SQLite DB (~189MB, local, gitignored)
+  │  344k+ climbs with grade, holds, angle, ascents
+  │
+  ▼
+GET /api/climbs/search?q={name}&angle={angle}
+  │  → Autocomplete from local DB
+  │
+  ▼
+POST /api/videos/upload + climb_id + angle
+  │  → Fetch climb data from BoardLib DB
+  │  → Build enriched Gemini prompt with climb context
+  │  → Structured JSON output with technique scores, move-by-move analysis
+```
+
+---
+
+## Key Technical Decisions
+
+| Decision | Choice | Why |
+|----------|--------|-----|
+| Video analysis | Gemini File API (whole video, 1 call) | Frame-by-frame = rate limit disaster (15 req/min) |
+| Background processing | FastAPI BackgroundTasks | Celery/Redis too complex for MVP |
+| Climb data | BoardLib (pip install) | Downloads official Kilter Board SQLite DB locally |
+| Climb identification | Search/autocomplete first | Visual LED recognition deferred to Phase 4 |
+| UUID storage | String(36) | SQLite + PostgreSQL compatibility |
+| Dev database | SQLite | Simple, no setup, PostgreSQL for prod |
+
+---
+
+## Environment Variables
+
+| Variable | Purpose | Where |
+|----------|---------|-------|
+| `GEMINI_API_KEY` | Google AI Studio API key | `.env` (local), Railway env vars (prod) |
+| `DATABASE_URL` | SQLAlchemy connection string | `.env` |
+| `JWT_SECRET` | Token signing key | `.env` |
+| `UPLOAD_DIR` | Video file storage path | `.env` |
+
+---
+
+*Architecture doc created: March 2026 — B002 Documentation Rationalization*
