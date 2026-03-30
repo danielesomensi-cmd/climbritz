@@ -49,6 +49,12 @@
 
 **Next:** Phase 3 — BoardLib integration for contextual AI coaching
 
+**Deploy:** Backend live on Railway (SQLite). Alembic runs in startCommand. Health check at `/health`.
+
+**Backlog:**
+- Migrate `google.generativeai` → `google.genai` (deprecated)
+- `gemini_service.py` API key → pydantic `Settings` object
+
 ---
 
 ## Core Rules for Claude Development
@@ -169,5 +175,5 @@ git push origin main
 
 ---
 
-**Version:** 2.1 (B001 cleanup 2026-03-28 — consolidated pipeline, all tests green)
+**Version:** 2.2 (B002 docs rationalization 2026-03-30 — Railway deploy, tech debt backlog, ARCHITECTURE.md)
 **Owner:** Daniele Somensi + Sam (AI Agent)
