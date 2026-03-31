@@ -6,7 +6,7 @@
 
 ## System Overview
 
-Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload climbing videos, and the system provides structured coaching feedback using Google's Gemini 2.0 Flash model.
+Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload climbing videos, and the system provides structured coaching feedback using Google's Gemini 2.5 Flash model.
 
 ---
 
@@ -14,7 +14,7 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload c
 
 ```
 ┌─────────────────┐     ┌──────────────────────────┐     ┌─────────────────┐
-│   Next.js 14    │────▶│    FastAPI Backend        │────▶│  Gemini 2.0     │
+│   Next.js 14    │────▶│    FastAPI Backend        │────▶│  Gemini 2.5     │
 │   (Frontend)    │◀────│    (Python 3.11)          │◀────│  Flash File API │
 │   Port 3000     │     │    Port 8001 (dev)        │     │                 │
 │   localhost (dev)│    │    Railway (prod)         │     │                 │
@@ -98,6 +98,7 @@ Processing statuses: `pending` → `processing` → `completed` / `failed`
 ```
 ┌──────────────────────────────────────────┐
 │               Railway                     │
+│  URL: web-production-cea9.up.railway.app  │
 │  ┌────────────────────────────────────┐  │
 │  │  FastAPI (uvicorn)                 │  │
 │  │  Port: $PORT (8080)                │  │
@@ -108,16 +109,16 @@ Processing statuses: `pending` → `processing` → `completed` / `failed`
 │  │  Health: GET /health → 200         │  │
 │  ├────────────────────────────────────┤  │
 │  │  SQLite (file-based, on Railway)   │  │
-│  │  ⚠️ Ephemeral — will lose data    │  │
-│  │     on redeploy without volume     │  │
+│  │  Persistent volume: /data/kilter-up│  │
+│  │  ✅ Data survives redeploys        │  │
 │  └────────────────────────────────────┘  │
 └──────────────────────────────────────────┘
 
-Frontend: localhost:3000 (Vercel deploy planned)
+Frontend: kilter-up-coach.vercel.app (deployed)
 Video storage: local filesystem (S3 planned)
 ```
 
-**⚠️ Known limitation:** SQLite on Railway is ephemeral. Data is lost on each redeploy unless a persistent volume is attached. Migration to PostgreSQL is planned for Phase 7.
+**Note:** SQLite is on a persistent Railway volume (`/data/kilter-up`) — data survives redeploys. Migration to PostgreSQL is still planned for Phase 7.
 
 ---
 
@@ -127,21 +128,29 @@ Video storage: local filesystem (S3 planned)
 Video file (MP4, MOV, etc.)
   │
   ▼
-Gemini File API: genai.upload_file(path)
+Gemini File API: client.files.upload(path)   # google.genai SDK
   │  → Returns file reference
   │  → Polls until state != PROCESSING
   │
   ▼
-Gemini 2.0 Flash: model.generate_content([video_file, prompt])
+Gemini 2.5 Flash: client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=[video_file, prompt],
+    config=GenerateContentConfig(
+        response_mime_type="application/json",
+        max_output_tokens=8192,
+    )
+  )
   │  → ONE API call per video (not frame-by-frame)
   │  → Prompt asks for structured coaching feedback
   │  → Model analyzes technique: body position, footwork, etc.
+  │  → JSON repair fallback if response is malformed
   │
   ▼
 Structured response stored as JSON in video_uploads.form_analysis
 ```
 
-**Cost:** ~$0.001 per video analyzed (Gemini 2.0 Flash pricing)
+**Cost:** ~$0.001–0.003 per video analyzed (Gemini 2.5 Flash pricing)
 
 ---
 

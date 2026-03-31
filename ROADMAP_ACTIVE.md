@@ -184,8 +184,8 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - [x] Deploy backend to Railway (FastAPI + SQLite)
 - [x] Alembic migrations in Railway startCommand (`alembic upgrade head && uvicorn ...`)
 - [x] Health check endpoint (`/health`)
-- [ ] Deploy frontend to Vercel
-- [ ] Switch Railway DB from SQLite to PostgreSQL
+- [x] Deploy frontend to Vercel — live at kilter-up-coach.vercel.app
+- [ ] Switch Railway DB from SQLite to PostgreSQL — persistent volume now attached at /data/kilter-up (data survives redeploys), PostgreSQL migration still planned
 - [ ] S3 for video storage (currently local filesystem)
 - [ ] Mobile responsive polish
 - [ ] Dashboard: aggregate stats, streaks, grade progression
@@ -213,10 +213,13 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 Items to address before or during the next major phase:
 
-- [ ] **Migrate `google.generativeai` → `google.genai`** — current package is deprecated with a FutureWarning. Switch to the new `google.genai` SDK before it stops working. See: https://github.com/google-gemini/deprecated-generative-ai-python
-- [ ] **`gemini_service.py`: migrate API key to pydantic Settings** — currently reads via `os.getenv()` instead of the project's `Settings` object in `core/config.py`. Align with the rest of the codebase.
+- [x] **Migrate `google.generativeai` → `google.genai`** — done in B003. New SDK active in production.
+- [x] **`gemini_service.py`: migrate API key to pydantic Settings** — done in B003. Reads from `get_settings().gemini_api_key`.
 - [ ] **Recreate API_SPECIFICATION.md** — archived due to heavy drift. Recreate after Phase 3 endpoints are stable.
 - [ ] **Recreate DATABASE_SCHEMA.sql** — archived due to heavy drift. Recreate after Phase 3 schema is stable.
+- [ ] **Retry with backoff on Gemini 503/429 errors in background task** — currently fails immediately on transient errors.
+- [ ] **Clean up dead files: root Procfile, railway_start.sh, backend/Procfile** — legacy Railway config, no longer used.
+- [ ] **Evaluate switch to gemini-2.5-pro when availability improves** — currently on 2.5-flash due to 503 availability issues with pro.
 
 ---
 
