@@ -50,12 +50,45 @@ app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 
 
+import time
+from pathlib import Path
+
+UPLOAD_DIR = Path(settings.upload_dir)
+PERSISTENCE_MARKER = UPLOAD_DIR / ".persistence_marker"
+
+
+def _check_persistence() -> dict:
+    """Check if persistent volume survived redeployment."""
+    marker_existed = PERSISTENCE_MARKER.exists()
+    if not marker_existed:
+        try:
+            UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+            PERSISTENCE_MARKER.write_text(f"created:{time.time()}")
+        except OSError:
+            return {"persistence_ok": False, "error": "Cannot write marker"}
+    return {
+        "persistence_ok": True,
+        "marker_survived_redeploy": marker_existed,
+    }
+
+
+def _check_upload_dir() -> dict:
+    """Check if upload directory exists and is writable."""
+    return {
+        "path": str(UPLOAD_DIR),
+        "exists": UPLOAD_DIR.exists(),
+        "writable": os.access(UPLOAD_DIR, os.W_OK) if UPLOAD_DIR.exists() else False,
+    }
+
+
 @app.get("/health")
 def health_check():
     return {
         "status": "ok",
         "environment": settings.environment,
-        "version": "0.1.0"
+        "version": "0.1.0",
+        "persistence": _check_persistence(),
+        "upload_dir": _check_upload_dir(),
     }
 
 
