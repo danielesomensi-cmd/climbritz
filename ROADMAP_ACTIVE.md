@@ -14,6 +14,8 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 | 2 | Contextual Analysis | Your video + climb ID | Grade, holds, angle, known beta, hold types | 🎯 Next |
 | 3 | Comparison Analysis | Your video + expert video | Everything from L2 + expert reference | 🔮 Future |
 
+**Market strategy:** Kilter Board-specific at launch. No direct competitor offers AI video coaching with BoardLib climb context integration. The standardization of Kilter Boards worldwide (identical holds, positions, grading) makes AI analysis deterministic and reliable. Natural expansion path: other Aurora boards (Tension, Moonboard) via BoardLib after Kilter product-market fit.
+
 ---
 
 ## Completed
@@ -28,6 +30,26 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - Gemini 2.5 Flash via google.genai SDK (NOT frame-by-frame)
 - Async processing with BackgroundTasks
 - Frontend: drag-drop upload, progress bar, mobile-first
+
+---
+
+## Pre-Phase 3 — Quick Wins
+
+### Prompt & Output Refinement (D001 → B brief)
+- [ ] Audit current Gemini prompt in `gemini_service.py` — document what we send and what we get back
+- [ ] Define compact structured JSON output schema (shorter, more actionable)
+- [ ] Always include dual grading scale: Font AND V-grade (e.g., "6A+ / V4")
+- [ ] Test with real climbing videos, iterate on prompt quality
+- [ ] STOP gate: review prompt changes before merging (touches gemini_service.py)
+
+### Video Thumbnails + Replay (B003)
+- [ ] Extract a representative frame (~30-50% of video duration) using ffmpeg during background processing
+- [ ] Save as JPEG alongside the video file
+- [ ] Serve thumbnail via API: GET /api/videos/{id}/thumbnail
+- [ ] Frontend: show thumbnail as cover in video list and analysis report
+- [ ] Frontend: add `<video>` player to video detail page so users can rewatch their upload
+- [ ] Ensure uploaded videos are NOT deleted after analysis — they must persist for replay
+- [ ] Tests pytest
 
 ---
 
@@ -81,36 +103,65 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - [ ] Management command: `python -m scripts.sync_kilter_db`
 - [ ] Document sync frequency recommendation (weekly is fine — DB doesn't change fast)
 
+### 3e — Climb Recommendation Engine
+- [ ] Endpoint GET /api/climbs/recommend?hold_type={type}&angle={angle}&grade_min={min}&grade_max={max}
+- [ ] Filter by: hold type preference (slopers/crimps/pinches), angle range, grade range, minimum ascents
+- [ ] Sort by popularity (ascent count) and difficulty accuracy
+- [ ] Support training-oriented queries: "4x4 sets", "endurance circuit", "power problems"
+- [ ] Frontend: recommendation UI — select preferences, browse suggested problems
+- [ ] This works WITHOUT video — standalone value for all Kilter Board users
+- [ ] Tests pytest
+
 ---
 
 ## Phase 4 — Visual Problem Recognition (Enhancement)
 
-**Goal:** User takes photo of board with LEDs lit → system identifies the climb.
+**Goal:** User takes a frontal photo of the Kilter Board with LEDs lit → system identifies the climb.
 
+**Why this is simpler than it sounds:** A deliberate frontal photo of a flat board with bright colored LEDs (green=start, cyan=middle, magenta=finish, yellow=feet) is essentially a template matching problem. BoardLib has exact x/y coordinates for every hole. The board type (7x10, 12x12, 16x12, Fullride) can be inferred from the detected hole pattern itself.
+
+**Approach:**
 - [ ] Endpoint POST /api/climbs/identify (accepts image)
-- [ ] Gemini vision: extract colored hold positions from photo
-- [ ] Match extracted pattern against BoardLib DB layouts
-- [ ] Return top-N candidate climbs for user confirmation
-- [ ] Handle: camera angle distortion, gym lighting variance, partial occlusion
-- [ ] Fallback: suggest manual search if confidence is low
+- [ ] Gemini Vision: extract LED positions and colors from frontal photo
+- [ ] Map detected positions to the holes grid (BoardLib `holes` table with x/y)
+- [ ] Infer board type from the overall pattern geometry
+- [ ] Match LED color pattern against `climbs.layout` strings in BoardLib DB
+- [ ] Return top-N candidate climbs with confidence score for user confirmation
+- [ ] User confirms match + provides angle (or use their default gym angle)
+- [ ] Fallback: if confidence is low, redirect to text search (Phase 3b)
+- [ ] Requirement: photo must be reasonably frontal (document in UX)
+- [ ] Tests pytest
+
+**Note:** No custom ML model needed — Gemini Vision + geometric matching against known coordinates. Camera angle distortion is minimized by requiring a frontal photo.
 
 ---
 
 ## Phase 5 — Expert Video Comparison (Level 3)
 
-**Goal:** Find and compare with expert beta videos.
+**Goal:** Compare user technique against expert reference videos using Gemini multi-video analysis.
 
-### 5a — Expert Video Sources
-- [ ] Curated list of 10-20 known expert Kilter Board YouTube channels
-- [ ] YouTube Data API v3 integration: search "{climb_name} kilter board" filtered by expert channels
-- [ ] Download via yt-dlp to local/S3 storage
-- [ ] Cache: once downloaded, don't re-download
-- [ ] Instagram video links from BoardLib DB (evaluate feasibility)
+### 5a — Curated Benchmark Database
+- [ ] Manually curate 20-50 expert send videos of the most iconic/benchmark Kilter Board problems
+- [ ] Sources: YouTube (top Kilter climbers), downloaded via yt-dlp
+- [ ] Store locally / S3 with metadata: climb_id, climber_name, source_url, grade, angle
+- [ ] Schema: `expert_videos` table (id, climb_id, climber_name, file_path, source_url, notes)
+- [ ] Alembic migration — STOP gate
+- [ ] When a user uploads a video for a problem that has a benchmark video → auto-suggest comparison
+- [ ] Endpoint GET /api/expert-videos?climb_id={id} — list available benchmarks for a climb
 
-### 5b — Comparison Analysis
-- [ ] Modified Gemini prompt: 2 videos (user + expert) + climb context
-- [ ] Structured comparison output: what expert does differently, specific move suggestions
+### 5b — Dual Video Upload + Comparison
+- [ ] Allow user to upload 2 videos in one session: "my attempt" + "reference video"
+- [ ] Works even for problems without a pre-loaded benchmark (user provides their own reference)
+- [ ] Gemini prompt: 2 videos + climb context → structured comparison output
+- [ ] Comparison JSON: what the expert does differently, move-by-move delta, specific suggestions
 - [ ] Frontend: side-by-side or sequential video display with annotations
+- [ ] Tests pytest
+
+### 5c — Future: Learning from Accumulated Videos
+- [ ] As video database grows, explore patterns across many analyses
+- [ ] Identify common technique gaps per grade band
+- [ ] Potentially auto-tag movement types (dyno, gaston, heel hook, etc.) for searchability
+- [ ] This is exploratory — revisit after 100+ analyzed videos
 
 ---
 
@@ -138,6 +189,23 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - [ ] S3 for video storage (currently local filesystem)
 - [ ] Mobile responsive polish
 - [ ] Dashboard: aggregate stats, streaks, grade progression
+
+---
+
+## Phase 8+ — Backlog / Visionary
+
+### Outdoor Video → Kilter Movement Matching
+- [ ] User films outdoor climb → AI describes movement types (dyno, gaston, compression, etc.)
+- [ ] Match movement descriptions against annotated Kilter problems
+- [ ] Suggest Kilter Board problems that train similar movement patterns
+- [ ] Requires: movement tagging system from Phase 5c + large analyzed video corpus
+- [ ] Extremely ambitious — revisit when movement annotation data is mature
+
+### Aurora Board Expansion
+- [ ] Extend support to other Aurora boards: Tension Board, Moonboard
+- [ ] BoardLib already supports these — same `boardlib database {board_name}` command
+- [ ] Reuse all infrastructure: search, recognition, analysis, benchmarks
+- [ ] Natural expansion once Kilter-specific product is proven and stable
 
 ---
 
