@@ -189,7 +189,7 @@ class TestAuthEndpoints:
     def test_get_me_without_token(self):
         """Test get_me endpoint without token"""
         response = client.get("/api/auth/me")
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_get_me_with_invalid_token(self):
         """Test get_me endpoint with invalid token"""

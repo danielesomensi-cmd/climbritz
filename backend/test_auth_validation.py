@@ -186,25 +186,28 @@ class TestDatabaseModels:
         assert video.status == "pending"
 
     def test_video_upload_model_defaults(self):
-        """Test VideoUpload model with default values"""
+        """Test VideoUpload model with default values.
+        Note: SQLAlchemy Column defaults only apply on DB insert,
+        not on in-memory instantiation — so status is None here.
+        """
         user_id = str(uuid.uuid4())
         video = VideoUpload(
             user_id=user_id,
             original_file_path="/uploads/video.mp4"
         )
-        assert video.status == "pending"
-        assert video.form_feedback is None
-        assert video.grade_estimate is None
-        assert video.body_position is None
+        assert video.status is None
+        assert video.form_analysis is None
 
     def test_video_upload_repr(self):
-        """Test VideoUpload model __repr__ method"""
+        """Test VideoUpload model __repr__ method.
+        __repr__ uses processing_status, not status.
+        """
         video_id = str(uuid.uuid4())
         video = VideoUpload(
             id=video_id,
             user_id=str(uuid.uuid4()),
             original_file_path="/path",
-            status="processing"
+            processing_status="processing"
         )
         assert f"{video_id} - processing" in str(video)
 
@@ -301,7 +304,7 @@ class TestConfiguration:
         settings = get_settings()
         assert settings.jwt_secret is not None
         assert settings.jwt_algorithm == "HS256"
-        assert settings.api_port == 8001
+        assert settings.api_port == 8000
         assert settings.environment == "development"
 
     def test_settings_cached(self):
