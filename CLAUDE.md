@@ -173,5 +173,24 @@ git push origin main
 
 ---
 
-**Version:** 2.2 (B002 docs rationalization 2026-03-30 — Railway deploy, tech debt backlog, ARCHITECTURE.md)
+---
+
+## High-Risk Modules — STOP Gate Required
+
+These files require **Phase 0 audit (read all affected files, list call sites) → STOP → explicit OK** before any changes:
+
+| File | Why |
+|------|-----|
+| `backend/app/services/gemini_service.py` | AI pipeline — broken = no analysis |
+| `backend/app/core/security.py` | JWT auth — broken = locked out |
+| `backend/app/core/deps.py` | Dependency injection — affects all endpoints |
+| `backend/app/api/auth.py` | Auth endpoints — broken = no login |
+| `backend/app/api/videos.py` | Video pipeline — broken = core feature down |
+| `alembic/versions/*.py` | Schema migrations — wrong = data loss |
+
+For these files: read first, print analysis, wait for OK, then implement.
+
+---
+
+**Version:** 2.3 (B005 quick wins from climb-agent audit 2026-03-31)
 **Owner:** Daniele Somensi + Sam (AI Agent)
