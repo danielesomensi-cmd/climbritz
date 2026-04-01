@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     upload_dir: str = "uploads"
     max_file_size_mb: int = 500
+    boardlib_db_path: str = "data/kilter.db"
 
     class Config:
         env_file = ".env"

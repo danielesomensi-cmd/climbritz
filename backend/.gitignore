@@ -4,6 +4,7 @@ __pycache__/
 .env
 .DS_Store
 *.db
+!tests/fixtures/*.db
 .pytest_cache/
 .vscode/
 data/*.db
