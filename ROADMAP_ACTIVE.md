@@ -200,7 +200,7 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 **Goal:** User takes a frontal photo of the Kilter Board with LEDs lit → system identifies the climb.
 
-**Why this is simpler than it sounds:** A deliberate frontal photo of a flat board with bright colored LEDs (green=start, cyan=middle, magenta=finish, yellow=feet) is essentially a template matching problem. BoardLib has exact x/y coordinates for every hole. The board type (7x10, 12x12, 16x12, Fullride) can be inferred from the detected hole pattern itself.
+**Why this is simpler than it sounds:** A deliberate frontal photo of a flat board with bright colored LEDs (green=start, cyan=middle, magenta=finish, orange=feet) is essentially a template matching problem. BoardLib has exact x/y coordinates for every hole. The board type (7x10, 12x12, 16x12, Fullride) can be inferred from the detected hole pattern itself.
 
 **Approach:**
 - [ ] Endpoint POST /api/climbs/identify (accepts image)
@@ -312,4 +312,4 @@ Items to address before or during the next major phase:
 - Secrets in .env only
 - Conventional commits, push after every feature
 - Don't break existing auth
-- BoardLib DB gitignored (85MB+ file)
+- BoardLib DB gitignored (~189MB file)

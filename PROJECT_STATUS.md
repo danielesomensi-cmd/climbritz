@@ -20,7 +20,7 @@
 | Gemini Video Service | ✅ Done | google.genai SDK, lazy init, gemini-2.5-flash, JSON repair |
 | Video endpoints | ✅ Done | POST upload (202), GET /{id}, GET list, DELETE |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 48 passed, 5 skipped (DB-dependent) |
+| Tests | ✅ Done | 106 collected (B005+) |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
 | BoardLib integration | ⏳ Da fare | Phase 3 — climb search, contextual analysis |
@@ -52,7 +52,7 @@ See ROADMAP_ACTIVE.md for detailed implementation plan.
 | `DATABASE_URL` | `sqlite:///./kilter.db` | Dev locale |
 | `JWT_SECRET` | Già in `.env` ✅ | Generato |
 | `UPLOAD_DIR` | `uploads/` | Locale |
-| GitHub | `OpenClawDani/kilter-training-app` | Main repo |
+| GitHub | `danielesomensi-cmd/kilter-up` | Main repo |
 
 ---
 
@@ -130,7 +130,7 @@ for frame in frames:
 **Why:**
 - Gives us 160k+ climbs with full metadata (grade, holds, angle, ascents)
 - Open source, pip installable, maintained
-- Database is ~85MB, stored locally (gitignored)
+- Database is ~189MB, stored locally (gitignored)
 - No need to reverse engineer Aurora Climbing API ourselves
 - Sync command updates DB incrementally
 

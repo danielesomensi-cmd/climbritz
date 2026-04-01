@@ -21,7 +21,7 @@ The project's differentiator is NOT training logging — it's **AI-powered climb
 - **160,000+ climbs** in the database, set by climbers worldwide
 - Each climb has: unique ID, name, setter, grade, angle, layout string (hold positions + roles), star rating, ascent count
 - Beta videos are linked as **Instagram URLs** (not YouTube) — stored in the app's local SQLite database
-- Hold roles are color-coded: Green = Start, Cyan = Middle, Magenta = Finish, Yellow = Foot Only
+- Hold roles are color-coded: Green = Start, Cyan = Middle, Magenta = Finish, Orange = Foot Only
 - Layout format: `p{hold_id}r{role_code}` concatenated string (e.g., `p1083r15p1117r15p1164r12...`)
 - The app syncs via Aurora Climbing's undocumented REST API
 
@@ -32,6 +32,7 @@ The project's differentiator is NOT training logging — it's **AI-powered climb
 - Database contains: all climbs, hold placements, holes (x/y coordinates), LED mappings, user-submitted beta video links
 - Also exports personal logbook as CSV
 - **Critical for us:** We can have the entire Kilter Board climb catalog locally without scraping
+- Database is ~189MB with 344k+ climbs (larger than initial ~85MB estimate)
 - Command: `boardlib database kilter kilter.db`
 - Sync command updates existing DB with latest data
 
@@ -168,5 +169,5 @@ AI Coaching Feedback
 ```
 
 ### Storage
-- BoardLib SQLite DB: `backend/data/kilter.db` (gitignored, ~85MB)
+- BoardLib SQLite DB: `backend/data/kilter.db` (gitignored, ~189MB)
 - Periodic sync via `boardlib database kilter backend/data/kilter.db`

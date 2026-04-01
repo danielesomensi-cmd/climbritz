@@ -70,6 +70,6 @@ pytest --cov       # with coverage report
 
 - `fastapi` + `uvicorn` — web framework
 - `sqlalchemy` + `alembic` — ORM + migrations
-- `google-generativeai` — Gemini File API for video analysis
+- `google-genai` — Gemini 2.5 Flash File API for video analysis
 - `python-jose` + `passlib[bcrypt]` — JWT auth
 - `pytest` — test suite

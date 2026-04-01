@@ -1,6 +1,6 @@
 # Kilter-Up — AI Climbing Coach for Kilter Board
 
-Upload climbing videos and get AI-powered coaching feedback using Gemini 2.0 Flash.
+Upload climbing videos and get AI-powered coaching feedback using Gemini 2.5 Flash.
 
 ## Quick Start
 
@@ -28,12 +28,12 @@ cd backend && pytest -v
 ## Tech Stack
 - **Frontend:** Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui
 - **Backend:** Python 3.11 + FastAPI + SQLAlchemy + Alembic
-- **AI:** Gemini 2.0 Flash (File API)
+- **AI:** Gemini 2.5 Flash (File API, google.genai SDK)
 - **DB:** SQLite (dev) / PostgreSQL (prod)
 
 ## Deployment
 - **Backend:** Railway (FastAPI + SQLite, auto-migrates on deploy)
-- **Frontend:** localhost (Vercel deploy planned)
+- **Frontend:** Vercel — kilter-up-coach.vercel.app
 - **CI:** Alembic migrations run automatically via `startCommand` in `railway.toml`
 
 ## API Endpoints
@@ -46,4 +46,4 @@ cd backend && pytest -v
 - `GET /api/auth/me` — Current user
 
 ## Repo
-https://github.com/OpenClawDani/kilter-training-app
+https://github.com/danielesomensi-cmd/kilter-up

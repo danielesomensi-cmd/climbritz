@@ -77,6 +77,19 @@
 4. Skip tests
 5. Add circuit detection as a primary feature (it's Phase 2)
 
+### 📄 Doc Alignment Rule (Non-Negotiable)
+When a change touches facts shared across docs (model version, test count, deploy status, repo URL, DB size, etc.), **update ALL files that reference that fact in the same commit.** Don't leave stale data behind.
+
+Files to cross-check on every factual change:
+- `README.md` (root) — tech stack, deploy status, repo URL
+- `backend/README.md` — dependencies, model version
+- `CLAUDE.md` — project structure, test references
+- `PROJECT_STATUS.md` — stato attuale, credenziali, contatori
+- `RESEARCH.md` — ecosystem data (DB size, LED colors, etc.)
+- `ARCHITECTURE.md` — stack diagram, deployment topology
+
+**Hard-coded numbers (test counts, climb counts, DB size) decay fast.** Prefer descriptions ("tests" not "46 tests") unless the number is the point. When a number must appear, grep all .md files for the old value before committing.
+
 ---
 
 ## 🏗️ Project Structure
@@ -113,7 +126,7 @@ kilter-training-app/
 │   │   ├── 001_initial_migration.py ✅
 │   │   └── 002_video_form_analysis.py ✅
 │   ├── tests/
-│   │   ├── test_videos.py          ✅ 46 tests
+│   │   ├── test_videos.py          ✅ tests
 │   │   └── test_kilter_parser.py   ✅
 │   ├── conftest.py                 ✅
 │   └── requirements.txt
@@ -192,5 +205,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.3 (B005 quick wins from climb-agent audit 2026-03-31)
+**Version:** 2.4 (B006 doc alignment + roadmap update 2026-04-01)
 **Owner:** Daniele Somensi + Sam (AI Agent)
