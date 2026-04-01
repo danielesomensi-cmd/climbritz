@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
-import { getVideo, Video, FormAnalysis, ApiError } from '@/app/lib/api';
+import { getVideo, Video, FormAnalysis, ImprovementItem, ApiError } from '@/app/lib/api';
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
   return (
@@ -23,11 +23,54 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   );
 }
 
+function ImpressionBadge({ impression }: { impression: string }) {
+  const colors: Record<string, string> = {
+    flash: 'bg-green-500/20 border-green-500/40 text-green-400',
+    onsight: 'bg-blue-500/20 border-blue-500/40 text-blue-400',
+    projecting: 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400',
+    working: 'bg-red-500/20 border-red-500/40 text-red-400',
+  };
+  const labels: Record<string, string> = {
+    flash: 'Flash',
+    onsight: 'Onsight',
+    projecting: 'Projecting',
+    working: 'Working',
+  };
+  const key = impression.toLowerCase();
+  return (
+    <span className={`inline-block px-4 py-1.5 border rounded-xl text-sm font-bold uppercase ${colors[key] || 'bg-zinc-800 border-zinc-700 text-zinc-400'}`}>
+      {labels[key] || impression}
+    </span>
+  );
+}
+
 function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
+  // Handle non-Kilter Board error
+  if (analysis.error === 'not_kilter_board') {
+    return (
+      <div className="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-8 text-center">
+        <div className="text-5xl mb-4">&#9888;&#65039;</div>
+        <h2 className="text-lg font-semibold text-white mb-2">Non Kilter Board</h2>
+        <p className="text-zinc-400">{analysis.message || 'Questo video non sembra mostrare una Kilter Board. Kilter-Up supporta solo analisi su Kilter Board.'}</p>
+      </div>
+    );
+  }
+
+  // Detect old format (pre-B007) vs new format
+  const isNewFormat = 'improvements' in analysis || 'hip_positioning_score' in analysis;
+
   return (
     <div className="space-y-4">
-      {/* Grade badge */}
-      {analysis.overall_grade_estimate && (
+      {/* Overall impression badge (new format) */}
+      {analysis.overall_impression && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
+          <p className="text-sm text-zinc-400 mb-2">Impressione</p>
+          <ImpressionBadge impression={analysis.overall_impression} />
+        </div>
+      )}
+
+      {/* Grade badge (old format only — backward compat) */}
+      {!isNewFormat && analysis.overall_grade_estimate && (
         <div className="bg-zinc-900 border border-[#FF6B35]/40 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-400 mb-2">Grado stimato</p>
           <span className="inline-block px-6 py-3 bg-[#FF6B35] text-white text-3xl font-black rounded-xl">
@@ -56,6 +99,8 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
             {analysis.technique_score && <ScoreBar label="Tecnica" score={analysis.technique_score} />}
             {analysis.body_tension_score && <ScoreBar label="Tensione corporea" score={analysis.body_tension_score} />}
             {analysis.footwork_score && <ScoreBar label="Footwork" score={analysis.footwork_score} />}
+            {analysis.hip_positioning_score && <ScoreBar label="Posizione fianchi" score={analysis.hip_positioning_score} />}
+            {analysis.power_management_score && <ScoreBar label="Gestione potenza" score={analysis.power_management_score} />}
           </div>
         </div>
       )}
@@ -77,14 +122,32 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
         </div>
       )}
 
-      {/* Weaknesses */}
-      {analysis.weaknesses && analysis.weaknesses.length > 0 && (
+      {/* Improvements (new format) */}
+      {analysis.improvements && analysis.improvements.length > 0 && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">
+            Da migliorare
+          </h3>
+          <div className="space-y-4">
+            {analysis.improvements.map((item: ImprovementItem, i: number) => (
+              <div key={i} className="border-l-2 border-yellow-500/40 pl-4">
+                <p className="text-zinc-200 text-sm">{item.issue}</p>
+                <p className="text-zinc-400 text-sm mt-1">&#8594; {item.fix}</p>
+                <p className="text-[#FF6B35] text-sm mt-1">Drill: {item.drill}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Weaknesses (old format — backward compat) */}
+      {!isNewFormat && analysis.weaknesses && analysis.weaknesses.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">
             Da migliorare
           </h3>
           <ul className="space-y-2">
-            {analysis.weaknesses.map((w, i) => (
+            {analysis.weaknesses.map((w: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
                 <span className="text-yellow-400 mt-0.5">&#9888;&#65039;</span>
                 <span>{w}</span>
@@ -94,41 +157,14 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
         </div>
       )}
 
-      {/* Specific feedback */}
-      {analysis.specific_feedback && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-3">
-            Feedback dettagliato
-          </h3>
-          <div className="space-y-4">
-            {Object.entries(analysis.specific_feedback).map(([key, value]) => {
-              if (!value) return null;
-              const labels: Record<string, string> = {
-                footwork: 'Footwork',
-                body_positioning: 'Posizione del corpo',
-                arm_usage: 'Uso delle braccia',
-                breathing_pacing: 'Ritmo e respirazione',
-                route_reading: 'Lettura del percorso',
-              };
-              return (
-                <div key={key}>
-                  <p className="text-sm font-medium text-zinc-400 mb-1">{labels[key] || key}</p>
-                  <p className="text-zinc-200 text-sm leading-relaxed">{value}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Drills */}
-      {analysis.drills_recommended && analysis.drills_recommended.length > 0 && (
+      {/* Drills (old format — backward compat) */}
+      {!isNewFormat && analysis.drills_recommended && analysis.drills_recommended.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-3">
             Esercizi consigliati
           </h3>
           <ul className="space-y-2">
-            {analysis.drills_recommended.map((drill, i) => (
+            {analysis.drills_recommended.map((drill: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
                 <span className="text-[#FF6B35]">&#8226;</span>
                 <span>{drill}</span>
@@ -138,8 +174,8 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
         </div>
       )}
 
-      {/* Next steps */}
-      {analysis.next_steps && (
+      {/* Next steps (old format — backward compat) */}
+      {!isNewFormat && analysis.next_steps && (
         <div className="bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-2">
             Prossimo passo

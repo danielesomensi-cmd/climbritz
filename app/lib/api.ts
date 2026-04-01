@@ -99,26 +99,32 @@ export interface User {
   updated_at: string;
 }
 
-export interface SpecificFeedback {
-  footwork?: string;
-  body_positioning?: string;
-  arm_usage?: string;
-  breathing_pacing?: string;
-  route_reading?: string;
+export interface ImprovementItem {
+  issue: string;
+  fix: string;
+  drill: string;
 }
 
 export interface FormAnalysis {
-  overall_grade_estimate?: string;
+  // New format (B007+)
+  is_kilter_board?: boolean;
+  error?: string;
+  message?: string;
   technique_score?: number;
   body_tension_score?: number;
   footwork_score?: number;
+  hip_positioning_score?: number;
+  power_management_score?: number;
   summary?: string;
   strengths?: string[];
+  improvements?: ImprovementItem[];
+  overall_impression?: string;
+  // Old format fields (backward compat with pre-B007 records)
+  overall_grade_estimate?: string;
   weaknesses?: string[];
-  specific_feedback?: SpecificFeedback;
   drills_recommended?: string[];
   next_steps?: string;
-  [key: string]: unknown; // forward-compat with prompt changes
+  [key: string]: unknown;
 }
 
 export interface Video {

@@ -29,22 +29,24 @@ client = TestClient(app)
 # --- Helpers ---
 
 MOCK_GEMINI_ANALYSIS = {
-    "overall_grade_estimate": "V5",
+    "is_kilter_board": True,
     "technique_score": 7,
     "body_tension_score": 8,
     "footwork_score": 6,
-    "summary": "Solid V5 attempt, body tension is good but finish on sloper needs work.",
-    "strengths": ["good body tension", "efficient movement"],
-    "weaknesses": ["weak sloper finish", "low hip position"],
-    "specific_feedback": {
-        "footwork": "Trust your feet more on the slab section.",
-        "body_positioning": "Hips could be closer to the wall.",
-        "arm_usage": "Good straight-arm technique on jugs.",
-        "breathing_pacing": "Consider resting before the crux.",
-        "route_reading": "Some hesitation mid-route suggests improvisation.",
-    },
-    "drills_recommended": ["slab traverses", "sloper hangs"],
-    "next_steps": "Focus on open-hand grip strength for sloper finishes.",
+    "hip_positioning_score": 5,
+    "power_management_score": 7,
+    "summary": "Good body tension on the steep section. Work on keeping hips closer to the wall on the second move.",
+    "strengths": ["strong lock-offs", "good contact strength", "controlled dynamics"],
+    "improvements": [
+        {"issue": "Hips sag on the second move", "fix": "Drive hips into the wall before reaching", "drill": "Angle progression: repeat at 35° focusing on hip drive"},
+        {"issue": "Feet cutting on the big reach", "fix": "Flag right foot for counterbalance", "drill": "4x4 sets on similar overhang problems at -1 grade"},
+    ],
+    "overall_impression": "projecting",
+}
+
+MOCK_NOT_KILTER_BOARD = {
+    "error": "not_kilter_board",
+    "message": "This does not appear to be a Kilter Board climbing video. Kilter-Up currently only supports Kilter Board analysis.",
 }
 
 
@@ -123,15 +125,19 @@ class TestVideoSchemas:
         )
         assert resp.form_analysis is not None
         assert resp.form_analysis.technique_score == 7
-        assert resp.form_analysis.overall_grade_estimate == "V5"
-        assert len(resp.form_analysis.weaknesses) == 2
+        assert resp.form_analysis.is_kilter_board is True
+        assert resp.form_analysis.hip_positioning_score == 5
+        assert len(resp.form_analysis.improvements) == 2
 
     def test_form_feedback_response(self):
         fb = FormFeedbackResponse(**MOCK_GEMINI_ANALYSIS)
         assert fb.technique_score == 7
         assert fb.footwork_score == 6
-        assert fb.specific_feedback is not None
-        assert fb.specific_feedback.footwork == "Trust your feet more on the slab section."
+        assert fb.hip_positioning_score == 5
+        assert fb.power_management_score == 7
+        assert fb.overall_impression == "projecting"
+        assert len(fb.improvements) == 2
+        assert fb.improvements[0].issue == "Hips sag on the second move"
 
     def test_form_feedback_extra_fields_allowed(self):
         data = {**MOCK_GEMINI_ANALYSIS, "custom_field": "extra"}
@@ -342,7 +348,8 @@ class TestGetVideoEndpoint:
         data = resp.json()
         assert data["processing_status"] == "completed"
         assert data["form_analysis"]["technique_score"] == 7
-        assert data["form_analysis"]["overall_grade_estimate"] == "V5"
+        assert data["form_analysis"]["is_kilter_board"] is True
+        assert data["form_analysis"]["overall_impression"] == "projecting"
 
     def test_get_video_not_found(self):
         db = TestingSessionLocal()
@@ -486,7 +493,9 @@ class TestGeminiService:
         result = analyze_climbing_form("files/abc123")
 
         assert result["technique_score"] == 7
-        assert result["overall_grade_estimate"] == "V5"
+        assert result["is_kilter_board"] is True
+        assert result["hip_positioning_score"] == 5
+        assert result["overall_impression"] == "projecting"
         client.files.get.assert_called_once_with(name="files/abc123")
         client.models.generate_content.assert_called_once()
 
@@ -560,13 +569,13 @@ class TestGeminiService:
         client.files.get.return_value = mock_file
 
         # Truncated JSON — missing closing brace
-        truncated = '{"overall_grade_estimate": "V4", "technique_score": 7'
+        truncated = '{"is_kilter_board": true, "technique_score": 7'
         mock_response = MagicMock()
         mock_response.text = truncated
         client.models.generate_content.return_value = mock_response
 
         result = analyze_climbing_form("files/abc123")
-        assert result["overall_grade_estimate"] == "V4"
+        assert result["is_kilter_board"] is True
         assert result["technique_score"] == 7
 
     def test_try_repair_json(self):
@@ -583,6 +592,24 @@ class TestGeminiService:
 
         # Completely invalid
         assert _try_repair_json("not json") is None
+
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_not_kilter_board(self, mock_get_client):
+        from app.services.gemini_service import analyze_climbing_form
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+
+        mock_file = MagicMock()
+        client.files.get.return_value = mock_file
+
+        mock_response = MagicMock()
+        mock_response.text = json.dumps(MOCK_NOT_KILTER_BOARD)
+        client.models.generate_content.return_value = mock_response
+
+        result = analyze_climbing_form("files/abc123")
+        assert result["error"] == "not_kilter_board"
+        assert "message" in result
 
     def test_get_client_raises_without_key(self):
         from app.services.gemini_service import _get_client

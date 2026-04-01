@@ -114,9 +114,11 @@ function DashboardContent() {
                         {video.file_size && <span>{formatSize(video.file_size)}</span>}
                       </div>
                     </div>
-                    {video.form_analysis?.overall_grade_estimate && (
+                    {(video.form_analysis?.overall_impression || video.form_analysis?.overall_grade_estimate) && (
                       <div className="ml-4 px-3 py-1.5 bg-[#FF6B35]/20 border border-[#FF6B35]/40 rounded-xl">
-                        <span className="text-[#FF6B35] font-bold text-lg">{video.form_analysis.overall_grade_estimate}</span>
+                        <span className="text-[#FF6B35] font-bold text-sm uppercase">
+                          {video.form_analysis.overall_impression || video.form_analysis.overall_grade_estimate}
+                        </span>
                       </div>
                     )}
                     <svg className="ml-3 w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

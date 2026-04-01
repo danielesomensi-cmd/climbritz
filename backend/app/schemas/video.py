@@ -5,7 +5,7 @@ Pydantic v2 schemas for video upload and analysis responses.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -14,66 +14,43 @@ from pydantic import BaseModel, Field, ConfigDict
 # Nested analysis schemas
 # ---------------------------------------------------------------------------
 
-class SpecificFeedback(BaseModel):
-    """Detailed per-aspect coaching notes from the AI analysis."""
+class ImprovementItem(BaseModel):
+    """A specific improvement with actionable fix and drill."""
 
-    footwork: str | None = Field(
-        default=None, description="Foot placement precision and trust."
-    )
-    body_positioning: str | None = Field(
-        default=None, description="Hip positioning, center of gravity, body rotation."
-    )
-    arm_usage: str | None = Field(
-        default=None, description="Straight-arm vs bent-arm usage, lock-off quality."
-    )
-    breathing_pacing: str | None = Field(
-        default=None, description="Rhythm, rest usage, breathing observations."
-    )
-    route_reading: str | None = Field(
-        default=None, description="Evidence of pre-planning or improvisation."
-    )
+    issue: str = Field(..., description="Specific observation of what needs work.")
+    fix: str = Field(..., description="Actionable suggestion to address the issue.")
+    drill: str = Field(..., description="Kilter Board-specific drill tied to this issue.")
 
 
 class FormFeedbackResponse(BaseModel):
     """
     Structured coaching feedback returned after Gemini analysis.
-    Maps directly to the JSON structure the Gemini prompt requests.
+    Maps to the Kilter Board-specific prompt output (B007+).
+
+    Backward compatible: old records with the previous schema (overall_grade_estimate,
+    weaknesses, specific_feedback, drills_recommended, next_steps) are handled via
+    extra="allow".
     """
 
-    model_config = ConfigDict(extra="allow")  # forward-compat with prompt changes
+    model_config = ConfigDict(extra="allow")  # backward compat with old records
 
-    overall_grade_estimate: str | None = Field(
-        default=None,
-        description="Estimated difficulty grade of the problem/route.",
-        examples=["V4", "6b+"],
-    )
-    technique_score: int | None = Field(
-        default=None, ge=1, le=10, description="Overall technique quality (1-10)."
-    )
-    body_tension_score: int | None = Field(
-        default=None, ge=1, le=10, description="Core and full-body tension quality (1-10)."
-    )
-    footwork_score: int | None = Field(
-        default=None, ge=1, le=10, description="Foot placement and trust (1-10)."
-    )
-    summary: str | None = Field(
-        default=None, description="2-3 sentence overall impression."
-    )
-    strengths: list[str] = Field(
-        default_factory=list, description="Things the climber does well."
-    )
-    weaknesses: list[str] = Field(
-        default_factory=list, description="Areas for improvement."
-    )
-    specific_feedback: SpecificFeedback | None = Field(
-        default=None, description="Detailed per-aspect coaching notes."
-    )
-    drills_recommended: list[str] = Field(
-        default_factory=list, description="Suggested training drills."
-    )
-    next_steps: str | None = Field(
-        default=None, description="Actionable coaching cue for next session."
-    )
+    # Board detection
+    is_kilter_board: bool = Field(default=True, description="Whether the video shows a Kilter Board.")
+    error: Optional[str] = Field(default=None, description="Error code if not a Kilter Board video.")
+    message: Optional[str] = Field(default=None, description="Error message for non-Kilter Board videos.")
+
+    # Scores (1-10)
+    technique_score: Optional[int] = Field(default=None, ge=1, le=10, description="Overall technique quality.")
+    body_tension_score: Optional[int] = Field(default=None, ge=1, le=10, description="Core and full-body tension.")
+    footwork_score: Optional[int] = Field(default=None, ge=1, le=10, description="Foot placement and trust.")
+    hip_positioning_score: Optional[int] = Field(default=None, ge=1, le=10, description="Hip positioning quality.")
+    power_management_score: Optional[int] = Field(default=None, ge=1, le=10, description="Power generation and management.")
+
+    # Feedback
+    summary: Optional[str] = Field(default=None, description="2 sentences max — key observation + suggestion.")
+    strengths: list[str] = Field(default_factory=list, description="Max 3 strengths.")
+    improvements: Optional[list[ImprovementItem]] = Field(default=None, description="Max 3 improvements with drill per issue.")
+    overall_impression: Optional[str] = Field(default=None, description="flash/onsight/projecting/working.")
 
 
 # ---------------------------------------------------------------------------

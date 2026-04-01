@@ -14,6 +14,7 @@ from google import genai
 from google.genai import types
 
 from app.core.config import get_settings
+from app.schemas.video import FormFeedbackResponse
 
 logger = logging.getLogger(__name__)
 
@@ -35,35 +36,51 @@ def _get_client() -> genai.Client:
     return _client
 
 
-CLIMBING_ANALYSIS_PROMPT = """
-You are an expert climbing coach with deep knowledge of sport climbing, bouldering, and movement technique.
+CLIMBING_ANALYSIS_PROMPT = """You are an expert Kilter Board climbing coach. You specialize in analyzing technique on the Kilter Board — a standardized indoor training board with adjustable angles (0–70°), plastic holds with LED indicators, and a focus on powerful, dynamic movement.
 
-Analyze this climbing video and provide a detailed, structured assessment.
+KILTER BOARD CONTEXT:
+- The Kilter Board is steep by design. At 40°+ most problems require dynamic movement and cutting feet is often the INTENDED beta, not a flaw.
+- The key distinction is: was the feet-cutting controlled and intentional (good) or a loss of body tension (needs work)?
+- Hold types: crimps, slopers, pinches, edges, jugs — all ergonomic plastic.
+- Core skills: body tension, hip positioning, contact strength, power generation, controlled dynamics.
+- Board angles change everything: the same problem at 40° vs 50° requires fundamentally different execution.
 
-Return your analysis as a JSON object with the following keys:
+BOARD DETECTION:
+First, determine if this video shows climbing on a Kilter Board (flat board with uniform grid of plastic holds, often with colored LED lights visible).
+- If this is NOT a Kilter Board or NOT a climbing video, return: {"error": "not_kilter_board", "message": "This does not appear to be a Kilter Board climbing video. Kilter-Up currently only supports Kilter Board analysis."}
+- If it IS a Kilter Board, proceed with the analysis below.
+
+ANALYSIS INSTRUCTIONS:
+Analyze the climber's technique and return a JSON object. Be specific — reference actual moments in the video (e.g., "at the second move..." or "on the big reach left..."). Be honest and constructive. A score of 8+ means strong, confident execution. A 9 or 10 means near-professional level — reserve these for truly exceptional technique.
+
+Do NOT estimate the grade of the problem — you cannot reliably determine the grade from video alone.
+
+Return ONLY this JSON structure:
 
 {
-  "overall_grade_estimate": "<e.g. V4, 6b+, 5.11a — estimated difficulty of the problem/route>",
-  "technique_score": <integer 1–10, overall technique quality>,
-  "body_tension_score": <integer 1–10, core and full-body tension>,
-  "footwork_score": <integer 1–10, foot placement precision and trust>,
-  "summary": "<2–3 sentence overall impression>",
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "weaknesses": ["<weakness 1>", "<weakness 2>", ...],
-  "specific_feedback": {
-    "footwork": "<detailed footwork observations>",
-    "body_positioning": "<hip positioning, center of gravity, body rotation>",
-    "arm_usage": "<straight-arm vs bent-arm, lock-off quality, reach efficiency>",
-    "breathing_pacing": "<observations on rhythm and rest usage>",
-    "route_reading": "<evidence of pre-planning, hesitation, or improvisation>"
-  },
-  "drills_recommended": ["<drill 1>", "<drill 2>", ...],
-  "next_steps": "<1–2 sentence actionable coaching cue>"
+  "is_kilter_board": true,
+  "technique_score": <integer 1-10>,
+  "body_tension_score": <integer 1-10>,
+  "footwork_score": <integer 1-10>,
+  "hip_positioning_score": <integer 1-10>,
+  "power_management_score": <integer 1-10>,
+  "summary": "<2 sentences max — the ONE most important observation and ONE key suggestion>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3 max>"],
+  "improvements": [
+    {"issue": "<specific observation>", "fix": "<actionable suggestion>", "drill": "<one Kilter Board-specific drill tied to this issue>"}
+  ],
+  "overall_impression": "<flash/onsight/projecting/working — how dialed-in does the climber look on this problem?>"
 }
 
-Be specific, honest, and constructive. Base observations strictly on what is visible in the video.
-Return ONLY the JSON object, no markdown fences, no preamble.
-"""
+IMPORTANT RULES:
+- Maximum 3 strengths.
+- Maximum 3 improvements. Each improvement MUST include a specific drill tied to that issue.
+- Drills must be Kilter Board-specific when possible: angle progression, 4x4 sets on similar hold types, campus moves on the board, repeat-sends at lower angles, specific hold-type circuits. Avoid generic drills like "do planks" or "silent feet" unless truly relevant.
+- "overall_impression" should assess how familiar/comfortable the climber looks with this specific problem: "flash" (first try, reading on the fly), "onsight" (first try but pre-planned), "projecting" (working moves, some hesitation), "working" (early attempts, falling or struggling).
+- Do NOT pad the response. If the climber is excellent, say so and give fewer improvements. If there are clear issues, be direct.
+- Keep the total response concise. No filler sections.
+
+Return ONLY the JSON object, no markdown fences, no preamble."""
 
 
 def upload_video_to_gemini(file_path: str) -> str:
@@ -237,6 +254,12 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
             raise RuntimeError(
                 f"Gemini returned non-JSON response: {exc}\n\nRaw output:\n{raw_text}"
             ) from exc
+
+    # Validate response structure (log warnings but don't crash)
+    try:
+        FormFeedbackResponse(**analysis)
+    except Exception as e:
+        logger.warning("Response validation warning for %s: %s", gemini_file_id, e)
 
     logger.info("Climbing analysis complete for file: %s", gemini_file_id)
     return analysis
