@@ -29,6 +29,11 @@ Server: `http://localhost:8001`
 - `GET /api/videos` — List videos (paginated)
 - `DELETE /api/videos/{id}` — Delete video
 
+### Climbs (BoardLib)
+- `GET /api/climbs/search?q={name}&angle={angle}&limit={n}` — Search climbs by name
+- `GET /api/climbs/{climb_uuid}?angle={angle}` — Full climb detail with holds
+- `GET /api/climbs/stats` — Database stats
+
 ## Documentation
 
 - **Swagger UI**: http://localhost:8001/docs
@@ -39,10 +44,10 @@ Server: `http://localhost:8001`
 ```
 app/
 ├── core/          # config (pydantic Settings), database, security, deps
-├── api/           # routes: auth, videos, circuits
+├── api/           # routes: auth, videos, climbs, circuits
 ├── models/        # SQLAlchemy models: User, VideoUpload
-├── schemas/       # Pydantic schemas
-├── services/      # gemini_service, video_service, storage_service, auth_service
+├── schemas/       # Pydantic schemas (video, climb, user, auth)
+├── services/      # gemini_service, climb_service, video_service, storage_service, auth_service
 └── main.py        # FastAPI app factory
 ```
 
@@ -72,4 +77,5 @@ pytest --cov       # with coverage report
 - `sqlalchemy` + `alembic` — ORM + migrations
 - `google-genai` — Gemini 2.5 Flash File API for video analysis
 - `python-jose` + `passlib[bcrypt]` — JWT auth
+- `boardlib` — Kilter Board database download/sync
 - `pytest` — test suite

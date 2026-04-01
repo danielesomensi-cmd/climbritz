@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Updated: March 2026
+> Updated: April 2026
 
 ---
 
@@ -63,11 +63,13 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload c
 |-----------|------|----------------|
 | **Auth API** | `api/auth.py` | Register, login, /me (JWT) |
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
-| **Gemini Service** | `services/gemini_service.py` | File API upload + analysis prompt (lazy init) |
+| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries) |
+| **Gemini Service** | `services/gemini_service.py` | File API upload + Kilter Board-specific prompt (B007) |
+| **Climb Service** | `services/climb_service.py` | Read-only sqlite3 queries against BoardLib DB |
 | **Storage Service** | `services/storage_service.py` | Local filesystem (dev), S3 planned (prod) |
 | **Auth Service** | `services/auth_service.py` | Password hashing, token generation |
 | **Video Service** | `services/video_service.py` | ffmpeg utilities |
-| **Config** | `core/config.py` | Pydantic Settings (env vars) |
+| **Config** | `core/config.py` | Pydantic Settings (env vars, BOARDLIB_DB_PATH) |
 | **Database** | `core/database.py` | SQLAlchemy engine + SessionLocal |
 | **Security** | `core/security.py` | JWT encode/decode |
 | **Dependencies** | `core/deps.py` | FastAPI dependency injection (get_db, get_current_user) |
@@ -142,9 +144,10 @@ Gemini 2.5 Flash: client.models.generate_content(
     )
   )
   │  → ONE API call per video (not frame-by-frame)
-  │  → Prompt asks for structured coaching feedback
-  │  → Model analyzes technique: body position, footwork, etc.
+  │  → Kilter Board-specific prompt (B007): board detection, 5 scores,
+  │     max 3 improvements with drills, overall impression
   │  → JSON repair fallback if response is malformed
+  │  → Pydantic validation (FormFeedbackResponse, warning-only)
   │
   ▼
 Structured response stored as JSON in video_uploads.form_analysis

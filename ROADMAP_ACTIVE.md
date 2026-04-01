@@ -75,12 +75,12 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 ## Pre-Phase 3 — Quick Wins
 
-### Prompt & Output Refinement (D001 → B brief)
-- [ ] Audit current Gemini prompt in `gemini_service.py` — document what we send and what we get back
-- [ ] Define compact structured JSON output schema (shorter, more actionable)
-- [ ] Always include dual grading scale: Font AND V-grade (e.g., "6A+ / V4")
-- [ ] Test with real climbing videos, iterate on prompt quality
-- [ ] STOP gate: review prompt changes before merging (touches gemini_service.py)
+### Prompt & Output Refinement (D001 → B007) ✅
+- [x] Audit current Gemini prompt in `gemini_service.py` — documented in `backend/docs/PROMPT_AUDIT.md`
+- [x] Define compact structured JSON output schema — B007 rework: max 3 strengths, max 3 improvements with drill
+- [x] Grade estimation removed — will come from DB in Level 2
+- [x] Test with real climbing videos — 4 videos tested, identified 7 issues, all addressed in B007
+- [x] STOP gate: review prompt changes before merging — Phase 0 audit done, approved
 
 ### Video Thumbnails + Replay (B003)
 - [ ] Extract a representative frame (~30-50% of video duration) using ffmpeg during background processing
@@ -97,18 +97,22 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 
 **Goal:** Connect user videos to specific Kilter Board problems for contextual AI coaching.
 
-### 3a — BoardLib Database Setup
-- [ ] Add `boardlib` to requirements.txt
-- [ ] Script to download/sync Kilter Board SQLite DB (`backend/data/kilter.db`)
-- [ ] Add `backend/data/` to .gitignore
-- [ ] Explore DB schema: climbs, placements, holes tables
-- [ ] Document available fields and data quality
+### 3a — BoardLib Database Setup ✅
+- [x] Add `boardlib` to requirements.txt
+- [x] Download Kilter Board SQLite DB (`backend/data/kilter.db`) — 189MB, 344k+ climbs
+- [x] `data/*.db` in .gitignore, `!tests/fixtures/*.db` exception for test fixture
+- [x] Explored DB schema: climbs, climb_stats, placements, holes, difficulty_grades
+- [x] Created `climb_service.py` with search_climbs, get_climb, get_db_stats
+- [x] Created test fixture DB (5 fake climbs) for CI-safe testing
+- [x] 16 service-layer tests passing
 
-### 3b — Climb Search API
-- [ ] Endpoint GET /api/climbs/search?q={name}&angle={angle}
-- [ ] Autocomplete-friendly: return top 10 matches with name, grade, setter, ascent count
-- [ ] Endpoint GET /api/climbs/{climb_id} — full climb detail with hold positions
-- [ ] Tests pytest for both endpoints
+### 3b — Climb Search API ✅
+- [x] Endpoint GET /api/climbs/search?q={name}&angle={angle}&limit={n}
+- [x] Autocomplete-friendly: returns top N matches with name, grade, setter, ascent count, quality
+- [x] Endpoint GET /api/climbs/{climb_uuid}?angle={angle} — full climb detail with hold positions (x/y)
+- [x] Endpoint GET /api/climbs/stats — DB health check (total climbs, angles, grade range)
+- [x] Pydantic schemas: ClimbSearchResult, ClimbDetail, HoldPosition, ClimbStats
+- [x] 13 API-level tests passing
 
 ### 3c — Enhanced Video Analysis (Level 2)
 - [ ] Modify video upload flow: optional `climb_id` + `angle` parameters

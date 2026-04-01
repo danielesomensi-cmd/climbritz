@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 30 Marzo 2026
+## 🗓️ Ultimo Aggiornamento: 1 Aprile 2026
 
 ---
 
@@ -17,13 +17,15 @@
 | Backend FastAPI | ✅ Done | Auth JWT + video pipeline, SQLite, Python 3.11 |
 | Auth (JWT) | ✅ Done | Register, login, /me |
 | VideoUpload model | ✅ Done | Consolidated — form_analysis JSON, processing_status |
-| Gemini Video Service | ✅ Done | google.genai SDK, lazy init, gemini-2.5-flash, JSON repair |
+| Gemini Video Service | ✅ Done | google.genai SDK, lazy init, gemini-2.5-flash, Kilter Board-specific prompt (B007) |
 | Video endpoints | ✅ Done | POST upload (202), GET /{id}, GET list, DELETE |
+| Climb endpoints | ✅ Done | GET search, GET detail, GET stats (Phase 3b) |
+| BoardLib DB | ✅ Done | 344k+ climbs, climb_service.py, test fixture DB |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 106 collected (B005+) |
+| Tests | ✅ Done | 136 passing |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
-| BoardLib integration | ⏳ Da fare | Phase 3 — climb search, contextual analysis |
+| BoardLib integration | ✅ Phase 3a+3b | DB setup + search/detail API. Phase 3c (Level 2 analysis) next |
 | Training logs | ⏳ Da fare | Phase 6 |
 | Deploy (Railway) | ✅ Partial | Backend live on Railway (SQLite), Alembic in startCommand. Frontend + PostgreSQL + S3 still TODO |
 

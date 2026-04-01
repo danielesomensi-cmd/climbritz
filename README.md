@@ -41,6 +41,9 @@ cd backend && pytest -v
 - `GET /api/videos/{id}` — Get video status and results
 - `GET /api/videos` — List videos (paginated)
 - `DELETE /api/videos/{id}` — Delete video
+- `GET /api/climbs/search?q={name}&angle={angle}` — Search Kilter Board climbs
+- `GET /api/climbs/{climb_uuid}` — Full climb detail with holds
+- `GET /api/climbs/stats` — BoardLib database stats
 - `POST /api/auth/register` — Register
 - `POST /api/auth/login` — Login
 - `GET /api/auth/me` — Current user

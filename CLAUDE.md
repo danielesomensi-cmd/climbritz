@@ -35,23 +35,31 @@
 
 ---
 
-## 📦 Current State (B003 Complete — 30 March 2026)
+## 📦 Current State (B007 + Phase 3b Complete — 1 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
 ✅ **B001:** Codebase rationalization — single endpoint set, clean migrations, all tests green
+✅ **B007:** Kilter Board-specific prompt rework — board detection, 5 scores, drills per issue
+✅ **Phase 3a:** BoardLib DB setup — climb_service.py, test fixture DB
+✅ **Phase 3b:** Climb search + detail API endpoints
 
-**Video API surface (consolidated):**
+**Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
 - `GET /api/videos/{id}` → video + status/results
 - `GET /api/videos` → paginated list
 - `DELETE /api/videos/{id}` → delete
 
-**Next:** Phase 3 — BoardLib integration for contextual AI coaching
+**Climb API surface (Phase 3b):**
+- `GET /api/climbs/search?q={name}&angle={angle}` → autocomplete search
+- `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
+- `GET /api/climbs/stats` → DB health stats
 
-**Deploy:** Backend live on Railway (SQLite). Alembic runs in startCommand. Health check at `/health`.
+**Next:** Phase 3c — Level 2 enhanced analysis (climb context in Gemini prompt)
 
-**Gemini:** google.genai SDK, model gemini-2.5-flash, JSON repair fallback, response_mime_type=application/json
+**Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`.
+
+**Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007), JSON repair + Pydantic validation
 
 ---
 
@@ -101,7 +109,8 @@ kilter-training-app/
 │   │   ├── api/
 │   │   │   ├── auth.py             ✅ JWT auth (register, login, /me)
 │   │   │   ├── videos.py           ✅ Upload, list, get, delete
-│   │   │   └── circuits.py         ✅ Stub for future BoardLib
+│   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
+│   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── core/
 │   │   │   ├── config.py           ✅
 │   │   │   ├── database.py         ✅
@@ -113,10 +122,12 @@ kilter-training-app/
 │   │   ├── schemas/
 │   │   │   ├── user.py             ✅
 │   │   │   ├── auth.py             ✅
-│   │   │   └── video.py            ✅ VideoResponse, FormFeedbackResponse
+│   │   │   ├── video.py            ✅ VideoResponse, FormFeedbackResponse
+│   │   │   └── climb.py            ✅ ClimbSearchResult, ClimbDetail
 │   │   ├── services/
 │   │   │   ├── auth_service.py     ✅
-│   │   │   ├── gemini_service.py   ✅ File API (lazy init)
+│   │   │   ├── gemini_service.py   ✅ File API (lazy init, Kilter Board prompt)
+│   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries
 │   │   │   ├── video_service.py    ✅ ffmpeg utils
 │   │   │   └── storage_service.py  ✅ Local filesystem
 │   │   ├── utils/
@@ -126,8 +137,11 @@ kilter-training-app/
 │   │   ├── 001_initial_migration.py ✅
 │   │   └── 002_video_form_analysis.py ✅
 │   ├── tests/
-│   │   ├── test_videos.py          ✅ tests
-│   │   └── test_kilter_parser.py   ✅
+│   │   ├── test_videos.py          ✅ video + gemini tests
+│   │   ├── test_climb_service.py   ✅ climb service tests
+│   │   ├── test_climbs_api.py      ✅ climb API tests
+│   │   ├── test_kilter_parser.py   ✅
+│   │   └── fixtures/test_kilter.db ✅ test fixture DB
 │   ├── conftest.py                 ✅
 │   └── requirements.txt
 ├── app/ (Next.js 14 frontend)
@@ -205,5 +219,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.4 (B006 doc alignment + roadmap update 2026-04-01)
+**Version:** 2.5 (B007 prompt rework + Phase 3b climb API 2026-04-01)
 **Owner:** Daniele Somensi + Sam (AI Agent)
