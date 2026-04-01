@@ -142,7 +142,15 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 ### Validation Gate — Level 1 vs Level 2 (MANDATORY before launch)
 > Source: Council verdict. This is the test that determines if our moat is real.
 
-- [ ] Record 5 test videos on well-documented BoardLib climbs (known grade, holds, angle)
+**Test video sourcing:**
+- [ ] Curate 10-15 test videos from public Kilter Board Instagram accounts (athletes, dedicated beta accounts, gym channels)
+- [ ] Focus on well-documented climbs with known grade, holds, and angle (easy to cross-reference in BoardLib DB)
+- [ ] Include grade spread: 2-3 videos each at V3-V4, V5-V6, V7+
+- [ ] Include different styles: slab, overhang, steep overhang, roof if available
+- [ ] Record 2-3 additional test videos yourself for first-person perspective testing
+- [ ] Save all test videos in a local test corpus folder (gitignored) with metadata CSV: filename, climb_name, climb_id, grade, angle, source_url
+
+**L1 vs L2 comparison:**
 - [ ] Run each video through Level 1 (generic) AND Level 2 (contextual) analysis
 - [ ] For each pair: can you articulate in ONE sentence why contextual is better?
 - [ ] If "holy shit" moments exist → proceed to soft launch
