@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import engine
-from app.api import auth, videos, circuits
+from app.api import auth, videos, circuits, climbs
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
+app.include_router(climbs.router, prefix="/api/climbs", tags=["climbs"])
 
 
 import time
