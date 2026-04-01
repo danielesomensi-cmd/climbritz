@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 30 March 2026
+> Updated: 1 April 2026
 > Strategy: AI CLIMBING COACH via Video Analysis (3-Level System)
 
 ---
@@ -15,6 +15,46 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 | 3 | Comparison Analysis | Your video + expert video | Everything from L2 + expert reference | 🔮 Future |
 
 **Market strategy:** Kilter Board-specific at launch. No direct competitor offers AI video coaching with BoardLib climb context integration. The standardization of Kilter Boards worldwide (identical holds, positions, grading) makes AI analysis deterministic and reliable. Natural expansion path: other Aurora boards (Tension, Moonboard) via BoardLib after Kilter product-market fit.
+
+---
+
+## Market Context (April 2026)
+
+**Ecosystem split:** The Kilter Board app ecosystem has fractured. Aurora Climbing's legacy app (3.3★ on Play Store, laggy, crashes, unpopular UI redesign) is being replaced by a new independent app from Kilter Grips (kilterboard.io — launched March 2026, zero reviews, feature-incomplete). The community is frustrated and fragmented between two apps. Neither offers coaching, technique feedback, or AI features of any kind.
+
+**Competitors (AI climbing coaching):**
+
+| App | Focus | Kilter-specific? | Traction | Status |
+|-----|-------|------------------|----------|--------|
+| Climbah | Generic AI coach + video analysis | No | ~830 downloads | Very early |
+| ClimbAI | Video technique analysis | No | Waitlist only | Pre-launch / beta |
+| Climbalyzer | 3D body position analysis | No | Beta | Pre-launch |
+
+**Our moat:** No one combines AI video analysis + Kilter Board contextual climb data (grade, holds, angle from BoardLib). This is only possible with Level 2. Level 1 alone is commodity — indistinguishable from generic analyzers.
+
+**Positioning:** "The AI coach that knows what you're climbing." Companion tool, not app replacement. Does not replicate BLE/LED control or climb browsing — focuses purely on coaching.
+
+**Target:** Intermediate Kilter Board climbers (V3–V7), train 2–4x/week, want to improve but can't afford a human coach.
+
+---
+
+## Monetization Strategy
+
+> Validated via Council analysis (April 2026). Subject to change after soft launch data.
+
+**Model:** 1 free video analysis (signup required for email capture) → €7.99/month unlimited.
+
+**Rationale:**
+- €5/month is unsustainable for solo founder (no margin for support, infra growth)
+- €7.99 is below €10 psychological threshold, signals quality, sustainable at low user counts
+- 1 free analysis creates try-before-you-buy moment; signup captures email for follow-up
+- No permanent free tier — free tiers kill revenue for bootstrapped products at this scale
+- No pay-per-analysis — kills habit formation, adds friction per use
+- 100 paying users = ~€800/month (covers infra + buys time)
+
+**Implementation:** Stripe integration required before public launch. Estimated effort: 1–2 weeks.
+
+**Not yet decided:** Annual plan discount, team/gym pricing, refund policy. Revisit after first 50 paying users.
 
 ---
 
@@ -99,6 +139,16 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - [ ] Frontend: climb search before upload, display structured feedback
 - [ ] Tests pytest
 
+### Validation Gate — Level 1 vs Level 2 (MANDATORY before launch)
+> Source: Council verdict. This is the test that determines if our moat is real.
+
+- [ ] Record 5 test videos on well-documented BoardLib climbs (known grade, holds, angle)
+- [ ] Run each video through Level 1 (generic) AND Level 2 (contextual) analysis
+- [ ] For each pair: can you articulate in ONE sentence why contextual is better?
+- [ ] If "holy shit" moments exist → proceed to soft launch
+- [ ] If contextual insights are not visibly different → fix Gemini prompt before launching
+- [ ] Document results in a short write-up (input for marketing copy + landing page)
+
 ### 3d — Sync & Maintenance
 - [ ] Management command: `python -m scripts.sync_kilter_db`
 - [ ] Document sync frequency recommendation (weekly is fine — DB doesn't change fast)
@@ -111,6 +161,38 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - [ ] Frontend: recommendation UI — select preferences, browse suggested problems
 - [ ] This works WITHOUT video — standalone value for all Kilter Board users
 - [ ] Tests pytest
+
+---
+
+## Phase 3.5 — Soft Launch & Community Validation
+
+**Goal:** Get real users, validate product-market fit, generate first revenue.
+
+**Prerequisites:** Phase 3 complete + Validation Gate passed + Stripe integration live.
+
+### Landing Page & Onboarding
+- [ ] Update kilter-up-coach.vercel.app with clear value prop, demo video embed, signup CTA
+- [ ] Remove registration requirement for the 1 free analysis (just email capture)
+- [ ] Mobile-optimized upload flow (most filming is on phones)
+- [ ] Stripe checkout integration: 1 free → €7.99/month paywall
+
+### Community Seeding (Week 1–2)
+- [ ] Post on r/climbharder: "Built an AI coach for Kilter Board — feedback welcome" with real analysis screenshot
+- [ ] Post on r/kilterboard: specific climb analysis demo (e.g., well-known benchmark V5)
+- [ ] 1 Instagram Reel: film session → upload → show AI feedback. 30 seconds, no hype.
+- [ ] Share in 2–3 Kilter Board Facebook groups / Discord servers
+
+### Metrics to Track
+- [ ] Signups (email captures from free analysis)
+- [ ] Free → paid conversion rate (target: >5% in first month)
+- [ ] Retention: do paid users upload again in week 2?
+- [ ] Qualitative: what do users say about the contextual feedback? Screenshot reactions.
+
+### Success Criteria
+- 50+ signups in first 2 weeks → product has pull
+- 5+ paying users in first month → monetization works
+- Users share analysis screenshots organically → viral loop potential
+- If crickets after 2 weeks of active community posting → re-evaluate positioning
 
 ---
 
