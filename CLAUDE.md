@@ -197,8 +197,15 @@ git push origin main
 4. **Verify** → Full test suite green
 5. **Commit** → Clear message
 6. **Push** → Confirm push succeeded
+7. **Doc Sync (MANDATORY)** → After every push, update ALL affected docs:
+   - `ROADMAP_ACTIVE.md` — mark completed tasks with ✅, update [ ] → [x]
+   - `PROJECT_STATUS.md` — update date, stato attuale table, test count
+   - `ARCHITECTURE.md` — new components, updated pipeline descriptions
+   - `CLAUDE.md` — current state section, project structure tree, version
+   - `README.md` + `backend/README.md` — new endpoints, dependencies
+   - Commit as `docs: sync after {brief_id}` and push
 
----
+**This step is NOT optional.** Do not wait for the user to ask. Do it immediately after every feature push, in the same conversation turn.
 
 ---
 
