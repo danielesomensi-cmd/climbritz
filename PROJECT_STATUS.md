@@ -145,12 +145,13 @@ for frame in frames:
 - Sync command updates DB incrementally
 
 ### 7. Search-first for Climb Identification (not vision-first)
-**Decision:** Users search/select climbs by name with autocomplete as primary flow. Visual LED recognition is a future enhancement.
+**Decision:** Users search/select climbs by name with autocomplete as primary flow. Visual LED recognition is a Phase 4 enhancement.
 **Why:**
 - Simpler, more reliable, works offline
 - BoardLib DB enables fast local search
-- Visual recognition has too many edge cases for MVP (lighting, angle, occlusion)
 - Can add visual recognition in Phase 4 without changing core flow
+
+**PoC Update (April 2026):** Manual PoC validated that Gemini 2.5 Flash can detect LEDs from a non-ideal Instagram gym photo. Start/finish holds (green/magenta) detected reliably. Cyan middle holds harder (can miss or hallucinate). Approach under evaluation: count physical holds from board edges (distortion-resistant) vs percentage-based positioning (vulnerable to camera angle). **Phase 4 is now a validated concept, pending second PoC.** See ROADMAP_ACTIVE.md Phase 4 and D005 Q4 for reverse-lookup matching strategy.
 
 ### 8. 3-Level Analysis Architecture
 **Decision:** Build intelligence incrementally — solo analysis → contextual → comparison.

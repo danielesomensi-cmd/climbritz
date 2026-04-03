@@ -162,6 +162,69 @@ Start with **search/autocomplete** (simpler, reliable). Add visual recognition a
 
 ---
 
+## Visual Problem Recognition — PoC Results (April 2026)
+
+### Test Setup
+
+- **Photo:** Instagram post (@higuera82kilter — "Straight outta Brione" 7C+ @ 40°, Kilter Board Original 12x12)
+- **Photo angle:** Roughly frontal — typical gym Instagram shot, not perfectly straight-on
+- **Tool:** Gemini 2.5 Flash via Gemini App (manual test, not automated)
+- **Prompt:** Asked Gemini to identify all illuminated LEDs with grid positions and colors
+
+**Ground truth:** 1 green (start) + 4 cyan (middle) + 1 magenta (finish) + 1 orange (foot)
+
+### Results
+
+**Test 1 — Basic prompt:**
+- Found: 1 green ✅, 2/4 cyan ❌ (missed 2), 1 magenta ✅, 1 orange ✅
+- Board type correctly identified as Original 12x12
+- All detected LEDs marked "high confidence"
+- Problem: 2 middle holds missed entirely
+
+**Test 2 — Aggressive prompt (told Gemini to look harder for faint LEDs):**
+- Found: 1 green ✅, 5 cyan (4 real + 1 ghost) ✅⚠️, 1 magenta ✅, 1 orange ✅
+- 2 high-confidence cyan = correct; 3 medium-confidence = 2 correct + 1 false positive
+- Better recall, but introduced one hallucinated hold
+
+### Key Conclusions
+
+- **Concept validated:** Gemini can detect LEDs from a non-ideal gym photo
+- **Not 100% reliable in a single pass** — some LEDs missed, some invented
+- **Confidence levels are useful:** high-confidence positions are reliable; medium requires verification
+- **Start (green) and finish (magenta) detected reliably** — bright, distinctive colors
+- **Cyan middle holds are hardest** — can be dim, similar in color to the hold itself
+- **A multi-pass or disambiguation approach is needed**
+
+### Coordinate Mapping Challenge
+
+The DB coordinate system (source: D005 Q7) for **Kilter Board Original 12x12 Square:**
+- `product_size` bounds: `edge_left=0, edge_right=144, edge_bottom=12, edge_top=156`
+- Grid is interlaced (KB1 + KB2 sub-grids), minimum spacing = 4 units between holes
+
+**The problem:** Gemini reports LED positions visually ("column 6, row 4"). The DB stores discrete board unit coordinates (e.g., x=40, y=40) for each hole in `holes.x/y`. Any photo-based approach must bridge this gap — and perspective distortion makes it non-trivial.
+
+### Approach Comparison
+
+| | **Approach A — Percentage-based** | **Approach B — Count holds from edge** |
+|--|----------------------------------|---------------------------------------|
+| How | Gemini: "LED is at 40% from left, 25% from bottom" → formula to DB coords | Gemini: "LED has 5 holds to its left on same row" → discrete grid position |
+| Distortion | Very vulnerable — perceived % shifts with camera angle | Immune — hold count from edge is invariant to angle |
+| Precision | Continuous but error-prone | Discrete, off-by-one manageable |
+| Board density | Less affected | Harder on dense boards (~47 x-positions) |
+| Status | Rejected | **Leading candidate — pending second PoC** |
+
+### Key Insight
+
+**Counting physical holds from the board edge is more robust than percentage positioning under perspective distortion.** If there are 5 holds to the left of a target LED, that count is the same whether the photo is taken straight-on or from below. This is the fundamental advantage of Approach B over Approach A.
+
+### Next Step
+
+Second PoC — test a count-holds prompt on a second real photo. If validated, proceed to Phase 4 implementation with this approach. See ROADMAP_ACTIVE.md Phase 4 for full task list and three-level matching strategy.
+
+<!-- TODO (not in scope B008): update "Gemini 2.0 Flash" → "Gemini 2.5 Flash" in Gemini Video Capabilities section above -->
+
+---
+
 ## "Expert" Definition Strategy
 
 Since we need to identify "expert" videos for comparison, here's how to define expertise levels:

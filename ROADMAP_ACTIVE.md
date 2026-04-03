@@ -276,11 +276,67 @@ Three levels of coaching intelligence (Coach tier):
 
 **Goal:** Photo of Kilter Board with LEDs lit → system identifies the climb.
 
+**Status (April 2026):** PoC validated — approach under evaluation. Second PoC required before any code is written.
+
+### PoC Results (April 2026)
+
+**Setup:** Instagram photo (@higuera82kilter — "Straight outta Brione" 7C+ @ 40°, Kilter Board Original 12x12). Tool: Gemini 2.5 Flash via Gemini App (manual test).
+
+**Ground truth:** 1 green (start) + 4 cyan (middle) + 1 magenta (finish) + 1 orange (foot).
+
+| Test | Prompt | Result |
+|------|--------|--------|
+| Test 1 | Basic | 1 green ✅, 2/4 cyan ❌ (missed 2), 1 magenta ✅, 1 orange ✅. Board type (Original 12x12) correctly identified. |
+| Test 2 | Aggressive (look harder for faint LEDs) | 1 green ✅, 5 cyan (4 real + 1 ghost) ✅⚠️, 1 magenta ✅, 1 orange ✅. Better recall, one false positive. |
+
+**Conclusions:**
+- Gemini CAN detect LEDs from a non-ideal gym photo — concept validated
+- Start (green) and finish (magenta) reliably detected — bright, distinctive colors
+- Cyan middle holds are hardest — can be dim, blend with hold color
+- Confidence levels are meaningful: high-confidence LEDs reliable, medium needs verification
+- Single-pass prompting insufficient — aggressive prompt helps recall but adds false positives
+
+### Coordinate Mapping Challenge (from D005)
+
+**Board coordinate system (Kilter Board Original 12x12 Square — source: D005 Q7):**
+- `product_size` bounds: `edge_left=0, edge_right=144, edge_bottom=12, edge_top=156`
+- Grid is interlaced (KB1/KB2 sub-grids), minimum spacing between holes = 4 units
+
+**Problem:** Gemini reports LED positions visually ("column 6, row 4"). We need BoardLib DB coordinates (board units, e.g. x=40, y=40) to match against `holes.x/y` for the reverse-lookup strategy described in D005 Q4.
+
+### Coordinate Approach — Under Evaluation
+
+**Approach A — Percentage-based positioning:**
+Gemini estimates "this LED is at 40% from left, 25% from bottom" → convert to DB coords.
+- **Pro:** Continuous scale, direct conversion formula
+- **Con:** Very vulnerable to perspective distortion. A LED at true 50% can appear at 45–55% from a non-frontal camera angle. Error compounds with distance from center.
+
+**Approach B — Count physical holds from edges (leading candidate):**
+Gemini counts "this LED has N holds to its left on the same row, M holds below it in the same column" → maps to discrete grid position.
+- **Pro:** Immune to perspective distortion — hold count from an edge is invariant to camera angle. Discrete values map naturally to DB grid structure.
+- **Con:** Dense board (~47 distinct x positions) — counting many holds risks off-by-one errors. Interlaced KB1/KB2 sub-grids add complexity.
+
+**Status:** Approach B is the leading candidate — pending one more PoC test with a count-holds prompt before any implementation decision.
+
+### Matching Strategy (proposed, not implemented)
+
+Three-level matching against BoardLib DB (reverse-lookup design from D005 Q4):
+
+1. **Filter 1 — Role fingerprint:** Count holds per role from Gemini output (e.g., 1 start + 4 middle + 1 finish + 1 foot). Discard climbs that don't match. Uses `climbs.frames` layout string parsing.
+2. **Filter 2 — High-confidence positions:** Map high-confidence LEDs to nearest `holes.x/y` with tolerance (±1–2 grid positions). Further narrow candidates.
+3. **Filter 3 — Medium-confidence disambiguation:** Use medium-confidence LEDs to narrow remaining candidates. If still ambiguous → show top 3 to user for manual selection.
+4. **Angle:** Always manual input — cannot be inferred from photo.
+5. **Fallback:** If recognition fails entirely → redirect to text search/autocomplete (Phase 3b, already working).
+
+### Tasks
+
+- [ ] **Second PoC — test count-holds prompt** ← PREREQUISITE before any code
 - [ ] `POST /api/climbs/identify` (accepts image)
-- [ ] Gemini Vision: extract LED positions + colors from frontal photo
-- [ ] Map to holes grid → match layout strings in DB
-- [ ] Return top-N candidates with confidence
-- [ ] Fallback to text search if low confidence
+- [ ] Gemini: detect LED positions + colors, count holds from board edges for position estimation
+- [ ] Filter 1: role fingerprint match against `climbs.frames`
+- [ ] Filter 2: high-confidence position match against `holes.x/y` (with tolerance)
+- [ ] Filter 3: medium-confidence disambiguation → top-3 candidates UI
+- [ ] Fallback to text search if recognition fails
 - [ ] Tests
 
 ---
