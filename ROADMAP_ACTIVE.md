@@ -98,7 +98,7 @@ Three levels of coaching intelligence (Coach tier):
 
 > These run alongside Claude Code development work.
 
-- [ ] **Register Apple Developer Account** (developer.apple.com, €99/year) — do ASAP, approval takes 1-3 days
+- [x] **Register Apple Developer Account** — application submitted 3 April 2026, awaiting approval (1-3 days)
 - [ ] **Write pro climber list** — names + Instagram/YouTube handles of known strong Kilter Board climbers (Daniele's knowledge)
 - [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check if 6 categories make sense
 - [ ] **Validate hold classifications** in gym — use mobile validation tool, physically check ambiguous holds (~2-3 hours)
