@@ -1,60 +1,76 @@
 # Kilter-Up — Active Roadmap
-> Updated: 1 April 2026
-> Strategy: AI CLIMBING COACH via Video Analysis (3-Level System)
+> Updated: 2 April 2026
+> Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
 
 ## Vision
 
-Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels of intelligence:
+Kilter-Up is an AI-powered climbing companion for Kilter Board users. Two tiers, one product:
+
+| Tier | Name | What it does | Price |
+|------|------|-------------|-------|
+| **Free** | Discovery | Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board control, attempt logging | Free |
+| **Paid** | Coach | Video upload → AI technique analysis with climb context, move-by-move coaching, training suggestions | €7.99/month |
+
+Three levels of coaching intelligence (Coach tier):
 
 | Level | Name | Input | What AI Knows | Status |
 |-------|------|-------|---------------|--------|
-| 1 | Solo Analysis | Your video only | General climbing technique | ✅ Working (Gemini File API) |
-| 2 | Contextual Analysis | Your video + climb ID | Grade, holds, angle, known beta, hold types | 🎯 Next |
+| 1 | Solo Analysis | Your video only | General climbing technique | ✅ Working |
+| 2 | Contextual Analysis | Your video + climb ID | Grade, holds, angle, grip types, known beta | 🎯 Next |
 | 3 | Comparison Analysis | Your video + expert video | Everything from L2 + expert reference | 🔮 Future |
 
-**Market strategy:** Kilter Board-specific at launch. No direct competitor offers AI video coaching with BoardLib climb context integration. The standardization of Kilter Boards worldwide (identical holds, positions, grading) makes AI analysis deterministic and reliable. Natural expansion path: other Aurora boards (Tension, Moonboard) via BoardLib after Kilter product-market fit.
+**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). No competitor has this.
+
+**Market strategy:** Discovery launches first as free acquisition layer. Coach monetizes serious climbers. BLE board connection via native app (Capacitor wrapping Next.js). Kilter Board-specific at launch, Aurora board expansion later.
 
 ---
 
 ## Market Context (April 2026)
 
-**Ecosystem split:** The Kilter Board app ecosystem has fractured. Aurora Climbing's legacy app (3.3★ on Play Store, laggy, crashes, unpopular UI redesign) is being replaced by a new independent app from Kilter Grips (kilterboard.io — launched March 2026, zero reviews, feature-incomplete). The community is frustrated and fragmented between two apps. Neither offers coaching, technique feedback, or AI features of any kind.
+**Ecosystem split:** Aurora Climbing's legacy app (3.3★, laggy, crashes) being replaced by kilterboard.io (Kilter Grips, launched March 2026, early stage). Community frustrated and fragmented. Neither app offers AI features, session building, or grip-type filtering.
 
-**Competitors (AI climbing coaching):**
+**Discovery competitors:**
 
-| App | Focus | Kilter-specific? | Traction | Status |
-|-----|-------|------------------|----------|--------|
-| Climbah | Generic AI coach + video analysis | No | ~830 downloads | Very early |
-| ClimbAI | Video technique analysis | No | Waitlist only | Pre-launch / beta |
-| Climbalyzer | 3D body position analysis | No | Beta | Pre-launch |
+| Tool | What it does | Our advantage |
+|------|-------------|---------------|
+| Climbdex (climbdex.com) | Hold filtering, mirrored search, difficulty accuracy. Free, open source, by BoardLib author. | No grip type classification, no session builder, no AI, no generation |
+| Kilter Lookup (kilterlookup.com) | Kilter-specific hold search, campus filter | No AI, no session building, limited filters |
+| kilterboard.io | Official new Kilter app. Better search, playlists. | No AI, no grip type filter, no session builder |
 
-**Our moat:** No one combines AI video analysis + Kilter Board contextual climb data (grade, holds, angle from BoardLib). This is only possible with Level 2. Level 1 alone is commodity — indistinguishable from generic analyzers.
+**Coach competitors:**
 
-**Positioning:** "The AI coach that knows what you're climbing." Companion tool, not app replacement. Does not replicate BLE/LED control or climb browsing — focuses purely on coaching.
+| App | Focus | Our advantage |
+|-----|-------|---------------|
+| Climbah | Generic AI video analysis | Not Kilter-specific, no climb context |
+| ClimbAI | Video technique analysis | Waitlist only, not Kilter-specific |
+| Climbalyzer | 3D body position | Beta, not Kilter-specific |
 
-**Target:** Intermediate Kilter Board climbers (V3–V7), train 2–4x/week, want to improve but can't afford a human coach.
+**Moat:** No one combines AI + Kilter Board contextual data + proprietary hold classification. Discovery's grip-type filter + AI session builder + "illuminate only crimps" BLE feature are unique.
+
+**Target:** Intermediate Kilter Board climbers (V3–V7), train 2–4x/week.
 
 ---
 
 ## Monetization Strategy
 
-> Validated via Council analysis (April 2026). Subject to change after soft launch data.
+> Council verdict (April 1, 2026) + revision (April 2, 2026).
 
-**Model:** 1 free video analysis (signup required for email capture) → €7.99/month unlimited.
+**Model:** Discovery free (unlimited) → Coach €7.99/month (1 free analysis per signup).
 
-**Rationale:**
-- €5/month is unsustainable for solo founder (no margin for support, infra growth)
-- €7.99 is below €10 psychological threshold, signals quality, sustainable at low user counts
-- 1 free analysis creates try-before-you-buy moment; signup captures email for follow-up
-- No permanent free tier — free tiers kill revenue for bootstrapped products at this scale
-- No pay-per-analysis — kills habit formation, adds friction per use
-- 100 paying users = ~€800/month (covers infra + buys time)
+**Why free Discovery:**
+- Climbdex is free — can't charge for search
+- Discovery's job: build audience, create habit, funnel to Coach
+- AI session builder + grip type filter = differentiator, offered free to maximize adoption
+- BLE connection = stickiness (users open Kilter-Up every session)
 
-**Implementation:** Stripe integration required before public launch. Estimated effort: 1–2 weeks.
+**Why €7.99/month Coach:**
+- Below €10 psychological threshold
+- 1 free analysis removes need for trial period
+- Revisit pricing at 50+ paying users (Council suggested €9.99 as alternative)
 
-**Not yet decided:** Annual plan discount, team/gym pricing, refund policy. Revisit after first 50 paying users.
+**Not yet decided:** Annual plan, team/gym pricing, refund policy.
 
 ---
 
@@ -71,216 +87,247 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 - Async processing with BackgroundTasks
 - Frontend: drag-drop upload, progress bar, mobile-first
 
+### B001–B005 — Cleanup & Migrations ✅
+- Codebase rationalization, docs, SDK migration, settings migration
+- 136 tests passing
+- Backend live on Railway, frontend on Vercel
+
 ---
 
-## Pre-Phase 3 — Quick Wins
+## Daniele's Action Items (Parallel Track)
 
-### Prompt & Output Refinement (D001 → B007) ✅
-- [x] Audit current Gemini prompt in `gemini_service.py` — documented in `backend/docs/PROMPT_AUDIT.md`
-- [x] Define compact structured JSON output schema — B007 rework: max 3 strengths, max 3 improvements with drill
-- [x] Grade estimation removed — will come from DB in Level 2
-- [x] Test with real climbing videos — 4 videos tested, identified 7 issues, all addressed in B007
-- [x] STOP gate: review prompt changes before merging — Phase 0 audit done, approved
+> These run alongside Claude Code development work.
+
+- [ ] **Register Apple Developer Account** (developer.apple.com, €99/year) — do ASAP, approval takes 1-3 days
+- [ ] **Write pro climber list** — names + Instagram/YouTube handles of known strong Kilter Board climbers (Daniele's knowledge)
+- [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check if 6 categories make sense
+- [ ] **Validate hold classifications** in gym — use mobile validation tool, physically check ambiguous holds (~2-3 hours)
+- [ ] **Record 2-3 test videos** at the Kilter Board for L1 vs L2 validation gate
+- [ ] **Curate 10-15 public test videos** from Instagram (known climbs, known grades)
+
+---
+
+## Pre-Phase 3 — Hold Classification (NEW — 1.5 weeks)
+
+> **PREREQUISITE for Discovery.** Without this, Discovery = Climbdex clone. With this, it's unique.
+
+**Taxonomy (6 categories):** Jug, Crimp, Microcrimp, Sloper, Pinch, Pocket
+
+**Target board:** 12x12 Original Layout (323 handholds + 153 footholds). Smaller boards (7x10, 8x12) are subsets — automatically covered.
+
+| # | Task | Owner | Effort | Notes |
+|---|------|-------|--------|-------|
+| HC-1 | Install BoardLib, download Kilter DB + hold images | Claude Code | 1 day | `boardlib database kilter` + `boardlib images kilter` |
+| HC-2 | Build canonical 12x12 board map (annotated, numbered, mobile-friendly) | Claude Code | 1 day | Must show hold position clearly on board for gym validation |
+| HC-3 | Validate taxonomy with Christie (show 20 random holds) | Daniele | 0.5 day | If >80% agreement → taxonomy confirmed |
+| HC-4 | AI batch classification script (Gemini Flash, all ~323 handholds) | Claude Code | 1 day | Output: JSON per hold with category + confidence |
+| HC-5 | Build mobile validation UI (hold image + board position + AI guess + override) | Claude Code | 1 day | **Must work on phone in gym — board map visible per hold** |
+| HC-6 | Daniele validates all holds in gym | Daniele | 0.5 day | Touch holds physically, confirm/override classification |
+| HC-7 | Store classifications in DB (`hold_classifications` table) + apply to board sizes | Claude Code | 0.5 day | Alembic migration — STOP gate |
+
+---
+
+## Pre-Phase 3 — Quick Wins (unchanged)
+
+### Prompt & Output Refinement (D001 → B brief)
+- [ ] Audit current Gemini prompt in `gemini_service.py`
+- [ ] Define compact structured JSON output schema
+- [ ] Always include dual grading: Font AND V-grade
+- [ ] Test with real climbing videos
+- [ ] STOP gate: review prompt changes before merging
 
 ### Video Thumbnails + Replay (B003)
-- [ ] Extract a representative frame (~30-50% of video duration) using ffmpeg during background processing
-- [ ] Save as JPEG alongside the video file
-- [ ] Serve thumbnail via API: GET /api/videos/{id}/thumbnail
-- [ ] Frontend: show thumbnail as cover in video list and analysis report
-- [ ] Frontend: add `<video>` player to video detail page so users can rewatch their upload
-- [ ] Ensure uploaded videos are NOT deleted after analysis — they must persist for replay
-- [ ] Tests pytest
+- [ ] Extract frame via ffmpeg, save as JPEG
+- [ ] Serve thumbnail via API
+- [ ] Frontend: thumbnail + video player
+- [ ] Tests
 
 ---
 
-## Phase 3 — BoardLib Integration + Climb Context (NEXT)
+## Phase 3 — Discovery + Coach Build (NEXT — ~8 weeks)
 
-**Goal:** Connect user videos to specific Kilter Board problems for contextual AI coaching.
-
-### 3a — BoardLib Database Setup ✅
+### 3a — BoardLib Database Setup (1 week) (✅ Complete)
 - [x] Add `boardlib` to requirements.txt
-- [x] Download Kilter Board SQLite DB (`backend/data/kilter.db`) — 189MB, 344k+ climbs
-- [x] `data/*.db` in .gitignore, `!tests/fixtures/*.db` exception for test fixture
-- [x] Explored DB schema: climbs, climb_stats, placements, holes, difficulty_grades
-- [x] Created `climb_service.py` with search_climbs, get_climb, get_db_stats
-- [x] Created test fixture DB (5 fake climbs) for CI-safe testing
-- [x] 16 service-layer tests passing
+- [x] Script to download/sync Kilter Board SQLite DB (`backend/data/kilter.db`)
+- [x] Add `backend/data/` to .gitignore
+- [x] Explore DB schema: climbs, placements, holes, leds tables
+- [x] Document available fields and data quality
+- [x] Extract Instagram video links from DB — store as viewable links (not downloaded)
+- [x] Management command: `python -m scripts.sync_kilter_db`
 
-### 3b — Climb Search API ✅
-- [x] Endpoint GET /api/climbs/search?q={name}&angle={angle}&limit={n}
-- [x] Autocomplete-friendly: returns top N matches with name, grade, setter, ascent count, quality
-- [x] Endpoint GET /api/climbs/{climb_uuid}?angle={angle} — full climb detail with hold positions (x/y)
-- [x] Endpoint GET /api/climbs/stats — DB health check (total climbs, angles, grade range)
-- [x] Pydantic schemas: ClimbSearchResult, ClimbDetail, HoldPosition, ClimbStats
-- [x] 13 API-level tests passing
+### 3b — Climb Search API + Advanced Filters (1-2 weeks) (✅ Complete)
+- [x] `GET /api/climbs/search` with core filters:
+  - Name (autocomplete)
+  - Grade range (V-scale + Font)
+  - Angle
+  - Min ascents / popularity
+  - Star rating
+  - Difficulty accuracy
+  - Board size/layout
+  - Setter name
+- [ ] Additional filters (requires hold classification — Pre-Phase 3):
+  - **Grip type** (jug/crimp/microcrimp/sloper/pinch/pocket) — from hold classification
+  - **Number of moves** (derived from layout string `p` count)
+  - **Session type filter** (Power: 1-4 moves / Power Endurance: 5-8 / Endurance: 9+)
+- [x] `GET /api/climbs/{id}` — full detail with hold classifications + beta video links
+- [ ] `GET /api/climbs/{id}/similar` — similar problems (Jaccard on hold sets, same grade/angle different holds)
+- [x] Dual grade display everywhere: Font + V-grade
+- [x] Tests
 
-### 3c — Enhanced Video Analysis (Level 2)
-- [ ] Modify video upload flow: optional `climb_id` + `angle` parameters
-- [ ] When climb_id provided: fetch climb data from BoardLib DB
-- [ ] Build enriched Gemini prompt with climb context:
-  - Grade and angle
-  - Hold types (start/middle/finish/foot-only)
-  - Hold positions on the board (from holes table x/y)
-  - Number of ascents + difficulty accuracy (community consensus)
-- [ ] Structured JSON output from Gemini:
-  ```json
-  {
-    "overall_grade_assessment": "This is a V5 at 40° — your attempt shows V4-level execution",
-    "technique_scores": {
-      "body_tension": 7,
-      "footwork": 5,
-      "hip_positioning": 6,
-      "route_reading": 8,
-      "power_management": 6
-    },
-    "move_by_move": [
-      {"move": 1, "observation": "Good start position, hips close to wall", "suggestion": "Try flagging right foot for balance"}
-    ],
-    "key_improvements": ["Work on active feet on slopers", "Drop your hips before the dyno"],
-    "training_suggestions": ["4x4s on sloper problems at -1 grade", "Hip mobility drills"]
-  }
-  ```
-- [ ] Frontend: climb search before upload, display structured feedback
-- [ ] Tests pytest
+### 3c — AI Session Builder (1-2 weeks)
+- [ ] `POST /api/sessions/build` — natural language OR structured input (dropdowns)
+- [ ] Gemini Flash parses natural language → structured query
+- [ ] Session types: warmup, 4x4, power endurance, project rehearsal, cooldown, mixed
+- [ ] Session logic: warmup → work sets → cooldown, no duplicate holds, grade progression, rest recs
+- [ ] Support constraints: grip type, angle, grade range, move count, exclude dynos (best effort)
+- [ ] `GET /api/sessions/{id}` — retrieve built session
+- [ ] `GET /api/sessions` — user's saved sessions
+- [ ] Frontend: session builder UI (chat input + dropdown fallback)
+- [ ] Tests
 
-### Validation Gate — Level 1 vs Level 2 (MANDATORY before launch)
-> Source: Council verdict. This is the test that determines if our moat is real.
+### 3d — Enhanced Video Analysis / Level 2 (1-2 weeks)
+- [ ] Modify video upload: optional `climb_id` + `angle`
+- [ ] When climb_id provided: fetch climb data + hold classifications from DB
+- [ ] Build enriched Gemini prompt with full context (grade, angle, grip types per hold, hold positions, ascent count)
+- [ ] Structured JSON coaching output (technique scores, move-by-move, key improvements, training suggestions)
+- [ ] Frontend: climb search before upload, structured feedback display
+- [ ] Tests
+- [ ] **Validation Gate: L1 vs L2 (MANDATORY before Coach launch)**
+  - Run 10-15 test videos through both levels
+  - Document: is L2 visibly better?
+  - If yes → proceed. If no → fix prompt before launch.
 
-**Test video sourcing:**
-- [ ] Curate 10-15 test videos from public Kilter Board Instagram accounts (athletes, dedicated beta accounts, gym channels)
-- [ ] Focus on well-documented climbs with known grade, holds, and angle (easy to cross-reference in BoardLib DB)
-- [ ] Include grade spread: 2-3 videos each at V3-V4, V5-V6, V7+
-- [ ] Include different styles: slab, overhang, steep overhang, roof if available
-- [ ] Record 2-3 additional test videos yourself for first-person perspective testing
-- [ ] Save all test videos in a local test corpus folder (gitignored) with metadata CSV: filename, climb_name, climb_id, grade, angle, source_url
+### 3e — Capacitor + BLE Integration (1-2 weeks)
+- [ ] Capacitor project setup wrapping Next.js frontend
+- [ ] `@capacitor-community/bluetooth-le` plugin
+- [ ] BLE scan → discover Kilter Board → connect
+- [ ] Light up a problem from search results (layout string → LED mapping via `leds` table)
+- [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
+- [ ] Light up generated problems
+- [ ] Connection management (reconnect, error states, disconnect on background)
+- [ ] iOS + Android builds
+- [ ] Tests
 
-**L1 vs L2 comparison:**
-- [ ] Run each video through Level 1 (generic) AND Level 2 (contextual) analysis
-- [ ] For each pair: can you articulate in ONE sentence why contextual is better?
-- [ ] If "holy shit" moments exist → proceed to soft launch
-- [ ] If contextual insights are not visibly different → fix Gemini prompt before launching
-- [ ] Document results in a short write-up (input for marketing copy + landing page)
+### 3f — Problem Generation (1-2 weeks)
+- [ ] `POST /api/climbs/generate` — constraints: grip types, move count, grade target, angle
+- [ ] Algorithm: select holds from classified DB → validate reachability (x/y distances) → assign roles (start/middle/finish/foot)
+- [ ] Generate valid layout string (internal to Kilter-Up only — not shared to Kilter community)
+- [ ] User can save, name generated problems
+- [ ] Frontend: generation UI with constraint inputs + result preview
+- [ ] Tests
 
-### 3d — Sync & Maintenance
-- [ ] Management command: `python -m scripts.sync_kilter_db`
-- [ ] Document sync frequency recommendation (weekly is fine — DB doesn't change fast)
+### 3g — Recommendation Engine + Attempt Logging (1 week)
+- [ ] `GET /api/climbs/recommend` — training-oriented queries (hold type, angle, grade range, min ascents)
+- [ ] Sort by: popularity, difficulty accuracy, grip diversity
+- [ ] Attempt logging: climb_id, result (Flash/Send/Attempt/DNF), tries, optional note, auto date+session
+- [ ] `POST /api/attempts` + `GET /api/attempts` (paginated, filterable by session/date)
+- [ ] Frontend: log button on every climb card + session history view
+- [ ] Tests
 
-### 3e — Climb Recommendation Engine
-- [ ] Endpoint GET /api/climbs/recommend?hold_type={type}&angle={angle}&grade_min={min}&grade_max={max}
-- [ ] Filter by: hold type preference (slopers/crimps/pinches), angle range, grade range, minimum ascents
-- [ ] Sort by popularity (ascent count) and difficulty accuracy
-- [ ] Support training-oriented queries: "4x4 sets", "endurance circuit", "power problems"
-- [ ] Frontend: recommendation UI — select preferences, browse suggested problems
-- [ ] This works WITHOUT video — standalone value for all Kilter Board users
-- [ ] Tests pytest
+### 3h — Pro Climber Video Database (1 week)
+- [ ] Schema: `pro_climbers` table (name, instagram, youtube, notes)
+- [ ] Schema: `curated_videos` table (climb_id, pro_climber_id, source_url, source_platform, grade, angle)
+- [ ] Populate with Daniele's list + Claude's research
+- [ ] Surface pro videos on climb detail page: "Watch [climber] send this problem"
+- [ ] Instagram links shown as external links (no download)
+- [ ] YouTube videos: evaluate yt-dlp for local caching (future, not MVP)
+- [ ] Alembic migration — STOP gate
+- [ ] Tests
 
 ---
 
 ## Phase 3.5 — Soft Launch & Community Validation
 
-**Goal:** Get real users, validate product-market fit, generate first revenue.
+**Goal:** Get real users, validate product-market fit.
 
-**Prerequisites:** Phase 3 complete + Validation Gate passed + Stripe integration live.
+**Prerequisites:** Phase 3 complete + Validation Gate passed + Apple Developer Account active.
 
-### Landing Page & Onboarding
-- [ ] Update kilter-up-coach.vercel.app with clear value prop, demo video embed, signup CTA
-- [ ] Remove registration requirement for the 1 free analysis (just email capture)
-- [ ] Mobile-optimized upload flow (most filming is on phones)
-- [ ] Stripe checkout integration: 1 free → €7.99/month paywall
+### Discovery Launch (Free — Week 1)
+- [ ] Landing page update: clear value prop, demo screenshots, "Get the app" CTA
+- [ ] Submit to iOS App Store (TestFlight first) + Android Play Store
+- [ ] Post on r/kilterboard: "Built an AI session builder for Kilter Board — searches by grip type"
+- [ ] Post on r/climbharder: demo with real session build (e.g., "V5 crimp 4x4 at 40°")
+- [ ] 1 Instagram Reel: open app → build session → light up board → climb. 30 seconds.
+- [ ] Share in Kilter Board Facebook groups / Discord servers
+- [ ] Target: **100 signups in 2 weeks**
 
-### Community Seeding (Week 1–2)
-- [ ] Post on r/climbharder: "Built an AI coach for Kilter Board — feedback welcome" with real analysis screenshot
-- [ ] Post on r/kilterboard: specific climb analysis demo (e.g., well-known benchmark V5)
-- [ ] 1 Instagram Reel: film session → upload → show AI feedback. 30 seconds, no hype.
-- [ ] Share in 2–3 Kilter Board Facebook groups / Discord servers
+### Coach Launch (€7.99/month — Week 3)
+- [ ] Stripe integration: signup → 1 free analysis → paywall
+- [ ] Email campaign to Discovery signups: "Coach is live — your first analysis is free"
+- [ ] Target: **5+ paying users in first month**
 
-### Metrics to Track
-- [ ] Signups (email captures from free analysis)
-- [ ] Free → paid conversion rate (target: >5% in first month)
-- [ ] Retention: do paid users upload again in week 2?
-- [ ] Qualitative: what do users say about the contextual feedback? Screenshot reactions.
+### Metrics
+- [ ] Discovery signups (email captures)
+- [ ] DAU on Discovery (session builder usage, search queries)
+- [ ] BLE connection rate (% of users connecting to board)
+- [ ] Free → paid Coach conversion (target >5%)
+- [ ] Coach retention: do users upload again in week 2?
+- [ ] Qualitative: screenshot reactions, feedback messages
 
 ### Success Criteria
-- 50+ signups in first 2 weeks → product has pull
-- 5+ paying users in first month → monetization works
-- Users share analysis screenshots organically → viral loop potential
-- If crickets after 2 weeks of active community posting → re-evaluate positioning
+- 100+ Discovery signups in 2 weeks → product has pull
+- 5+ paying Coach users in first month → monetization works
+- Users share sessions/analyses organically → viral loop
+- If crickets after 2 weeks → re-evaluate positioning, talk to every signup
 
 ---
 
 ## Phase 4 — Visual Problem Recognition (Enhancement)
 
-**Goal:** User takes a frontal photo of the Kilter Board with LEDs lit → system identifies the climb.
+**Goal:** Photo of Kilter Board with LEDs lit → system identifies the climb.
 
-**Why this is simpler than it sounds:** A deliberate frontal photo of a flat board with bright colored LEDs (green=start, cyan=middle, magenta=finish, orange=feet) is essentially a template matching problem. BoardLib has exact x/y coordinates for every hole. The board type (7x10, 12x12, 16x12, Fullride) can be inferred from the detected hole pattern itself.
-
-**Approach:**
-- [ ] Endpoint POST /api/climbs/identify (accepts image)
-- [ ] Gemini Vision: extract LED positions and colors from frontal photo
-- [ ] Map detected positions to the holes grid (BoardLib `holes` table with x/y)
-- [ ] Infer board type from the overall pattern geometry
-- [ ] Match LED color pattern against `climbs.layout` strings in BoardLib DB
-- [ ] Return top-N candidate climbs with confidence score for user confirmation
-- [ ] User confirms match + provides angle (or use their default gym angle)
-- [ ] Fallback: if confidence is low, redirect to text search (Phase 3b)
-- [ ] Requirement: photo must be reasonably frontal (document in UX)
-- [ ] Tests pytest
-
-**Note:** No custom ML model needed — Gemini Vision + geometric matching against known coordinates. Camera angle distortion is minimized by requiring a frontal photo.
+- [ ] `POST /api/climbs/identify` (accepts image)
+- [ ] Gemini Vision: extract LED positions + colors from frontal photo
+- [ ] Map to holes grid → match layout strings in DB
+- [ ] Return top-N candidates with confidence
+- [ ] Fallback to text search if low confidence
+- [ ] Tests
 
 ---
 
 ## Phase 5 — Expert Video Comparison (Level 3)
 
-**Goal:** Compare user technique against expert reference videos using Gemini multi-video analysis.
+**Goal:** Compare user technique against expert reference videos.
 
 ### 5a — Curated Benchmark Database
-- [ ] Manually curate 20-50 expert send videos of the most iconic/benchmark Kilter Board problems
-- [ ] Sources: YouTube (top Kilter climbers), downloaded via yt-dlp
-- [ ] Store locally / S3 with metadata: climb_id, climber_name, source_url, grade, angle
-- [ ] Schema: `expert_videos` table (id, climb_id, climber_name, file_path, source_url, notes)
+- [ ] Curate 20-50 expert send videos (YouTube via yt-dlp)
+- [ ] Store with metadata: climb_id, pro_climber_id, source_url, grade, angle
+- [ ] Auto-suggest comparison when user uploads video for a problem with benchmark
 - [ ] Alembic migration — STOP gate
-- [ ] When a user uploads a video for a problem that has a benchmark video → auto-suggest comparison
-- [ ] Endpoint GET /api/expert-videos?climb_id={id} — list available benchmarks for a climb
 
-### 5b — Dual Video Upload + Comparison
-- [ ] Allow user to upload 2 videos in one session: "my attempt" + "reference video"
-- [ ] Works even for problems without a pre-loaded benchmark (user provides their own reference)
-- [ ] Gemini prompt: 2 videos + climb context → structured comparison output
-- [ ] Comparison JSON: what the expert does differently, move-by-move delta, specific suggestions
-- [ ] Frontend: side-by-side or sequential video display with annotations
-- [ ] Tests pytest
+### 5b — Dual Video Comparison
+- [ ] Upload 2 videos: "my attempt" + "reference"
+- [ ] Gemini prompt: 2 videos + climb context → structured comparison
+- [ ] Frontend: side-by-side display with annotations
+- [ ] Tests
 
-### 5c — Future: Learning from Accumulated Videos
-- [ ] As video database grows, explore patterns across many analyses
-- [ ] Identify common technique gaps per grade band
-- [ ] Potentially auto-tag movement types (dyno, gaston, heel hook, etc.) for searchability
-- [ ] This is exploratory — revisit after 100+ analyzed videos
+### 5c — Movement Tagging from Video (Enables "no dynos" filter)
+- [ ] AI analyzes video → tags movement types (dyno, gaston, heel hook, toe hook, compression, deadpoint)
+- [ ] Store tags per climb in DB
+- [ ] Enables movement-style filter in Discovery search (Phase 2 of filtering)
+- [ ] Requires accumulated video data — revisit after 100+ analyzed videos
 
 ---
 
 ## Phase 6 — Training Logs + Progress Tracking
 
-**Goal:** Log sessions and track improvement over time.
-
-- [ ] Schema training_logs (date, location, duration, session_type)
-- [ ] Schema climb_attempts (training_log_id, climb_id, grade, result, attempts, video_id)
-- [ ] Alembic migration
-- [ ] Endpoints: POST/GET /api/training-logs, POST/GET /api/climb-attempts
+- [ ] Schema: training_logs (date, location, duration, session_type)
+- [ ] Schema: climb_attempts (training_log_id, climb_id, grade, result, attempts, video_id)
+- [ ] Progress charts: grade distribution, send rate trend, grip type breakdown
 - [ ] Link to video analysis results
-- [ ] Frontend: session logger, progress charts (grade distribution, send rate trend)
-- [ ] Tests pytest
+- [ ] Frontend: session logger, progress dashboard
+- [ ] Tests
 
 ---
 
 ## Phase 7 — Deploy & Polish
 
 - [x] Deploy backend to Railway (FastAPI + SQLite)
-- [x] Alembic migrations in Railway startCommand (`alembic upgrade head && uvicorn ...`)
+- [x] Alembic migrations in Railway startCommand
 - [x] Health check endpoint (`/health`)
-- [x] Deploy frontend to Vercel — live at kilter-up-coach.vercel.app
-- [ ] Switch Railway DB from SQLite to PostgreSQL — persistent volume now attached at /data/kilter-up (data survives redeploys), PostgreSQL migration still planned
-- [ ] S3 for video storage (currently local filesystem)
+- [x] Deploy frontend to Vercel
+- [ ] Switch Railway DB from SQLite to PostgreSQL
+- [ ] S3 for video storage
 - [ ] Mobile responsive polish
 - [ ] Dashboard: aggregate stats, streaks, grade progression
 
@@ -289,35 +336,38 @@ Kilter-Up is an AI-powered climbing coach for Kilter Board users. Three levels o
 ## Phase 8+ — Backlog / Visionary
 
 ### Outdoor Video → Kilter Movement Matching
-- [ ] User films outdoor climb → AI describes movement types (dyno, gaston, compression, etc.)
-- [ ] Match movement descriptions against annotated Kilter problems
-- [ ] Suggest Kilter Board problems that train similar movement patterns
-- [ ] Requires: movement tagging system from Phase 5c + large analyzed video corpus
-- [ ] Extremely ambitious — revisit when movement annotation data is mature
+- [ ] Film outdoor climb → AI describes movement types
+- [ ] Match against annotated Kilter problems
+- [ ] Suggest training problems with similar patterns
+- [ ] Requires movement tagging (Phase 5c) + large video corpus
 
 ### Aurora Board Expansion
-- [ ] Extend support to other Aurora boards: Tension Board, Moonboard
-- [ ] BoardLib already supports these — same `boardlib database {board_name}` command
-- [ ] Reuse all infrastructure: search, recognition, analysis, benchmarks
-- [ ] Natural expansion once Kilter-specific product is proven and stable
+- [ ] Extend to Tension Board, Moonboard via BoardLib
+- [ ] Hold classification pipeline reusable (different hold sets)
+- [ ] Same infrastructure: search, BLE, analysis, benchmarks
+
+### Fullride (Homewall) Board Support
+- [ ] Separate hold classification pass (~305 different holds)
+- [ ] Same pipeline, different hold set
 
 ---
 
 ## Backlog — Technical Debt
 
-Items to address before or during the next major phase:
-
-- [x] **Migrate `google.generativeai` → `google.genai`** — done in B003. New SDK active in production.
-- [x] **`gemini_service.py`: migrate API key to pydantic Settings** — done in B003. Reads from `get_settings().gemini_api_key`.
-- [ ] **Recreate API_SPECIFICATION.md** — archived due to heavy drift. Recreate after Phase 3 endpoints are stable.
-- [ ] **Recreate DATABASE_SCHEMA.sql** — archived due to heavy drift. Recreate after Phase 3 schema is stable.
-- [ ] **Retry with backoff on Gemini 503/429 errors in background task** — currently fails immediately on transient errors.
-- [ ] **Clean up dead files: root Procfile, railway_start.sh, backend/Procfile** — legacy Railway config, no longer used.
-- [ ] **Evaluate switch to gemini-2.5-pro when availability improves** — currently on 2.5-flash due to 503 availability issues with pro.
+- [x] **Migrate `google.generativeai` → `google.genai`** — B003
+- [x] **`gemini_service.py` API key → pydantic Settings** — B003
+- [ ] **Recreate API_SPECIFICATION.md** — after Phase 3 stabilizes
+- [ ] **Recreate DATABASE_SCHEMA.sql** — after Phase 3 stabilizes
+- [ ] **Retry with backoff on Gemini 503/429** — fails immediately on transient errors
+- [ ] **Clean up dead files** — Procfile, railway_start.sh, backend/Procfile
+- [ ] **Evaluate gemini-2.5-pro** — when availability improves
+- [ ] **Update Railway source repo** — from OpenClawDani → danielesomensi-cmd
+- [ ] **Set up Vercel–GitHub auto-deploy**
 
 ---
 
 ## Non-Negotiable Rules
+
 - Gemini File API for video (NEVER frame-by-frame)
 - FastAPI BackgroundTasks (NOT Celery/Redis for MVP)
 - pytest required for every new endpoint
@@ -325,3 +375,6 @@ Items to address before or during the next major phase:
 - Conventional commits, push after every feature
 - Don't break existing auth
 - BoardLib DB gitignored (~189MB file)
+- Hold classification data is a proprietary asset — not open sourced
+- BLE via Capacitor (native app) — Web Bluetooth insufficient for iOS
+- STOP gates on: gemini_service.py, auth, Alembic migrations, video pipeline

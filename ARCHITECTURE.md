@@ -6,25 +6,41 @@
 
 ## System Overview
 
-Kilter-Up is an AI-powered climbing coach for Kilter Board users. Users upload climbing videos, and the system provides structured coaching feedback using Google's Gemini 2.5 Flash model.
+Kilter-Up is an AI climbing companion for Kilter Board users. Two tiers:
+
+- **Discovery (free):** Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging. Powered by a proprietary hold classification database (every hold tagged: jug/crimp/microcrimp/sloper/pinch/pocket).
+- **Coach (€7.99/month):** Video technique analysis with Gemini 2.5 Flash, enriched with climb context (grade, holds, angle) from BoardLib DB. Move-by-move coaching feedback.
+
+The native app wraps the Next.js frontend via Capacitor (iOS + Android), enabling BLE connection to the Kilter Board.
 
 ---
 
 ## High-Level Architecture
 
 ```
-┌─────────────────┐     ┌──────────────────────────┐     ┌─────────────────┐
-│   Next.js 14    │────▶│    FastAPI Backend        │────▶│  Gemini 2.5     │
-│   (Frontend)    │◀────│    (Python 3.11)          │◀────│  Flash File API │
-│   Port 3000     │     │    Port 8001 (dev)        │     │                 │
-│   localhost (dev)│    │    Railway (prod)         │     │                 │
-└─────────────────┘     └──────────┬───────────────┘     └─────────────────┘
-                                   │
-                        ┌──────────┴───────────────┐
-                        │   SQLite (dev + prod*)    │
-                        │   users + video_uploads   │
-                        │   *PostgreSQL planned     │
-                        └──────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Capacitor Native App (iOS / Android — Phase 3e)                     │
+│  ┌─────────────────┐                          ┌────────────────────┐ │
+│  │   Next.js 14    │──────────────────────────▶  Kilter Board      │ │
+│  │   (Frontend)    │  BLE (@capacitor-        │  (Hardware)        │ │
+│  │   Port 3000     │   community/bluetooth-le) │  LED control       │ │
+│  └────────┬────────┘                          └────────────────────┘ │
+└───────────┼──────────────────────────────────────────────────────────┘
+            │ HTTP
+            ▼
+┌──────────────────────────┐     ┌─────────────────┐
+│    FastAPI Backend        │────▶│  Gemini 2.5     │
+│    (Python 3.11)          │◀────│  Flash File API │
+│    Port 8001 (dev)        │     │  (Coach tier)   │
+│    Railway (prod)         │     └─────────────────┘
+└──────────┬────────────────┘
+           │
+┌──────────┴────────────────────────────────────────────┐
+│  SQLite (dev + prod*)          BoardLib SQLite DB      │
+│  users + video_uploads         ~189MB, gitignored      │
+│  hold_classifications          kilter.db (344k+ climbs)│
+│  *PostgreSQL planned           + hold_classifications   │
+└───────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -122,6 +138,8 @@ Video storage: local filesystem (S3 planned)
 
 **Note:** SQLite is on a persistent Railway volume (`/data/kilter-up`) — data survives redeploys. Migration to PostgreSQL is still planned for Phase 7.
 
+**Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via `@capacitor-community/bluetooth-le`. Same frontend codebase, zero rewrite.
+
 ---
 
 ## AI Pipeline Detail
@@ -177,7 +195,7 @@ Protected routes: Authorization: Bearer <token>
 | Level | Status | What it adds |
 |-------|--------|-------------|
 | **Level 1: Solo Analysis** | ✅ Working | Gemini analyzes video with general climbing knowledge |
-| **Level 2: Contextual Analysis** | 🎯 Phase 3 | + climb data from BoardLib DB (grade, holds, angle) |
+| **Level 2: Contextual Analysis** | 🎯 Phase 3d | + climb data from BoardLib DB (grade, holds, angle) |
 | **Level 3: Expert Comparison** | 🔮 Phase 5 | + expert reference video for side-by-side comparison |
 
 Level 2 architecture (Phase 3):
@@ -208,6 +226,9 @@ POST /api/videos/upload + climb_id + angle
 | Climb identification | Search/autocomplete first | Visual LED recognition deferred to Phase 4 |
 | UUID storage | String(36) | SQLite + PostgreSQL compatibility |
 | Dev database | SQLite | Simple, no setup, PostgreSQL for prod |
+| Native app | Capacitor (wraps Next.js) | BLE plugin available, zero frontend rewrite, iOS + Android |
+| BLE | @capacitor-community/bluetooth-le | Web Bluetooth insufficient for iOS Safari |
+| Hold classification | Gemini Flash batch + manual validation | Proprietary asset, one-time pipeline, prerequisite for Discovery |
 
 ---
 

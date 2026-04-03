@@ -16,17 +16,21 @@
 
 ## 🎯 CORE STRATEGY (Non-Negotiable)
 
-```
-🎥 VIDEO = CORE FEATURE
-  Upload video → Gemini File API → structured form analysis
-  → Output: scores, strengths, weaknesses, drills, coaching cues
+**One product, two tiers:**
 
-📸 PHOTO = UTILITY (supplementary, Phase 3+)
-  Quick LED recognition (BoardLib) for logging
-  → NOT the main value driver
-```
+| Tier | Name | Value prop | Price |
+|------|------|------------|-------|
+| **Free** | Discovery | Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging | Free |
+| **Paid** | Coach | Video upload → Gemini AI technique analysis with climb context (Levels 1–3), move-by-move coaching | €7.99/month |
 
-**Gemini Vision analyzes:**
+**Key asset — hold classification database:**
+Every hold on the Kilter Board tagged by grip type: Jug / Crimp / Microcrimp / Sloper / Pinch / Pocket. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
+
+**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app with `@capacitor-community/bluetooth-le`. Web Bluetooth is insufficient for iOS.
+
+**Discovery competitors:** Climbdex (free, open-source, no AI), Kilter Lookup (limited filters, no AI), kilterboard.io (official new Kilter app, no AI, no grip-type filter).
+
+**Coach — Gemini Vision analyzes:**
 - Hold positions and quality
 - Body tension and posture
 - Efficiency score
@@ -55,7 +59,7 @@
 - `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
 - `GET /api/climbs/stats` → DB health stats
 
-**Next:** Phase 3c — Level 2 enhanced analysis (climb context in Gemini prompt)
+**Next:** Pre-Phase 3 — Hold Classification (HC-1 through HC-7), then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`.
 
@@ -83,7 +87,7 @@
 2. Push credentials, API keys, or .env files
 3. Change database schema without creating a new Alembic migration
 4. Skip tests
-5. Add circuit detection as a primary feature (it's Phase 2)
+5. Add circuit detection as a primary feature (it's Phase 4 — visual LED recognition)
 
 ### 📄 Doc Alignment Rule (Non-Negotiable)
 When a change touches facts shared across docs (model version, test count, deploy status, repo URL, DB size, etc.), **update ALL files that reference that fact in the same commit.** Don't leave stale data behind.

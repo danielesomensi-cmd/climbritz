@@ -6,7 +6,11 @@
 
 ## Core Vision Shift
 
-The project's differentiator is NOT training logging — it's **AI-powered climbing coaching via video analysis**. The pipeline:
+Kilter-Up is a two-tier product: **Discovery (free)** + **Coach (paid, €7.99/month)**.
+
+**Discovery's differentiator** is the proprietary hold classification asset — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). This enables grip-type filtering, AI session building, problem generation, and BLE "illuminate only crimps" — features no competitor has.
+
+**Coach's differentiator** is AI-powered video coaching with Kilter Board context. The pipeline:
 1. User uploads video of their climbing attempt on a specific Kilter Board problem
 2. System identifies the problem (via search or visual LED recognition)
 3. AI analyzes technique with full context (grade, holds, angle, known beta)
@@ -45,12 +49,24 @@ Key tables in the SQLite database:
 - Instagram video links are stored and associated with climbs
 - The layout string encodes both position and role of each hold
 
-### Climbdex (Search Engine)
+### Climbdex (Search Engine) — Discovery Competitor
 - **Repo:** https://github.com/lemeryfertitta/Climbdex
 - Built on BoardLib — adds **filter-by-hold** feature missing from official app
 - PWA that works across all Aurora boards
 - Has difficulty accuracy filter + minimum ascents filter
 - Demonstrates that BoardLib data is rich enough for advanced filtering
+- **Our advantage:** No grip type classification, no session builder, no AI, no problem generation
+
+### Kilter Lookup — Discovery Competitor
+- **URL:** kilterlookup.com
+- Kilter-specific hold search, campus filter, move size filter
+- **Our advantage:** No AI, no session building, no grip type classification
+
+### kilterboard.io — Official New App (Discovery Competitor)
+- Launched March 2026 — Aurora Climbing's redesigned Kilter app (Kilter Grips)
+- Better search UX, playlists, early stage
+- Replacing the old Aurora Climbing app (3.3★, laggy, crashes)
+- **Our advantage:** No AI features, no grip type filter, no session builder, no problem generation
 
 ### Boardsesh
 - **Repo:** https://github.com/marcodejongh/boardsesh
@@ -69,6 +85,33 @@ Key tables in the SQLite database:
 - Detailed walkthrough of decompiling the Kilter Board APK
 - Documents the SQLite schema, API auth flow, BLE protocol
 - Confirms that ALL climb data + video links are in the local SQLite file
+
+---
+
+## BLE / Capacitor Integration (Phase 3e — In Scope)
+
+### Why Capacitor
+Web Bluetooth API is not available on iOS Safari. To support BLE on both iOS and Android from the same codebase, Kilter-Up wraps the existing Next.js frontend with Capacitor — zero frontend rewrite, native plugin system.
+
+- **Plugin:** `@capacitor-community/bluetooth-le`
+- **Flow:** Capacitor app → BLE scan → discover Kilter Board → connect → send LED packets
+
+### BLE Protocol
+The Kilter Board BLE protocol is fully documented via community reverse engineering:
+- **Reference:** https://bazun.me/blog/kiterboard (APK decompilation + BLE packet analysis)
+- Also documented in Grip Connect open source project
+
+### LED Mapping via BoardLib
+The BoardLib database `leds` table maps `hole_id → LED position`. This means:
+1. Look up a climb's layout string → extract hold IDs
+2. Map hold IDs → hole IDs → LED positions via `leds` table
+3. Send BLE packet with LED positions + colors
+
+### "Illuminate only [grip type]" feature
+1. Query `hold_classifications` table for all holds of category X (e.g., "crimp")
+2. Map those hold IDs → hole IDs → LED positions via `leds` table
+3. Send BLE packet — board lights up only holds of that grip type
+4. **This feature is unique to Kilter-Up — requires the hold classification asset**
 
 ---
 

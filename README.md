@@ -1,6 +1,6 @@
-# Kilter-Up — AI Climbing Coach for Kilter Board
+# Kilter-Up — AI Climbing Companion for Kilter Board
 
-Upload climbing videos and get AI-powered coaching feedback using Gemini 2.5 Flash.
+AI climbing companion for Kilter Board — search 160k+ climbs by grip type, build AI training sessions, connect to your board via Bluetooth (Discovery, free) + video technique analysis powered by Gemini 2.5 Flash (Coach, €7.99/month).
 
 ## Quick Start
 

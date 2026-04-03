@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 1 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 2 Aprile 2026
 
 ---
 
@@ -31,16 +31,24 @@
 
 ---
 
-## 🎯 CORE STRATEGY (Updated March 2026)
+## 🎯 CORE STRATEGY (Updated April 2026)
 
-The project has evolved from video analysis to **AI Climbing Coach**.
+**One product, two tiers:**
 
-3-LEVEL INTELLIGENCE SYSTEM:
+| Tier | Name | What it does | Price |
+|------|------|-------------|-------|
+| **Free** | Discovery | Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging | Free |
+| **Paid** | Coach | Video upload → AI technique analysis with climb context, move-by-move coaching, training suggestions | €7.99/month |
+
+**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). No competitor has this. Prerequisite for Discovery.
+
+**BLE in scope:** Capacitor wraps Next.js for a native iOS/Android app. BLE connection (Phase 3e) enables lighting up the board directly from the app — unique feature.
+
+**Coach intelligence — 3-level system:**
 - Level 1: Solo video analysis (Gemini analyzes your technique) — ✅ WORKING
-- Level 2: Contextual analysis (your video + climb data from BoardLib DB) — 🎯 NEXT
-- Level 3: Expert comparison (your video vs expert beta video) — 🔮 FUTURE
+- Level 2: Contextual analysis (your video + climb data from BoardLib DB) — 🎯 Phase 3d
+- Level 3: Expert comparison (your video vs expert beta video) — 🔮 Phase 5
 
-VIDEO = CORE. But now enriched with Kilter Board data (160k+ climbs, grades, holds, angles).
 See RESEARCH.md for full ecosystem audit.
 See ROADMAP_ACTIVE.md for detailed implementation plan.
 
@@ -103,7 +111,7 @@ for frame in frames:
 
 ## ✅ DECISIONI ARCHITETTURALI PRESE
 
-### 1. Gemini 2.0 Flash (non MediaPipe/YOLO)
+### 1. Gemini 2.5 Flash (non MediaPipe/YOLO)
 **Decisione:** Usare Gemini Vision API per MVP invece di MediaPipe + YOLO.
 **Perché:**
 - Zero ML training richiesto → MVP più veloce
@@ -162,7 +170,7 @@ for frame in frames:
 | ~~`gemini_service.py` API key → pydantic Settings~~ | ✅ Done | B003 — reads from `get_settings().gemini_api_key` |
 | Recreate API_SPECIFICATION.md | After Phase 3 | Archived — was heavily outdated |
 | Recreate DATABASE_SCHEMA.sql | After Phase 3 | Archived — was heavily outdated |
-| Frontend deploy to Vercel | Phase 7 | Backend is live, frontend still local |
+| ~~Frontend deploy to Vercel~~ | ✅ Done | kilter-up-coach.vercel.app |
 | PostgreSQL on Railway | Phase 7 | Currently using SQLite on Railway |
 
 ---
@@ -171,7 +179,9 @@ for frame in frames:
 
 ### ✅ Phase 1 — Foundation (Done)
 ### ✅ Phase 2 — Video Analysis (Done)
-### 🎯 Phase 3 — BoardLib Integration + Climb Context (NEXT)
+### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [CURRENT PRIORITY]
+### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ 3c→3h pending)
+### ⏳ Phase 3.5 — Soft Launch (Discovery free → Coach paid)
 ### ⏳ Phase 4 — Visual Problem Recognition
 ### ⏳ Phase 5 — Expert Video Comparison
 ### ⏳ Phase 6 — Training Logs + Progress
@@ -190,16 +200,19 @@ kilter-training-app/
 │   │   ├── api/
 │   │   │   ├── auth.py             ✅ JWT auth (register, login, /me)
 │   │   │   ├── videos.py           ✅ Upload, list, get, delete + background analysis
-│   │   │   └── circuits.py         ✅ Stub for BoardLib
+│   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
+│   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── models/
 │   │   │   ├── user.py             ✅
 │   │   │   └── video.py            ✅ Consolidated model
 │   │   ├── schemas/
 │   │   │   ├── user.py, auth.py    ✅
-│   │   │   └── video.py            ✅ VideoResponse, FormFeedbackResponse
+│   │   │   ├── video.py            ✅ VideoResponse, FormFeedbackResponse
+│   │   │   └── climb.py            ✅ ClimbSearchResult, ClimbDetail
 │   │   ├── services/
 │   │   │   ├── auth_service.py     ✅
 │   │   │   ├── gemini_service.py   ✅ File API, lazy init
+│   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries
 │   │   │   ├── video_service.py    ✅ ffmpeg utils
 │   │   │   └── storage_service.py  ✅ Local filesystem
 │   │   ├── utils/
@@ -207,7 +220,7 @@ kilter-training-app/
 │   │   ├── core/                   ✅ config, database, security, deps
 │   │   └── main.py                 ✅
 │   ├── alembic/versions/           ✅ 001 + 002 (single head)
-│   ├── tests/                      ✅ 46 passed
+│   ├── tests/                      ✅ 136 passing
 │   ├── conftest.py                 ✅ In-memory SQLite fixtures
 │   ├── requirements.txt            ✅
 │   └── .env                        (gitignored)
@@ -255,5 +268,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 30 Marzo 2026*
+*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 2 Aprile 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*
