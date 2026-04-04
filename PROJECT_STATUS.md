@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 2 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 3 Aprile 2026
 
 ---
 
@@ -269,5 +269,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 2 Aprile 2026*
+*Creato da Sam — 22 Febbraio 2026 | Aggiornato: 3 Aprile 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*
