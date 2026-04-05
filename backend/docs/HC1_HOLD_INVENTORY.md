@@ -8,35 +8,35 @@
 
 ## Section 1: Image Download Results
 
-### Status: BLOCKED
+### Status: RESOLVED
 
-BoardLib's `boardlib images kilter` command fails — the old Aurora API domain (`api.kilterboardapp.com`) is dead (DNS NXDOMAIN). Aurora shut down the server after Kilter Grips sent a cease-and-desist over the domain name (March 2026).
+BoardLib's `boardlib images kilter` command fails — the old Aurora API domain (`api.kilterboardapp.com`) is dead (DNS NXDOMAIN). However, two open-source projects that pre-downloaded these images still serve them:
 
-**What was tried:**
-- `boardlib images kilter data/kilter.db data/images/` → DNS resolution failure
-- Tested `api.kilterboardapp.com` → NXDOMAIN
-- Tested `api.kilterboard.io` → NXDOMAIN
-- Tested `https://kilterboard.io/img/product_sizes_layouts_sets/77-1.png` → returns HTML (SPA, not actual image)
+| Source | URL pattern | Format | Status |
+|--------|-------------|--------|--------|
+| **Climbdex** | `https://climbdex.com/board-images/kilter/{image_filename}` | PNG | Working |
+| **Boardsesh** | `https://boardsesh.com/images/kilter/{image_filename}` (as .webp) | WebP | Working (308 redirect) |
 
-**New infrastructure (from BoardLib issue #78):**
-- Auth: `idp.kiltergrips.com`
-- API: `portal.kiltergrips.com`
-- Sync: `sync1.kiltergrips.com`
-- No image-serving subdomain exists
+**Downloaded:** All 31 composite board layout images from Climbdex → `data/images/product_sizes_layouts_sets/`
 
-**BoardLib version:** 0.15.1 (latest on PyPI as of April 2026) — still hardcodes `kilterboardapp.com`. Issue #78 open, no fix yet.
+**12x12 Original images:**
+- `77-1.png` — Bolt Ons (1080x1080 RGBA) — all 342 handholds + 6 foot Bolt Ons
+- `78-1.png` — Screw Ons (1080x1080 RGBA) — 135 footholds
 
-### Alternatives for HC-4 (AI classification)
+### Individual hold crops
 
-| Option | Feasibility | Notes |
-|--------|-------------|-------|
-| **A. Daniele photographs holds in gym** | High | Take close-up photo of each hold. 336 holds, ~1-2 hours. Most reliable — actual hold appearance at the gym. |
-| **B. Use composite board layout images** | Medium | Two images exist for 12x12 (Bolt Ons + Screw Ons) but the URLs return HTML. If we can source them from the Kilter native app assets, we could crop individual holds using known x/y coordinates. |
-| **C. Wait for BoardLib fix** | Unknown | Issue #78 open. No ETA. |
-| **D. Extract from Kilter native app APK** | Medium | New app (com.kiltergrips.kilter_board_app) likely bundles hold images. Requires APK extraction. |
-| **E. AI classifies from board photo** | High | Take 1-2 photos of the full board → Gemini identifies hold types by position. Faster than individual photos but less precise. |
+Cropped 336 individual handhold images from composite `77-1.png` using DB coordinates:
+- **Output:** `data/images/holds/{placement_id}.png` (336 files)
+- **Size:** 120x120px each (60px radius crop around hold center)
+- **Quality:** Center hold clearly visible; neighboring holds partially visible at edges (expected — holds are packed at 4-unit grid spacing = 30px apart in the image)
+- **Mapping:** image filename = `{placement_id}.png` → direct lookup in DB
 
-**Recommendation:** Option A (gym photos) is most reliable. Option E (full board photo + AI) is fastest. Can combine: start with E for a first pass, use A for validation of ambiguous holds.
+### Why BoardLib failed (for reference)
+
+- `api.kilterboardapp.com` → DNS NXDOMAIN (Aurora shut down after Kilter Grips cease-and-desist, March 2026)
+- `kilterboard.io/img/...` → returns HTML (SPA, not images)
+- BoardLib 0.15.1 hardcodes the dead domain. Issue #78 open, no fix.
+- New Kilter infrastructure (`idp.kiltergrips.com`, `portal.kiltergrips.com`, `sync1.kiltergrips.com`) has no image-serving endpoint.
 
 ---
 
@@ -93,25 +93,26 @@ The DB does not distinguish physical hold shapes — each placement has a unique
 
 ## Section 4: Image-to-Hold Mapping
 
-### Current status: No individual hold images available
+### Status: RESOLVED
 
-BoardLib's image system downloads **composite layout images** (`product_sizes_layouts_sets`), not individual hold photos. These show all holds of a set overlaid on the board outline — 31 images total across all board sizes.
+**Mapping:** `placement_id` → `data/images/holds/{placement_id}.png`
 
-For the 12x12 Original, two composite images exist:
-- `product_sizes_layouts_sets/77-1.png` — Bolt Ons layout
-- `product_sizes_layouts_sets/78-1.png` — Screw Ons layout
+Each of the 336 handhold images is named by its `placement_id` from the DB. To look up any hold:
 
-These URLs currently return HTML from kilterboard.io (not actual images).
+```python
+# Get hold image + metadata
+placement_id = 1234
+image_path = f"data/images/holds/{placement_id}.png"
+# DB query: SELECT h.x, h.y, pr.name FROM placements p JOIN holes h ...
+```
 
-### Path to individual hold images
+### How images were extracted
 
-**If composite images become available:**
-Each hold's pixel position can be computed from its (x, y) DB coordinates mapped to image dimensions. This would allow automated cropping of individual holds.
-
-**For HC-4 classification without images:**
-- Option A: Daniele photographs each hold in gym → name files as `{placement_id}.jpg`
-- Option E: Full board photos → Gemini classifies by position reference
-- The `placement_id` is the canonical identifier linking DB data → image → classification
+1. Downloaded composite layout image from Climbdex (`77-1.png`, 1080x1080 RGBA)
+2. Image maps 1:1 to board coordinate space: x=[0,144] → px=[0,1080], y=[12,156] → py=[1080,0] (Y inverted)
+3. Scale: 7.5 pixels per board unit
+4. Cropped 120x120px region (60px radius) around each hold's center pixel
+5. All 336 crops contain visible hold content (no empty crops)
 
 ---
 
