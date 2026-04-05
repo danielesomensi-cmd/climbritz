@@ -21,7 +21,7 @@ Three levels of coaching intelligence (Coach tier):
 | 2 | Contextual Analysis | Your video + climb ID | Grade, holds, angle, grip types, known beta | 🎯 Next |
 | 3 | Comparison Analysis | Your video + expert video | Everything from L2 + expert reference | 🔮 Future |
 
-**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). No competitor has this.
+**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, good crimp, crimp, sloper, undercling, pinch). No competitor has this.
 
 **Market strategy:** Discovery launches first as free acquisition layer. Coach monetizes serious climbers. BLE board connection via native app (Capacitor wrapping Next.js). Kilter Board-specific at launch, Aurora board expansion later.
 
@@ -111,7 +111,7 @@ Three levels of coaching intelligence (Coach tier):
 
 > **PREREQUISITE for Discovery.** Without this, Discovery = Climbdex clone. With this, it's unique.
 
-**Taxonomy (6 categories):** Jug, Crimp, Microcrimp, Sloper, Pinch, Pocket
+**Taxonomy (6 categories):** Jug, Good Crimp, Crimp, Sloper, Undercling, Pinch
 
 **Target board:** 12x12 Original Layout (323 handholds + 153 footholds). Smaller boards (7x10, 8x12) are subsets — automatically covered.
 
@@ -166,7 +166,7 @@ Three levels of coaching intelligence (Coach tier):
   - Board size/layout
   - Setter name
 - [ ] Additional filters (requires hold classification — Pre-Phase 3):
-  - **Grip type** (jug/crimp/microcrimp/sloper/pinch/pocket) — from hold classification
+  - **Grip type** (jug/good crimp/crimp/sloper/undercling/pinch) — from hold classification
   - **Number of moves** (derived from layout string `p` count)
   - **Session type filter** (Power: 1-4 moves / Power Endurance: 5-8 / Endurance: 9+)
 - [x] `GET /api/climbs/{id}` — full detail with hold classifications + beta video links

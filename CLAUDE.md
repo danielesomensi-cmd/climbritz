@@ -24,7 +24,7 @@
 | **Paid** | Coach | Video upload → Gemini AI technique analysis with climb context (Levels 1–3), move-by-move coaching | €7.99/month |
 
 **Key asset — hold classification database:**
-Every hold on the Kilter Board tagged by grip type: Jug / Crimp / Microcrimp / Sloper / Pinch / Pocket. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
+Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / Sloper / Undercling / Pinch. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
 
 **BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app with `@capacitor-community/bluetooth-le`. Web Bluetooth is insufficient for iOS.
 

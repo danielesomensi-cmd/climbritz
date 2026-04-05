@@ -8,7 +8,7 @@
 
 Kilter-Up is an AI climbing companion for Kilter Board users. Two tiers:
 
-- **Discovery (free):** Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging. Powered by a proprietary hold classification database (every hold tagged: jug/crimp/microcrimp/sloper/pinch/pocket).
+- **Discovery (free):** Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging. Powered by a proprietary hold classification database (every hold tagged: jug/good crimp/crimp/sloper/undercling/pinch).
 - **Coach (€7.99/month):** Video technique analysis with Gemini 2.5 Flash, enriched with climb context (grade, holds, angle) from BoardLib DB. Move-by-move coaching feedback.
 
 The native app wraps the Next.js frontend via Capacitor (iOS + Android), enabling BLE connection to the Kilter Board.

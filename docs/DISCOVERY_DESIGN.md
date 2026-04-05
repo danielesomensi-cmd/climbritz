@@ -21,7 +21,7 @@
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Product architecture | One product, two tiers (Discovery free + Coach paid) | Council unanimous verdict |
-| Hold taxonomy | 6 categories: Jug, Crimp, Microcrimp, Sloper, Pinch, Pocket | Matches how climbers actually think. Edge too ambiguous, Volume too rare on Kilter. |
+| Hold taxonomy | 6 categories: Jug, Good Crimp, Crimp, Sloper, Undercling, Pinch | Validated with Christie Palmer. Edge too ambiguous, Volume too rare on Kilter. |
 | First board to classify | 12x12 Original Layout (323 handholds + 153 footholds) | Most common gym board. Smaller boards are subsets. |
 | BLE | Non-negotiable. In plan from day 1. | Two apps open = friction that kills habitual use |
 | Native framework | Capacitor (wraps existing Next.js) | Zero frontend rewrite. BLE plugin available. iOS + Android. |
@@ -46,11 +46,11 @@ Without hold classification, Discovery is just Climbdex with a different UI. Wit
 | Category | Description | Typical use on Kilter |
 |----------|-------------|----------------------|
 | **Jug** | Large, positive, easy to grip. Mini-jugs, incut ears, huecos. | Warmups, rest positions, beginners |
-| **Crimp** | Small-medium edge requiring half or full crimp grip. | Technical climbing, finger strength |
-| **Microcrimp** | Very small edge, 1-2 pad depth. High finger strength required. | Limit climbing, power, hard grades |
+| **Good Crimp** | Larger, more positive crimp edge. Comfortable half-crimp grip. | Technical climbing, moderate finger strength |
+| **Crimp** | Small edge requiring full crimp or half-crimp grip. High finger strength. | Limit climbing, power, hard grades |
 | **Sloper** | Rounded, friction-dependent. Requires open-hand grip + body tension. | Technique, body positioning, steep angles |
+| **Undercling** | Must be gripped from below with palm facing up. | Body tension, steep angles, core engagement |
 | **Pinch** | Requires thumb opposition. Various widths. | Thumb strength, compression |
-| **Pocket** | Hole for 1-3 fingers. Mono/duo/trio pockets, huecos. | Finger isolation, grip variety |
 
 ### Classification Pipeline (6 Steps)
 
@@ -68,7 +68,7 @@ Without hold classification, Discovery is just Climbdex with a different UI. Wit
 **Step 3 — Validate taxonomy with 3-5 climbers**
 - Quick test: show 20 random holds, ask people to classify them
 - If >80% agreement on categories → taxonomy is good
-- If confusion on boundaries (e.g., "is this a crimp or microcrimp?") → refine definitions
+- If confusion on boundaries (e.g., "is this a good crimp or crimp?") → refine definitions
 
 **Step 4 — AI batch classification**
 - Feed each hold image to Gemini 2.5 Flash with structured prompt
@@ -106,7 +106,7 @@ Search the 160k+ climb database with filters no other tool offers.
 | Board size/layout | BoardLib DB | Easy | ✅ |
 | Setter name | BoardLib DB | Easy | ✅ |
 | Benchmark filter | BoardLib (ascents + accuracy) | Easy | ✅ |
-| **Grip type** (jug/crimp/microcrimp/sloper/pinch/pocket) | **Hold classification asset** | **Medium** | ✅ |
+| **Grip type** (jug/good crimp/crimp/sloper/undercling/pinch) | **Hold classification asset** | **Medium** | ✅ |
 | "Problems similar to X" | Layout string comparison (Jaccard) | Medium | ✅ |
 | Movement style (dyno/static/compression) | NOT in DB — requires tagging | Hard | ❌ Phase 2 |
 

@@ -40,7 +40,7 @@
 | **Free** | Discovery | Search 160k+ climbs by grip type, AI session builder, problem generation, BLE board connection, attempt logging | Free |
 | **Paid** | Coach | Video upload → AI technique analysis with climb context, move-by-move coaching, training suggestions | €7.99/month |
 
-**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). No competitor has this. Prerequisite for Discovery.
+**Key asset:** Proprietary hold classification database — every hold on the Kilter Board tagged by grip type (jug, good crimp, crimp, sloper, undercling, pinch). No competitor has this. Prerequisite for Discovery.
 
 **BLE in scope:** Capacitor wraps Next.js for a native iOS/Android app. BLE connection (Phase 3e) enables lighting up the board directly from the app — unique feature.
 

@@ -8,7 +8,7 @@
 
 Kilter-Up is a two-tier product: **Discovery (free)** + **Coach (paid, €7.99/month)**.
 
-**Discovery's differentiator** is the proprietary hold classification asset — every hold on the Kilter Board tagged by grip type (jug, crimp, microcrimp, sloper, pinch, pocket). This enables grip-type filtering, AI session building, problem generation, and BLE "illuminate only crimps" — features no competitor has.
+**Discovery's differentiator** is the proprietary hold classification asset — every hold on the Kilter Board tagged by grip type (jug, good crimp, crimp, sloper, undercling, pinch). This enables grip-type filtering, AI session building, problem generation, and BLE "illuminate only crimps" — features no competitor has.
 
 **Coach's differentiator** is AI-powered video coaching with Kilter Board context. The pipeline:
 1. User uploads video of their climbing attempt on a specific Kilter Board problem
