@@ -8,3 +8,5 @@ __pycache__/
 .pytest_cache/
 .vscode/
 data/*.db
+data/images/
+data/12x12_placements.json
