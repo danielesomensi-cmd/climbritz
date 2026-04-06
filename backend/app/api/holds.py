@@ -17,14 +17,19 @@ SOURCE_16X12 = LAYOUTS_DIR / "original-16x12-bolt-ons-v2.png"
 # 12x12 Square cropped composite — generated on first request
 BOARD_12X12 = CACHE_DIR / "board_original_12x12.png"
 
-# Kilter coordinate bounds for 16x12 Super Wide (edge_left/right/bottom/top from
-# boardlib schema — see docs/BOARDLIB_SCHEMA_ANALYSIS.md §7).
-SRC_X_MIN, SRC_X_MAX = -24, 168
-SRC_Y_MIN, SRC_Y_MAX = 0, 156
-
-# Kilter coordinate bounds for 12x12 Square (the sub-region we want to show).
-DST_X_MIN, DST_X_MAX = 0, 144
-DST_Y_MIN, DST_Y_MAX = 12, 156
+# Empirically measured crop box on the 16x12 composite that isolates the
+# 12x12 Square inner frame (the solid-black physical board rectangle).
+#
+# A proportional crop using the documented coordinate bounds
+# (16x12: x=[-24,168], y=[0,156]) produces ~half a column of extras on each
+# side because the composite image has non-uniform padding around the hole
+# area and the gray background with extra bolt-ons of the Super Wide bleeds
+# in. These numbers were measured by detecting the dark frame edges and
+# verified by overlaying all 336 placement centers on the crop (every dot
+# sits on a hold). Width/height are both 1075 px (square, as expected).
+#
+# Crop box maps exactly to kilter coordinates x=[0,144], y=[12,156].
+CROP_BOX = (201, 17, 1276, 1092)
 
 
 def _ensure_board_image() -> Path:
@@ -43,18 +48,7 @@ def _ensure_board_image() -> Path:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     with Image.open(SOURCE_16X12) as im:
-        w, h = im.size
-        px_per_x = w / (SRC_X_MAX - SRC_X_MIN)
-        px_per_y = h / (SRC_Y_MAX - SRC_Y_MIN)
-
-        left = (DST_X_MIN - SRC_X_MIN) * px_per_x
-        right = (DST_X_MAX - SRC_X_MIN) * px_per_x
-        # Kilter y grows upward; image y grows downward.
-        top = (SRC_Y_MAX - DST_Y_MAX) * px_per_y
-        bottom = (SRC_Y_MAX - DST_Y_MIN) * px_per_y
-
-        box = (round(left), round(top), round(right), round(bottom))
-        cropped = im.crop(box)
+        cropped = im.crop(CROP_BOX)
         cropped.save(BOARD_12X12, format="PNG", optimize=True)
 
     return BOARD_12X12
