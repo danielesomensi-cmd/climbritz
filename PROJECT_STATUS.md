@@ -73,9 +73,11 @@ See ROADMAP_ACTIVE.md for detailed implementation plan.
 **Problema:** Il piano originale mandava ogni frame del video come immagine separata a Gemini. 30 secondi di video @ 1 FPS = 30 API calls → rate limit del free tier (15 req/min) → 2 minuti di attesa.
 **Soluzione:** ✅ **Gemini File API** — upload il video intero UNA volta, poi UNA sola chiamata a Gemini con `file_data`. Gemini elabora internamente tutti i frame.
 
-**Implementazione corretta:**
+**Implementazione corretta (pattern File API — architettura ancora valida):**
+> **Nota storica:** Il codice sotto usa il vecchio SDK `google.generativeai` e il modello `gemini-2.0-flash`, entrambi deprecati. Il codebase attuale usa `google.genai` SDK con `gemini-2.5-flash` (migrato in B003). Il *pattern* (File API, un'unica chiamata) è corretto.
+
 ```python
-import google.generativeai as genai
+import google.generativeai as genai  # ← deprecato, ora: from google import genai
 
 # Step 1: Upload video (una volta)
 video_file = genai.upload_file(path="climbing_video.mp4")
@@ -180,7 +182,7 @@ for frame in frames:
 
 ### ✅ Phase 1 — Foundation (Done)
 ### ✅ Phase 2 — Video Analysis (Done)
-### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [CURRENT PRIORITY]
+### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [IN PROGRESS — HC-1✅ HC-2✅ HC-3⏳ HC-4⏳ HC-5✅ HC-6⏳ HC-7⏳]
 ### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ 3c→3h pending)
 ### ⏳ Phase 3.5 — Soft Launch (Discovery free → Coach paid)
 ### ⏳ Phase 4 — Visual Problem Recognition

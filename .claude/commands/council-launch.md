@@ -24,7 +24,7 @@ Idea A — Kilter AI Coach (current product):
 - Moat: no competitor combines AI video analysis + Kilter Board contextual data
 - High friction: user must film + upload video
 - Monetization validated by Council at €7.99/month
-- Phase 3c (Level 2 contextual analysis) is next — the moat depends on this
+- Phase 3d (Level 2 contextual analysis) is next — the moat depends on this
 
 Idea B — Kilter Climb Discovery:
 - Search 344k+ Kilter Board climbs with advanced filters
@@ -51,5 +51,5 @@ CONSTRAINTS:
 - Solo founder, bootstrapped, no funding, no marketing budget
 - Both products use the same BoardLib data source and backend (climb_service.py)
 - Same tech stack (Next.js + FastAPI), shared backend possible
-- Currently in Phase 3 planning for the AI Coach — Phase 3c (Level 2 analysis) is the moat
-- 136 tests passing, clean codebase, ready for feature development
+- Currently in Phase 3 planning for the AI Coach — Phase 3d (Level 2 analysis) is the moat
+- 140+ backend tests passing, clean codebase, ready for feature development
