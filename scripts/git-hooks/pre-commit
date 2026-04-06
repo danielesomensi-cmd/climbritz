@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Pre-commit hook: block the commit if either test suite is red.
+#
+# Install once with:
+#     ln -sf ../../scripts/git-hooks/pre-commit .git/hooks/pre-commit
+#
+# Skip intentionally (use sparingly, e.g. docs-only commit):
+#     SKIP_TESTS=1 git commit ...
+
+set -euo pipefail
+
+if [[ "${SKIP_TESTS:-0}" == "1" ]]; then
+  echo "[pre-commit] SKIP_TESTS=1 — bypassing test run"
+  exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+RED="\033[31m"; GREEN="\033[32m"; YELLOW="\033[33m"; RESET="\033[0m"
+
+run_backend_tests() {
+  echo -e "${YELLOW}[pre-commit] Running backend pytest...${RESET}"
+  if [[ ! -d backend/venv ]]; then
+    echo -e "${YELLOW}[pre-commit] backend/venv not found — skipping backend tests${RESET}"
+    return 0
+  fi
+  (cd backend && source venv/bin/activate && pytest -q)
+}
+
+run_frontend_tests() {
+  echo -e "${YELLOW}[pre-commit] Running frontend jest...${RESET}"
+  if [[ ! -d node_modules ]]; then
+    echo -e "${YELLOW}[pre-commit] node_modules not found — skipping frontend tests${RESET}"
+    return 0
+  fi
+  npx jest --bail --silent
+}
+
+if ! run_backend_tests; then
+  echo -e "${RED}[pre-commit] Backend tests failed — commit blocked.${RESET}"
+  echo -e "${RED}Fix the failures or commit with SKIP_TESTS=1 if you truly know what you're doing.${RESET}"
+  exit 1
+fi
+
+if ! run_frontend_tests; then
+  echo -e "${RED}[pre-commit] Frontend tests failed — commit blocked.${RESET}"
+  echo -e "${RED}Fix the failures or commit with SKIP_TESTS=1 if you truly know what you're doing.${RESET}"
+  exit 1
+fi
+
+echo -e "${GREEN}[pre-commit] All tests green. Proceeding with commit.${RESET}"

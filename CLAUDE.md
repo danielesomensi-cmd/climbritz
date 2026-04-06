@@ -190,7 +190,9 @@ git push origin main
 ## 🧪 Testing Requirements
 - **Backend:** pytest, >80% coverage on new code
 - **Frontend:** Jest + React Testing Library
-- All tests must pass before push
+- **Every commit must leave BOTH suites green** — no exceptions, not even pre-existing failures. If you find red tests, fix them in the same session before moving on.
+- **CI:** `.github/workflows/test.yml` runs backend pytest + frontend jest + tsc + next build on every push/PR. A red CI is a blocker.
+- **Local pre-commit hook** (optional but recommended): `ln -sf ../../scripts/git-hooks/pre-commit .git/hooks/pre-commit` — blocks commits with red tests. Bypass only when strictly needed with `SKIP_TESTS=1 git commit ...`.
 
 ---
 
@@ -198,9 +200,12 @@ git push origin main
 1. **Receive task** → Understand scope
 2. **Plan** → Files to change + dependencies
 3. **Code** → Implement + tests
-4. **Verify** → Full test suite green
-5. **Commit** → Clear message
-6. **Push** → Confirm push succeeded
+4. **Verify** → Run the FULL suites, not just touched areas:
+   - Backend: `cd backend && source venv/bin/activate && pytest`
+   - Frontend: `npx jest` + `npx tsc --noEmit`
+   - Any red test — including ones you didn't touch — must be diagnosed and fixed now, not logged as "pre-existing".
+5. **Commit** → Clear message (pre-commit hook will re-run the suites)
+6. **Push** → Confirm push succeeded; check the GitHub Actions run stays green
 7. **Doc Sync (MANDATORY)** → After every push, update ALL affected docs:
    - `ROADMAP_ACTIVE.md` — mark completed tasks with ✅, update [ ] → [x]
    - `PROJECT_STATUS.md` — update date, stato attuale table, test count
@@ -230,5 +235,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.5 (B007 prompt rework + Phase 3b climb API 2026-04-01)
+**Version:** 2.6 (HC-2/HC-5 board-map rework with composite image + CI/pre-commit hook 2026-04-06)
 **Owner:** Daniele Somensi + Sam (AI Agent)

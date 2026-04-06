@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Home from '../page';
 
 describe('Home Page', () => {
@@ -22,7 +23,7 @@ describe('Home Page', () => {
 
   it('renders the CTA button', () => {
     render(<Home />);
-    const button = screen.getByText(/Coming Soon/);
+    const button = screen.getByText(/Inizia/);
     expect(button).toBeInTheDocument();
   });
 
