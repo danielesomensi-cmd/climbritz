@@ -1,12 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ClassifyPage, {
+import ClassifyPage from '../page';
+import {
   buildExportData,
   nextUnvisited,
   currentHoldForState,
   CATEGORIES,
   type ClassifyState,
-} from '../page';
+} from '../state';
 
 // ─── Mock localStorage ────────────────────────────────────────────────────────
 const localStorageMock = (() => {

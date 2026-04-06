@@ -1,12 +1,13 @@
 'use client';
 
-// Board coordinate bounds (from 12x12_placements.json)
+// Board coordinate bounds match the backend /api/holds/board-image crop
+// (12x12 Square region: x=[0,144], y=[12,156]).
 export const BOARD_X_MIN = 0;
 export const BOARD_X_MAX = 144;
-export const BOARD_Y_MIN = 16;
-export const BOARD_Y_MAX = 152;
+export const BOARD_Y_MIN = 12;
+export const BOARD_Y_MAX = 156;
 const BOARD_W = BOARD_X_MAX - BOARD_X_MIN; // 144
-const BOARD_H = BOARD_Y_MAX - BOARD_Y_MIN; // 136
+const BOARD_H = BOARD_Y_MAX - BOARD_Y_MIN; // 144
 
 export interface Placement {
   placement_id: number;
@@ -24,7 +25,7 @@ interface BoardMapProps {
   placements: Placement[];
   /** placement_id of the hold to highlight */
   highlightId?: number;
-  /** 'full' = full page board with images, 'mini' = inline reference with dots */
+  /** 'full' = large interactive map, 'mini' = compact reference (smaller circles) */
   size?: 'full' | 'mini';
   /** Show hole_name labels (full size only) */
   showLabels?: boolean;
@@ -32,19 +33,25 @@ interface BoardMapProps {
   onHoldClick?: (placement: Placement) => void;
 }
 
-function toPosition(x: number, y: number) {
-  return {
-    left: `${(x / BOARD_W) * 100}%`,
-    top: `${((BOARD_Y_MAX - y) / BOARD_H) * 100}%`,
-  };
+function getApiBase(): string {
+  return typeof window !== 'undefined'
+    ? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001')
+    : 'http://localhost:8001';
 }
 
-function getImageUrl(placementId: number): string {
-  const base =
-    typeof window !== 'undefined'
-      ? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001')
-      : 'http://localhost:8001';
-  return `${base}/api/holds/${placementId}/image`;
+export function getBoardImageUrl(): string {
+  return `${getApiBase()}/api/holds/board-image`;
+}
+
+export function getHoldImageUrl(placementId: number): string {
+  return `${getApiBase()}/api/holds/${placementId}/image`;
+}
+
+function toPosition(x: number, y: number) {
+  return {
+    left: `${((x - BOARD_X_MIN) / BOARD_W) * 100}%`,
+    top: `${((BOARD_Y_MAX - y) / BOARD_H) * 100}%`,
+  };
 }
 
 export default function BoardMap({
@@ -55,69 +62,61 @@ export default function BoardMap({
   onHoldClick,
 }: BoardMapProps) {
   const isMini = size === 'mini';
-
-  // Dot size for mini, image size for full — expressed as % of board width
-  // At mini ~150px: 5% = 7.5px dots | At full ~700px: 3% = 21px images
-  const holdPct = isMini ? '5%' : '3.2%';
+  // Circle diameter as % of board width. Mini stays small; full is generous enough to click.
+  const holdPct = isMini ? '3.2%' : '4.2%';
 
   return (
     <div
       data-testid="board-map"
-      className="relative bg-zinc-900 rounded overflow-hidden"
+      className="relative bg-zinc-900 rounded-lg overflow-hidden select-none"
       style={{ width: '100%', aspectRatio: `${BOARD_W} / ${BOARD_H}` }}
     >
+      {/* Composite board background */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={getBoardImageUrl()}
+        alt="Kilter Board 12x12 layout"
+        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        draggable={false}
+      />
+
+      {/* Overlay clickable hold markers */}
       {placements.map((hold) => {
         const pos = toPosition(hold.x, hold.y);
         const isHighlighted = hold.placement_id === highlightId;
 
         return (
-          <div
+          <button
             key={hold.placement_id}
+            type="button"
             data-testid={`hold-${hold.placement_id}`}
-            className="absolute"
+            aria-label={`Hold ${hold.placement_id} (${hold.hole_name})`}
+            onClick={onHoldClick ? () => onHoldClick(hold) : undefined}
+            disabled={!onHoldClick}
+            className={`absolute rounded-full border transition-all ${
+              isHighlighted
+                ? 'border-yellow-300 bg-yellow-400/30 shadow-[0_0_10px_3px_rgba(250,204,21,0.7)] animate-pulse'
+                : 'border-cyan-300/60 bg-cyan-400/10 hover:bg-cyan-400/30 hover:border-cyan-200'
+            } ${onHoldClick ? 'cursor-pointer' : 'cursor-default'}`}
             style={{
               left: pos.left,
               top: pos.top,
               transform: 'translate(-50%, -50%)',
               width: holdPct,
               aspectRatio: '1',
-              cursor: onHoldClick ? 'pointer' : 'default',
+              padding: 0,
             }}
-            onClick={() => onHoldClick?.(hold)}
             title={showLabels ? `${hold.placement_id} (${hold.hole_name})` : undefined}
           >
-            {isMini ? (
-              <div
-                className={`w-full h-full rounded-full transition-colors ${
-                  isHighlighted
-                    ? 'bg-yellow-400 shadow-[0_0_6px_2px_rgba(250,204,21,0.7)]'
-                    : 'bg-zinc-500 opacity-60'
-                }`}
-              />
-            ) : (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={getImageUrl(hold.placement_id)}
-                  alt={`Hold ${hold.placement_id}`}
-                  className={`w-full h-full object-contain rounded transition-all ${
-                    isHighlighted
-                      ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-zinc-900 scale-125'
-                      : ''
-                  }`}
-                  loading="lazy"
-                />
-                {showLabels && (
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 top-full text-[6px] text-zinc-400 whitespace-nowrap"
-                    aria-hidden="true"
-                  >
-                    {hold.placement_id}
-                  </span>
-                )}
-              </>
+            {showLabels && !isMini && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-0.5 text-[8px] text-zinc-200 bg-zinc-900/80 px-1 rounded whitespace-nowrap pointer-events-none"
+                aria-hidden="true"
+              >
+                {hold.placement_id}
+              </span>
             )}
-          </div>
+          </button>
         );
       })}
     </div>

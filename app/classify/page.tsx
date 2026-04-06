@@ -1,191 +1,20 @@
 'use client';
 
 import { useEffect, useReducer, useCallback, useState } from 'react';
-import BoardMap, { Placement, getHoldImageUrl } from '@/components/BoardMap';
-import placementsData from '@/app/data/placements_12x12.json';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Category = 'jug' | 'good_crimp' | 'crimp' | 'sloper' | 'undercling' | 'pinch';
-
-/**
- * State design:
- * - visitedOrder: placement_ids in the order they were shown (incl. skipped + classified)
- * - cursor: position in visitedOrder, OR visitedOrder.length = "show next unvisited"
- * - classifications + skipped: the actual data
- *
- * This lets "back" navigate into already-visited holds without losing the queue.
- */
-interface ClassifyState {
-  version: 1;
-  visitedOrder: number[];
-  cursor: number;
-  classifications: Record<number, Category>;
-  skipped: number[];
-}
-
-type Action =
-  | { type: 'CLASSIFY'; placementId: number; category: Category }
-  | { type: 'SKIP'; placementId: number }
-  | { type: 'BACK' }
-  | { type: 'RESET' }
-  | { type: 'RESTORE'; state: ClassifyState };
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const LS_KEY = 'kilter_hold_classifications';
-
-// Sorted: top of board first (y DESC), then left-to-right (x ASC)
-const ALL_HOLDS: Placement[] = (placementsData as Placement[]).slice().sort(
-  (a, b) => b.y - a.y || a.x - b.x,
-);
-const TOTAL = ALL_HOLDS.length;
-
-const CATEGORIES: { value: Category; label: string; color: string }[] = [
-  { value: 'jug',        label: 'Jug',       color: 'bg-green-600 hover:bg-green-500' },
-  { value: 'good_crimp', label: 'Good Crimp', color: 'bg-blue-600 hover:bg-blue-500' },
-  { value: 'crimp',      label: 'Crimp',      color: 'bg-orange-500 hover:bg-orange-400' },
-  { value: 'sloper',     label: 'Sloper',     color: 'bg-purple-600 hover:bg-purple-500' },
-  { value: 'undercling', label: 'Undercling', color: 'bg-red-600 hover:bg-red-500' },
-  { value: 'pinch',      label: 'Pinch',      color: 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900' },
-];
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function initialState(): ClassifyState {
-  return { version: 1, visitedOrder: [], cursor: 0, classifications: {}, skipped: [] };
-}
-
-/**
- * Returns the next hold to show that hasn't been visited yet.
- * Priority order:
- *   1. Unclassified, unskipped holds (in sorted board order)
- *   2. Skipped holds (appended at end, in skip order)
- */
-function nextUnvisited(state: ClassifyState): Placement | null {
-  const visited = new Set(state.visitedOrder);
-  const classified = new Set(Object.keys(state.classifications).map(Number));
-  const skippedSet = new Set(state.skipped);
-
-  // First: unclassified, unskipped, unvisited
-  const pending = ALL_HOLDS.find(
-    (h) => !classified.has(h.placement_id) && !skippedSet.has(h.placement_id) && !visited.has(h.placement_id),
-  );
-  if (pending) return pending;
-
-  // Then: skipped holds not yet re-visited
-  const revisitSkipped = state.skipped.find((id) => !visited.has(id));
-  if (revisitSkipped != null) {
-    return ALL_HOLDS.find((h) => h.placement_id === revisitSkipped) ?? null;
-  }
-
-  return null;
-}
-
-/**
- * Returns the hold to display for the current cursor position.
- */
-function currentHoldForState(state: ClassifyState): Placement | null {
-  if (state.cursor < state.visitedOrder.length) {
-    const id = state.visitedOrder[state.cursor];
-    return ALL_HOLDS.find((h) => h.placement_id === id) ?? null;
-  }
-  // cursor is at the frontier → show next unvisited
-  return nextUnvisited(state);
-}
-
-// ─── Reducer ─────────────────────────────────────────────────────────────────
-
-function reducer(state: ClassifyState, action: Action): ClassifyState {
-  switch (action.type) {
-    case 'CLASSIFY': {
-      const alreadyVisited = state.visitedOrder.includes(action.placementId);
-      return {
-        ...state,
-        classifications: { ...state.classifications, [action.placementId]: action.category },
-        skipped: state.skipped.filter((id) => id !== action.placementId),
-        visitedOrder: alreadyVisited
-          ? state.visitedOrder
-          : [...state.visitedOrder, action.placementId],
-        cursor: state.cursor + 1,
-      };
-    }
-    case 'SKIP': {
-      const alreadyVisited = state.visitedOrder.includes(action.placementId);
-      const alreadySkipped = state.skipped.includes(action.placementId);
-      return {
-        ...state,
-        skipped: alreadySkipped ? state.skipped : [...state.skipped, action.placementId],
-        visitedOrder: alreadyVisited
-          ? state.visitedOrder
-          : [...state.visitedOrder, action.placementId],
-        cursor: state.cursor + 1,
-      };
-    }
-    case 'BACK':
-      return { ...state, cursor: Math.max(0, state.cursor - 1) };
-    case 'RESET':
-      return initialState();
-    case 'RESTORE':
-      return action.state;
-    default:
-      return state;
-  }
-}
-
-// ─── Export helpers ───────────────────────────────────────────────────────────
-
-function buildExportData(state: ClassifyState) {
-  const classifiedList = Object.entries(state.classifications).map(([id, category]) => {
-    const hold = ALL_HOLDS.find((h) => h.placement_id === Number(id));
-    return { placement_id: Number(id), category, x: hold?.x ?? 0, y: hold?.y ?? 0 };
-  });
-
-  const counts = CATEGORIES.reduce<Record<string, number>>((acc, c) => {
-    acc[c.value] = 0;
-    return acc;
-  }, {});
-  for (const cat of Object.values(state.classifications)) {
-    counts[cat] = (counts[cat] ?? 0) + 1;
-  }
-
-  return {
-    version: 1,
-    board: 'kilter_original_12x12',
-    classifier: 'anonymous',
-    date: new Date().toISOString(),
-    total: TOTAL,
-    classified: classifiedList.length,
-    skipped: state.skipped.length,
-    categories: counts,
-    classifications: classifiedList,
-  };
-}
-
-async function shareOrDownload(data: object) {
-  const filename = `kilter_classifications_${Date.now()}.json`;
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const file = new File([blob], filename, { type: 'application/json' });
-
-  if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: 'Hold Classifications' });
-      return;
-    } catch {
-      // fall through to download
-    }
-  }
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-
-// ─── Component ────────────────────────────────────────────────────────────────
+import BoardMap, { getHoldImageUrl } from '@/components/BoardMap';
+import {
+  ALL_HOLDS,
+  CATEGORIES,
+  LS_KEY,
+  TOTAL,
+  buildExportData,
+  currentHoldForState,
+  initialState,
+  reducer,
+  shareOrDownload,
+  type Category,
+  type ClassifyState,
+} from './state';
 
 export default function ClassifyPage() {
   const [state, dispatch] = useReducer(reducer, null, () => initialState());

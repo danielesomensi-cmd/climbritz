@@ -44,28 +44,31 @@ describe('BoardMap component', () => {
     expect(holdElements).toHaveLength(336);
   });
 
-  it('highlights the specified hold in mini mode', () => {
-    render(<BoardMap placements={SAMPLE} highlightId={1003} size="mini" />);
-    const highlighted = screen.getByTestId('hold-1003').firstChild as HTMLElement;
-    expect(highlighted).toHaveClass('bg-yellow-400');
+  it('highlights the specified hold', () => {
+    render(<BoardMap placements={SAMPLE} highlightId={1003} />);
+    const highlighted = screen.getByTestId('hold-1003');
+    expect(highlighted.className).toMatch(/border-yellow-300/);
   });
 
-  it('does not highlight other holds in mini mode', () => {
-    render(<BoardMap placements={SAMPLE} highlightId={1003} size="mini" />);
-    const other = screen.getByTestId('hold-1001').firstChild as HTMLElement;
-    expect(other).not.toHaveClass('bg-yellow-400');
+  it('does not highlight other holds', () => {
+    render(<BoardMap placements={SAMPLE} highlightId={1003} />);
+    const other = screen.getByTestId('hold-1001');
+    expect(other.className).not.toMatch(/border-yellow-300/);
   });
 
-  it('renders img tags in full size mode', () => {
+  it('renders a single composite board background image', () => {
     render(<BoardMap placements={SAMPLE} size="full" />);
     const imgs = screen.getAllByRole('img');
-    expect(imgs.length).toBe(SAMPLE.length);
+    // Only the composite board background — no per-hold thumbnails
+    expect(imgs.length).toBe(1);
+    expect((imgs[0] as HTMLImageElement).src).toContain('/api/holds/board-image');
   });
 
-  it('renders dot divs (no img) in mini mode', () => {
+  it('renders the composite background in mini mode as well', () => {
     render(<BoardMap placements={SAMPLE} size="mini" />);
-    const imgs = screen.queryAllByRole('img');
-    expect(imgs.length).toBe(0);
+    const imgs = screen.getAllByRole('img');
+    expect(imgs.length).toBe(1);
+    expect((imgs[0] as HTMLImageElement).src).toContain('/api/holds/board-image');
   });
 
   it('calls onHoldClick when a hold is clicked', () => {
@@ -92,7 +95,7 @@ describe('BoardMap component', () => {
 
   it('renders with size="full" by default', () => {
     render(<BoardMap placements={SAMPLE} />);
-    // Full size renders img tags
-    expect(screen.getAllByRole('img').length).toBeGreaterThan(0);
+    // Default (full) renders the composite background
+    expect(screen.getAllByRole('img').length).toBe(1);
   });
 });

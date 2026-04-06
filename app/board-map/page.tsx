@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import BoardMap, { Placement, BOARD_X_MIN, BOARD_X_MAX, BOARD_Y_MIN, BOARD_Y_MAX } from '@/components/BoardMap';
+import BoardMap, {
+  Placement,
+  BOARD_X_MIN,
+  BOARD_X_MAX,
+  BOARD_Y_MIN,
+  BOARD_Y_MAX,
+  getHoldImageUrl,
+} from '@/components/BoardMap';
 import placementsData from '@/app/data/placements_12x12.json';
 
 const placements = placementsData as Placement[];
-
-const SET_COLORS: Record<string, string> = {
-  'Bolt Ons': '#60a5fa',
-  'Screw Ons': '#f59e0b',
-};
 
 export default function BoardMapPage() {
   const [selectedHold, setSelectedHold] = useState<Placement | null>(null);
@@ -17,7 +19,7 @@ export default function BoardMapPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -36,17 +38,14 @@ export default function BoardMapPage() {
           </button>
         </div>
 
-        {/* Legend */}
-        <div className="flex gap-4 text-xs text-zinc-400">
-          <span>
-            Board: x=[{BOARD_X_MIN}–{BOARD_X_MAX}] y=[{BOARD_Y_MIN}–{BOARD_Y_MAX}]
-          </span>
-          <span>Higher y = higher on board</span>
+        <div className="text-xs text-zinc-400">
+          Board: x=[{BOARD_X_MIN}–{BOARD_X_MAX}] y=[{BOARD_Y_MIN}–{BOARD_Y_MAX}] · Click a hold for details
         </div>
 
-        {/* Board */}
-        <div className="overflow-x-auto">
-          <div style={{ minWidth: '320px' }}>
+        {/* Responsive layout: board + detail panel */}
+        <div className="grid gap-4 md:grid-cols-[1fr_320px]">
+          {/* Board */}
+          <div>
             <BoardMap
               placements={placements}
               highlightId={selectedHold?.placement_id}
@@ -55,37 +54,55 @@ export default function BoardMapPage() {
               onHoldClick={setSelectedHold}
             />
           </div>
-        </div>
 
-        {/* Hold detail panel */}
-        {selectedHold && (
-          <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 space-y-2">
-            <div className="flex items-start justify-between">
-              <h2 className="font-semibold text-lg">Hold #{selectedHold.placement_id}</h2>
-              <button
-                onClick={() => setSelectedHold(null)}
-                className="text-zinc-400 hover:text-zinc-100 text-xl leading-none"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <dt className="text-zinc-400">Placement ID</dt>
-              <dd>{selectedHold.placement_id}</dd>
-              <dt className="text-zinc-400">Hole ID</dt>
-              <dd>{selectedHold.hole_id}</dd>
-              <dt className="text-zinc-400">Hole name</dt>
-              <dd>{selectedHold.hole_name}</dd>
-              <dt className="text-zinc-400">Position (x, y)</dt>
-              <dd>({selectedHold.x}, {selectedHold.y})</dd>
-              <dt className="text-zinc-400">Default role</dt>
-              <dd>{selectedHold.default_role}</dd>
-              <dt className="text-zinc-400">Set</dt>
-              <dd>{selectedHold.set_name}</dd>
-            </dl>
-          </div>
-        )}
+          {/* Detail panel — side on desktop, below on mobile */}
+          <aside
+            className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 min-h-[260px]"
+            data-testid="hold-detail-panel"
+          >
+            {selectedHold ? (
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <h2 className="font-semibold text-lg">Hold #{selectedHold.placement_id}</h2>
+                  <button
+                    onClick={() => setSelectedHold(null)}
+                    className="text-zinc-400 hover:text-zinc-100 text-2xl leading-none"
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Large crop of the individual hold */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getHoldImageUrl(selectedHold.placement_id)}
+                  alt={`Hold ${selectedHold.placement_id}`}
+                  className="w-full aspect-square object-contain rounded-lg bg-zinc-800 border border-zinc-700"
+                />
+
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-zinc-400">Placement</dt>
+                  <dd>{selectedHold.placement_id}</dd>
+                  <dt className="text-zinc-400">Hole</dt>
+                  <dd>
+                    {selectedHold.hole_name} <span className="text-zinc-500">(#{selectedHold.hole_id})</span>
+                  </dd>
+                  <dt className="text-zinc-400">Position</dt>
+                  <dd>({selectedHold.x}, {selectedHold.y})</dd>
+                  <dt className="text-zinc-400">Role</dt>
+                  <dd>{selectedHold.default_role}</dd>
+                  <dt className="text-zinc-400">Set</dt>
+                  <dd>{selectedHold.set_name}</dd>
+                </dl>
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500 text-center pt-16">
+                Click a hold on the board to see its details.
+              </p>
+            )}
+          </aside>
+        </div>
 
         {/* Stats */}
         <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4">
