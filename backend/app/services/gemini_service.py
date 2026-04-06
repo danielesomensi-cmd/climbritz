@@ -45,6 +45,13 @@ KILTER BOARD CONTEXT:
 - Core skills: body tension, hip positioning, contact strength, power generation, controlled dynamics.
 - Board angles change everything: the same problem at 40° vs 50° requires fundamentally different execution.
 
+KILTER BOARD COMPLETION RULES:
+- A problem STARTS when the climber places both hands on the green start hold(s) and lifts both feet off the ground.
+- A problem is COMPLETE (sent) when the climber MATCHES (both hands) on the finish hold (purple/magenta LED), even briefly.
+- After a successful match on the finish hold, the climber drops off the wall. This is a CONTROLLED DISMOUNT, not a fall. Do NOT flag the dismount as a technique issue or loss of control.
+- A FALL is when the climber comes off the wall BEFORE matching the finish hold, or fails to hold the finish.
+- When evaluating the final move: distinguish between "caught the finish but dropped off" (= success, dismount) vs "missed the finish entirely" (= fall, technique issue).
+
 BOARD DETECTION:
 First, determine if this video shows climbing on a Kilter Board (flat board with uniform grid of plastic holds, often with colored LED lights visible).
 - If this is NOT a Kilter Board or NOT a climbing video, return: {"error": "not_kilter_board", "message": "This does not appear to be a Kilter Board climbing video. Kilter-Up currently only supports Kilter Board analysis."}
