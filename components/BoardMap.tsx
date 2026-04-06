@@ -31,6 +31,12 @@ interface BoardMapProps {
   showLabels?: boolean;
   /** Called when a hold is clicked */
   onHoldClick?: (placement: Placement) => void;
+  /**
+   * Optional fill color per hold, keyed by placement_id. If omitted the
+   * default (unclassified) cyan look is used. Used by the classify flow to
+   * show per-category colors at a glance.
+   */
+  holdColors?: Record<number, string>;
 }
 
 function getApiBase(): string {
@@ -60,6 +66,7 @@ export default function BoardMap({
   size = 'full',
   showLabels = false,
   onHoldClick,
+  holdColors,
 }: BoardMapProps) {
   const isMini = size === 'mini';
   // Circle diameter as % of board width. Mini stays small; full is generous enough to click.
@@ -84,6 +91,17 @@ export default function BoardMap({
       {placements.map((hold) => {
         const pos = toPosition(hold.x, hold.y);
         const isHighlighted = hold.placement_id === highlightId;
+        const customColor = holdColors?.[hold.placement_id];
+
+        // Base (unclassified) look: translucent gray.
+        // With a custom color: colored fill + matching border.
+        // Highlighted: pulsing yellow ring overlay regardless of fill.
+        const baseClass = customColor
+          ? 'border-white/80'
+          : 'border-zinc-300/70 bg-zinc-400/25 hover:bg-zinc-300/40';
+        const highlightClass = isHighlighted
+          ? 'ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent shadow-[0_0_10px_3px_rgba(250,204,21,0.7)] animate-pulse'
+          : '';
 
         return (
           <button
@@ -93,11 +111,9 @@ export default function BoardMap({
             aria-label={`Hold ${hold.placement_id} (${hold.hole_name})`}
             onClick={onHoldClick ? () => onHoldClick(hold) : undefined}
             disabled={!onHoldClick}
-            className={`absolute rounded-full border transition-all ${
-              isHighlighted
-                ? 'border-yellow-300 bg-yellow-400/30 shadow-[0_0_10px_3px_rgba(250,204,21,0.7)] animate-pulse'
-                : 'border-cyan-300/60 bg-cyan-400/10 hover:bg-cyan-400/30 hover:border-cyan-200'
-            } ${onHoldClick ? 'cursor-pointer' : 'cursor-default'}`}
+            className={`absolute rounded-full border transition-all ${baseClass} ${highlightClass} ${
+              onHoldClick ? 'cursor-pointer hover:scale-110' : 'cursor-default'
+            }`}
             style={{
               left: pos.left,
               top: pos.top,
@@ -105,6 +121,7 @@ export default function BoardMap({
               width: holdPct,
               aspectRatio: '1',
               padding: 0,
+              backgroundColor: customColor ?? undefined,
             }}
             title={showLabels ? `${hold.placement_id} (${hold.hole_name})` : undefined}
           >

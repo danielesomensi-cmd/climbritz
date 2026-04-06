@@ -8,9 +8,7 @@ import placementsData from '@/app/data/placements_12x12.json';
 export type Category = 'jug' | 'good_crimp' | 'crimp' | 'sloper' | 'undercling' | 'pinch';
 
 export interface ClassifyState {
-  version: 1;
-  visitedOrder: number[];
-  cursor: number;
+  version: 2;
   classifications: Record<number, Category>;
   skipped: number[];
 }
@@ -18,7 +16,7 @@ export interface ClassifyState {
 export type ClassifyAction =
   | { type: 'CLASSIFY'; placementId: number; category: Category }
   | { type: 'SKIP'; placementId: number }
-  | { type: 'BACK' }
+  | { type: 'UNSKIP'; placementId: number }
   | { type: 'RESET' }
   | { type: 'RESTORE'; state: ClassifyState };
 
@@ -31,80 +29,67 @@ export const ALL_HOLDS: Placement[] = (placementsData as Placement[])
 
 export const TOTAL = ALL_HOLDS.length;
 
-export const CATEGORIES: { value: Category; label: string; color: string }[] = [
-  { value: 'jug',        label: 'Jug',        color: 'bg-green-600 hover:bg-green-500' },
-  { value: 'good_crimp', label: 'Good Crimp', color: 'bg-blue-600 hover:bg-blue-500' },
-  { value: 'crimp',      label: 'Crimp',      color: 'bg-orange-500 hover:bg-orange-400' },
-  { value: 'sloper',     label: 'Sloper',     color: 'bg-purple-600 hover:bg-purple-500' },
-  { value: 'undercling', label: 'Undercling', color: 'bg-red-600 hover:bg-red-500' },
-  { value: 'pinch',      label: 'Pinch',      color: 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900' },
+export const CATEGORIES: {
+  value: Category;
+  label: string;
+  /** Tailwind classes for buttons */
+  color: string;
+  /** Raw hex used to fill the matching circle on the board overlay */
+  fill: string;
+}[] = [
+  { value: 'jug',        label: 'Jug',        color: 'bg-green-600 hover:bg-green-500',                       fill: '#16a34a' },
+  { value: 'good_crimp', label: 'Good Crimp', color: 'bg-blue-600 hover:bg-blue-500',                         fill: '#2563eb' },
+  { value: 'crimp',      label: 'Crimp',      color: 'bg-orange-500 hover:bg-orange-400',                     fill: '#f97316' },
+  { value: 'sloper',     label: 'Sloper',     color: 'bg-purple-600 hover:bg-purple-500',                     fill: '#9333ea' },
+  { value: 'undercling', label: 'Undercling', color: 'bg-red-600 hover:bg-red-500',                           fill: '#dc2626' },
+  { value: 'pinch',      label: 'Pinch',      color: 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900',       fill: '#eab308' },
 ];
 
+/** Lookup table: category value → fill hex. */
+export const CATEGORY_FILL: Record<Category, string> = CATEGORIES.reduce(
+  (acc, c) => {
+    acc[c.value] = c.fill;
+    return acc;
+  },
+  {} as Record<Category, string>,
+);
+
 export function initialState(): ClassifyState {
-  return { version: 1, visitedOrder: [], cursor: 0, classifications: {}, skipped: [] };
+  return { version: 2, classifications: {}, skipped: [] };
 }
 
 /**
- * Returns the next hold to show that hasn't been visited yet.
- * Priority: unclassified+unskipped first, then skipped holds.
+ * Returns the first hold (in sorted board order) that is neither classified
+ * nor skipped. Used by the "next unclassified" jump button. Returns null when
+ * nothing is pending.
  */
-export function nextUnvisited(state: ClassifyState): Placement | null {
-  const visited = new Set(state.visitedOrder);
+export function firstUnclassified(state: ClassifyState): Placement | null {
   const classified = new Set(Object.keys(state.classifications).map(Number));
   const skippedSet = new Set(state.skipped);
-
-  const pending = ALL_HOLDS.find(
-    (h) =>
-      !classified.has(h.placement_id) &&
-      !skippedSet.has(h.placement_id) &&
-      !visited.has(h.placement_id),
+  return (
+    ALL_HOLDS.find(
+      (h) => !classified.has(h.placement_id) && !skippedSet.has(h.placement_id),
+    ) ?? null
   );
-  if (pending) return pending;
-
-  const revisitSkipped = state.skipped.find((id) => !visited.has(id));
-  if (revisitSkipped != null) {
-    return ALL_HOLDS.find((h) => h.placement_id === revisitSkipped) ?? null;
-  }
-
-  return null;
-}
-
-export function currentHoldForState(state: ClassifyState): Placement | null {
-  if (state.cursor < state.visitedOrder.length) {
-    const id = state.visitedOrder[state.cursor];
-    return ALL_HOLDS.find((h) => h.placement_id === id) ?? null;
-  }
-  return nextUnvisited(state);
 }
 
 export function reducer(state: ClassifyState, action: ClassifyAction): ClassifyState {
   switch (action.type) {
-    case 'CLASSIFY': {
-      const alreadyVisited = state.visitedOrder.includes(action.placementId);
+    case 'CLASSIFY':
       return {
         ...state,
         classifications: { ...state.classifications, [action.placementId]: action.category },
+        // Classifying implicitly removes the skip flag.
         skipped: state.skipped.filter((id) => id !== action.placementId),
-        visitedOrder: alreadyVisited
-          ? state.visitedOrder
-          : [...state.visitedOrder, action.placementId],
-        cursor: state.cursor + 1,
       };
-    }
     case 'SKIP': {
-      const alreadyVisited = state.visitedOrder.includes(action.placementId);
-      const alreadySkipped = state.skipped.includes(action.placementId);
-      return {
-        ...state,
-        skipped: alreadySkipped ? state.skipped : [...state.skipped, action.placementId],
-        visitedOrder: alreadyVisited
-          ? state.visitedOrder
-          : [...state.visitedOrder, action.placementId],
-        cursor: state.cursor + 1,
-      };
+      if (state.skipped.includes(action.placementId)) return state;
+      // Remove any existing classification when skipping.
+      const { [action.placementId]: _removed, ...rest } = state.classifications;
+      return { ...state, classifications: rest, skipped: [...state.skipped, action.placementId] };
     }
-    case 'BACK':
-      return { ...state, cursor: Math.max(0, state.cursor - 1) };
+    case 'UNSKIP':
+      return { ...state, skipped: state.skipped.filter((id) => id !== action.placementId) };
     case 'RESET':
       return initialState();
     case 'RESTORE':
@@ -129,7 +114,7 @@ export function buildExportData(state: ClassifyState) {
   }
 
   return {
-    version: 1,
+    version: 2,
     board: 'kilter_original_12x12',
     classifier: 'anonymous',
     date: new Date().toISOString(),
