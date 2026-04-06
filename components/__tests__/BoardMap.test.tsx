@@ -61,14 +61,14 @@ describe('BoardMap component', () => {
     const imgs = screen.getAllByRole('img');
     // Only the composite board background — no per-hold thumbnails
     expect(imgs.length).toBe(1);
-    expect((imgs[0] as HTMLImageElement).src).toContain('/api/holds/board-image');
+    expect((imgs[0] as HTMLImageElement).src).toContain('/holds/board_original_12x12.png');
   });
 
   it('renders the composite background in mini mode as well', () => {
     render(<BoardMap placements={SAMPLE} size="mini" />);
     const imgs = screen.getAllByRole('img');
     expect(imgs.length).toBe(1);
-    expect((imgs[0] as HTMLImageElement).src).toContain('/api/holds/board-image');
+    expect((imgs[0] as HTMLImageElement).src).toContain('/holds/board_original_12x12.png');
   });
 
   it('calls onHoldClick when a hold is clicked', () => {

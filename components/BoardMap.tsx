@@ -1,6 +1,6 @@
 'use client';
 
-// Board coordinate bounds match the backend /api/holds/board-image crop
+// Board coordinate bounds match the cached 12x12 board image crop
 // (12x12 Square region: x=[0,144], y=[12,156]).
 export const BOARD_X_MIN = 0;
 export const BOARD_X_MAX = 144;
@@ -39,18 +39,15 @@ interface BoardMapProps {
   holdColors?: Record<number, string>;
 }
 
-function getApiBase(): string {
-  return typeof window !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001')
-    : 'http://localhost:8001';
-}
-
+// Hold images are served as static assets from public/holds/ so the
+// classify and board-map flows work on Vercel without a backend dependency.
+// See B010.
 export function getBoardImageUrl(): string {
-  return `${getApiBase()}/api/holds/board-image`;
+  return '/holds/board_original_12x12.png';
 }
 
 export function getHoldImageUrl(placementId: number): string {
-  return `${getApiBase()}/api/holds/${placementId}/image`;
+  return `/holds/${placementId}.png`;
 }
 
 function toPosition(x: number, y: number) {
