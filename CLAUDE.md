@@ -78,9 +78,10 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ### ✅ ALWAYS Do This
 1. **Write tests for every feature** — pytest (backend), Jest (frontend)
 2. **Test locally before push** — full suite must pass
-3. **Commit with clear messages**: `feat: add video upload endpoint`
-4. **Push after each working feature** — small, atomic commits
-5. **Document complex logic** — docstrings for functions
+3. **Run `npm run build` before every push that includes frontend changes** — pytest and jest alone do NOT catch Next.js type errors or invalid page exports; only `npm run build` does
+4. **Commit with clear messages**: `feat: add video upload endpoint`
+5. **Push after each working feature** — small, atomic commits
+6. **Document complex logic** — docstrings for functions
 
 ### ❌ NEVER Do This
 1. Commit broken code
@@ -193,6 +194,7 @@ git push origin main
 - **Every commit must leave BOTH suites green** — no exceptions, not even pre-existing failures. If you find red tests, fix them in the same session before moving on.
 - **CI:** `.github/workflows/test.yml` runs backend pytest + frontend jest + tsc + next build on every push/PR. A red CI is a blocker.
 - **Local pre-commit hook** (optional but recommended): `ln -sf ../../scripts/git-hooks/pre-commit .git/hooks/pre-commit` — blocks commits with red tests. Bypass only when strictly needed with `SKIP_TESTS=1 git commit ...`.
+- **Local pre-push hook** (active): `.git/hooks/pre-push` runs `npm run build` before every push — aborts if the build fails. This is the last line of defence against broken Vercel deploys.
 
 ---
 
