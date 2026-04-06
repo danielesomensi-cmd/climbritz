@@ -47,13 +47,13 @@ describe('BoardMap component', () => {
   it('highlights the specified hold', () => {
     render(<BoardMap placements={SAMPLE} highlightId={1003} />);
     const highlighted = screen.getByTestId('hold-1003');
-    expect(highlighted.className).toMatch(/border-yellow-300/);
+    expect(highlighted.className).toMatch(/ring-yellow-300/);
   });
 
   it('does not highlight other holds', () => {
     render(<BoardMap placements={SAMPLE} highlightId={1003} />);
     const other = screen.getByTestId('hold-1001');
-    expect(other.className).not.toMatch(/border-yellow-300/);
+    expect(other.className).not.toMatch(/ring-yellow-300/);
   });
 
   it('renders a single composite board background image', () => {
