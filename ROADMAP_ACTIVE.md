@@ -89,8 +89,21 @@ Three levels of coaching intelligence (Coach tier):
 
 ### B001–B005 — Cleanup & Migrations ✅
 - Codebase rationalization, docs, SDK migration, settings migration
-- 136 tests passing
+- 140 backend + 49 frontend tests passing
 - Backend live on Railway, frontend on Vercel
+
+### B007 — Kilter Board Prompt Rework ✅
+- Board detection (non-Kilter videos return error)
+- 5 scores: technique, body_tension, footwork, hip_positioning, power_management
+- `improvements[]` with issue + fix + drill per item (max 3)
+- Calibration guidance (8+ = strong, 9-10 = near-professional)
+- Tested on 4 real Kilter Board videos
+- See `backend/docs/PROMPT_AUDIT.md`
+
+### B008 — Kilter Board Completion Rules ✅
+- Added `KILTER BOARD COMPLETION RULES` section to prompt
+- Defines start, send (match on purple/magenta), controlled dismount, and fall
+- Fixes Gemini misinterpreting post-match dismount as a fall
 
 ---
 
@@ -129,12 +142,13 @@ Three levels of coaching intelligence (Coach tier):
 
 ## Pre-Phase 3 — Quick Wins (unchanged)
 
-### Prompt & Output Refinement (D001 → B brief)
-- [ ] Audit current Gemini prompt in `gemini_service.py`
-- [ ] Define compact structured JSON output schema
-- [ ] Always include dual grading: Font AND V-grade
-- [ ] Test with real climbing videos
-- [ ] STOP gate: review prompt changes before merging
+### Prompt & Output Refinement (D001 → B007 → B008) ✅
+- [x] Audit current Gemini prompt in `gemini_service.py` — D001-mini → PROMPT_AUDIT.md
+- [x] Define compact structured JSON output schema — B007
+- [x] Dual grading: removed AI estimation entirely (comes from DB in Level 2) — B007
+- [x] Test with real climbing videos — 4 videos tested in B007
+- [x] STOP gate: B007 reviewed and merged; B008 completion rules added
+- [x] Kilter Board completion rules (match = send, dismount ≠ fall) — B008
 
 ### Video Thumbnails + Replay (B003)
 - [ ] Extract frame via ffmpeg, save as JPEG

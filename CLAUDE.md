@@ -39,14 +39,17 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B007 + Phase 3b Complete — 1 April 2026)
+## 📦 Current State (B008 + Phase 3b Complete — 6 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
 ✅ **B001:** Codebase rationalization — single endpoint set, clean migrations, all tests green
 ✅ **B007:** Kilter Board-specific prompt rework — board detection, 5 scores, drills per issue
+✅ **B008:** Kilter Board completion rules added to prompt — match on finish hold = send, post-match drop = dismount not fall
 ✅ **Phase 3a:** BoardLib DB setup — climb_service.py, test fixture DB
 ✅ **Phase 3b:** Climb search + detail API endpoints
+✅ **HC-2:** 12x12 board map (composite background, annotated, mobile-friendly)
+✅ **HC-5:** Hold classification validation UI (mobile, board map per hold, AI guess + override)
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -59,11 +62,11 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 - `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
 - `GET /api/climbs/stats` → DB health stats
 
-**Next:** Pre-Phase 3 — Hold Classification (HC-1 through HC-7), then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
-
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`.
 
-**Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007), JSON repair + Pydantic validation
+**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-4 AI batch classification, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
+
+**Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
 ---
 
@@ -237,5 +240,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.6 (HC-2/HC-5 board-map rework with composite image + CI/pre-commit hook 2026-04-06)
-**Owner:** Daniele Somensi + Sam (AI Agent)
+**Version:** 2.7 (B008 completion rules + D002 doc sync 2026-04-06)
+**Owner:** Daniele Somensi + Claude Code

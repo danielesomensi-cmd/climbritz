@@ -1,5 +1,5 @@
 # Gemini Prompt Audit
-> Last updated: 2026-04-01 (B007 — Kilter Board-specific rework)
+> Last updated: 2026-04-06 (B008 — Kilter Board completion rules added)
 > File: `backend/app/services/gemini_service.py`
 
 ---
@@ -21,6 +21,9 @@ Key changes from old prompt:
 - **Added** overall_impression (flash/onsight/projecting/working)
 - **Removed** specific_feedback (5 filler sub-sections) — replaced with concise improvements
 - **Added** calibration guidance (8+ = strong, 9-10 = near-professional)
+
+**B008 addition (2026-04-06):**
+- **Added** `KILTER BOARD COMPLETION RULES` section: defines start, send, dismount, and fall. Fixes Gemini misinterpreting a successful send (match + drop) as a fall. Root cause: "Pulp Friction" 7A @ 45° — Gemini flagged the post-match dismount as "loss of control".
 
 ---
 
@@ -86,7 +89,7 @@ Error response (non-Kilter Board video):
 - [x] ~~Single grade format~~ — grade estimation removed entirely (comes from DB in Level 2)
 - [x] ~~Filler sections (breathing, route_reading)~~ — removed, replaced with concise improvements
 
-## Remaining TODOs (Level 2 — Phase 3c)
+## Remaining TODOs (Level 2 — Phase 3d)
 
 - [ ] Inject climb context (name, grade, holds, angle) when `climb_id` is provided
 - [ ] Add move-by-move analysis when climb context is available

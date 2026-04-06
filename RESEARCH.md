@@ -130,7 +130,7 @@ The BoardLib database `leds` table maps `hole_id → LED position`. This means:
 - **Limitation:** Not every climb has a YouTube video. Coverage is good for popular/benchmark problems, sparse for obscure ones
 
 ### Gemini Video Capabilities
-- Gemini 2.0 Flash can process full videos via File API (already implemented in our backend)
+- Gemini 2.5 Flash can process full videos via File API (already implemented in our backend)
 - Can accept MULTIPLE videos in a single request for comparison
 - Can analyze technique: body position, foot placement, momentum, timing
 - **Key insight:** Gemini can also analyze still images of the board with LEDs lit to identify hold patterns
@@ -220,8 +220,6 @@ The DB coordinate system (source: D005 Q7) for **Kilter Board Original 12x12 Squ
 ### Next Step
 
 Second PoC — test a count-holds prompt on a second real photo. If validated, proceed to Phase 4 implementation with this approach. See ROADMAP_ACTIVE.md Phase 4 for full task list and three-level matching strategy.
-
-<!-- TODO (not in scope B008): update "Gemini 2.0 Flash" → "Gemini 2.5 Flash" in Gemini Video Capabilities section above -->
 
 ---
 
