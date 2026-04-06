@@ -118,10 +118,10 @@ Three levels of coaching intelligence (Coach tier):
 | # | Task | Owner | Effort | Notes |
 |---|------|-------|--------|-------|
 | HC-1 | Install BoardLib, download Kilter DB + hold images | Claude Code | 1 day | `boardlib database kilter` + `boardlib images kilter` |
-| HC-2 | Build canonical 12x12 board map (annotated, numbered, mobile-friendly) | Claude Code | 1 day | Must show hold position clearly on board for gym validation |
+| HC-2 | ✅ Build canonical 12x12 board map (annotated, numbered, mobile-friendly) | Claude Code | 1 day | Composite background + 336 overlay markers, precise empirical crop (`/board-map`) |
 | HC-3 | Validate taxonomy with Christie (show 20 random holds) | Daniele | 0.5 day | If >80% agreement → taxonomy confirmed |
 | HC-4 | AI batch classification script (Gemini Flash, all ~323 handholds) | Claude Code | 1 day | Output: JSON per hold with category + confidence |
-| HC-5 | Build mobile validation UI (hold image + board position + AI guess + override) | Claude Code | 1 day | **Must work on phone in gym — board map visible per hold** |
+| HC-5 | ✅ Build mobile validation UI (hold image + board position + AI guess + override) | Claude Code | 1 day | `/classify` free-click flow with color overlay + localStorage + JSON export |
 | HC-6 | Daniele validates all holds in gym | Daniele | 0.5 day | Touch holds physically, confirm/override classification |
 | HC-7 | Store classifications in DB (`hold_classifications` table) + apply to board sizes | Claude Code | 0.5 day | Alembic migration — STOP gate |
 
