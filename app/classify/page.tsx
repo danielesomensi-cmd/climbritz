@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useReducer, useCallback, useState } from 'react';
-import BoardMap, { Placement } from '@/components/BoardMap';
+import BoardMap, { Placement, getHoldImageUrl } from '@/components/BoardMap';
 import placementsData from '@/app/data/placements_12x12.json';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type Category = 'jug' | 'good_crimp' | 'crimp' | 'sloper' | 'undercling' | 'pinch';
+type Category = 'jug' | 'good_crimp' | 'crimp' | 'sloper' | 'undercling' | 'pinch';
 
 /**
  * State design:
@@ -16,7 +16,7 @@ export type Category = 'jug' | 'good_crimp' | 'crimp' | 'sloper' | 'undercling' 
  *
  * This lets "back" navigate into already-visited holds without losing the queue.
  */
-export interface ClassifyState {
+interface ClassifyState {
   version: 1;
   visitedOrder: number[];
   cursor: number;
@@ -41,7 +41,7 @@ const ALL_HOLDS: Placement[] = (placementsData as Placement[]).slice().sort(
 );
 const TOTAL = ALL_HOLDS.length;
 
-export const CATEGORIES: { value: Category; label: string; color: string }[] = [
+const CATEGORIES: { value: Category; label: string; color: string }[] = [
   { value: 'jug',        label: 'Jug',       color: 'bg-green-600 hover:bg-green-500' },
   { value: 'good_crimp', label: 'Good Crimp', color: 'bg-blue-600 hover:bg-blue-500' },
   { value: 'crimp',      label: 'Crimp',      color: 'bg-orange-500 hover:bg-orange-400' },
@@ -62,7 +62,7 @@ function initialState(): ClassifyState {
  *   1. Unclassified, unskipped holds (in sorted board order)
  *   2. Skipped holds (appended at end, in skip order)
  */
-export function nextUnvisited(state: ClassifyState): Placement | null {
+function nextUnvisited(state: ClassifyState): Placement | null {
   const visited = new Set(state.visitedOrder);
   const classified = new Set(Object.keys(state.classifications).map(Number));
   const skippedSet = new Set(state.skipped);
@@ -85,7 +85,7 @@ export function nextUnvisited(state: ClassifyState): Placement | null {
 /**
  * Returns the hold to display for the current cursor position.
  */
-export function currentHoldForState(state: ClassifyState): Placement | null {
+function currentHoldForState(state: ClassifyState): Placement | null {
   if (state.cursor < state.visitedOrder.length) {
     const id = state.visitedOrder[state.cursor];
     return ALL_HOLDS.find((h) => h.placement_id === id) ?? null;
@@ -135,7 +135,7 @@ function reducer(state: ClassifyState, action: Action): ClassifyState {
 
 // ─── Export helpers ───────────────────────────────────────────────────────────
 
-export function buildExportData(state: ClassifyState) {
+function buildExportData(state: ClassifyState) {
   const classifiedList = Object.entries(state.classifications).map(([id, category]) => {
     const hold = ALL_HOLDS.find((h) => h.placement_id === Number(id));
     return { placement_id: Number(id), category, x: hold?.x ?? 0, y: hold?.y ?? 0 };
@@ -184,10 +184,6 @@ async function shareOrDownload(data: object) {
   URL.revokeObjectURL(url);
 }
 
-function holdImageUrl(placementId: number): string {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001';
-  return `${base}/api/holds/${placementId}/image`;
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -234,7 +230,7 @@ export default function ClassifyPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center px-4 py-6">
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-md space-y-4">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -300,13 +296,23 @@ export default function ClassifyPage() {
           </div>
         ) : (
           <>
-            {/* Hold image */}
+            {/* Composite board with current hold highlighted */}
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-2">
+              <p className="text-[10px] text-zinc-500 mb-1 text-center">Board position</p>
+              <BoardMap
+                placements={ALL_HOLDS}
+                highlightId={currentHold.placement_id}
+                size="mini"
+              />
+            </div>
+
+            {/* Current hold — large crop */}
             <div className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 flex flex-col items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={holdImageUrl(currentHold.placement_id)}
+                src={getHoldImageUrl(currentHold.placement_id)}
                 alt={`Hold ${currentHold.placement_id}`}
-                className="w-40 h-40 object-contain rounded-lg bg-zinc-800"
+                className="w-56 h-56 object-contain rounded-lg bg-zinc-800"
               />
               <p className="text-xs text-zinc-500">
                 #{currentHold.placement_id} · ({currentHold.x}, {currentHold.y}) · {currentHold.default_role}
@@ -317,18 +323,6 @@ export default function ClassifyPage() {
                   Current: {state.classifications[currentHold.placement_id].replace('_', ' ')}
                 </span>
               )}
-            </div>
-
-            {/* Mini board map */}
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-2">
-              <p className="text-[10px] text-zinc-500 mb-1 text-center">Board position</p>
-              <div style={{ maxWidth: '160px', margin: '0 auto' }}>
-                <BoardMap
-                  placements={ALL_HOLDS}
-                  highlightId={currentHold.placement_id}
-                  size="mini"
-                />
-              </div>
             </div>
 
             {/* Category buttons */}
