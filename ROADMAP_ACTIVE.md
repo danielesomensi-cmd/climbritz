@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 6 April 2026
+> Updated: 8 April 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -89,7 +89,7 @@ Three levels of coaching intelligence (Coach tier):
 
 ### B001–B005 — Cleanup & Migrations ✅
 - Codebase rationalization, docs, SDK migration, settings migration
-- 140 backend + 49 frontend tests passing
+- 161 backend + 91 frontend tests passing
 - Backend live on Railway, frontend on Vercel
 
 ### B007 — Kilter Board Prompt Rework ✅
@@ -172,14 +172,15 @@ Three levels of coaching intelligence (Coach tier):
 
 ### 3b — Climb Search API + Advanced Filters (1-2 weeks) (✅ Complete)
 - [x] `GET /api/climbs/search` with core filters:
-  - Name (autocomplete)
-  - Grade range (V-scale + Font)
-  - Angle
-  - Min ascents / popularity
-  - Star rating
-  - Difficulty accuracy
-  - Board size/layout
-  - Setter name
+  - [x] Name (autocomplete)
+  - [x] Grade range (numeric difficulty) — A011
+  - [x] Angle
+  - [x] Min ascents / popularity — A011
+  - [x] Min star rating (quality) — A011
+  - [x] Sort: popularity / quality / grade asc / grade desc — A011
+  - [ ] Difficulty accuracy (deferred)
+  - [ ] Board size/layout (12x12 only at launch)
+  - [ ] Setter name (deferred)
 - [ ] Additional filters (requires hold classification — Pre-Phase 3):
   - **Grip type** (jug/good crimp/crimp/sloper/undercling/pinch) — from hold classification
   - **Number of moves** (derived from layout string `p` count)
@@ -188,6 +189,18 @@ Three levels of coaching intelligence (Coach tier):
 - [ ] `GET /api/climbs/{id}/similar` — similar problems (Jaccard on hold sets, same grade/angle different holds)
 - [x] Dual grade display everywhere: Font + V-grade
 - [x] Tests
+
+### A011 — Discovery Frontend (✅ Complete, 8 April 2026)
+- [x] `/discover` page: angle selector, search input (300ms debounce),
+      filter panel (grade range, min ascents, min stars, sort)
+- [x] Filter state mirrored in URL params (shareable)
+- [x] Grip-type chips wired but disabled — enable once HC-6 lands
+- [x] `/discover/[climb_uuid]` page: title block, board visualization
+      (reuses BoardMap with role colors), role legend, other-angles
+      links, action bar (Favorite/Coach/BLE — Coach is live, others stub)
+- [x] BottomNav (Home / Discover / Coach / Profile) — added across app
+- [x] 42 new frontend tests — total 91 frontend, 161 backend
+- [x] Backend filter extension (grade_min/max, min_ascents, min_quality, sort)
 
 ### 3c — AI Session Builder (1-2 weeks)
 - [ ] `POST /api/sessions/build` — natural language OR structured input (dropdowns)

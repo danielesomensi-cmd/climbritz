@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 6 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 8 Aprile 2026
 
 ---
 
@@ -22,8 +22,9 @@
 | Climb endpoints | ✅ Done | GET search, GET detail, GET stats (Phase 3b) |
 | BoardLib DB | ✅ Done | 344k+ climbs, climb_service.py, test fixture DB |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 140 backend + 49 frontend passing, CI on GitHub Actions |
+| Tests | ✅ Done | 161 backend + 91 frontend passing, CI on GitHub Actions |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
+| Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). Grip-type filter wired but disabled. |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
 | BoardLib integration | ✅ Phase 3a+3b | DB setup + search/detail API. Phase 3d (Level 2 analysis) next |
 | Training logs | ⏳ Da fare | Phase 6 |
@@ -183,7 +184,7 @@ for frame in frames:
 ### ✅ Phase 1 — Foundation (Done)
 ### ✅ Phase 2 — Video Analysis (Done)
 ### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [IN PROGRESS — HC-1✅ HC-2✅ HC-3⏳ HC-5✅ HC-6⏳ HC-7⏳] (HC-4 removed — manual classification via `/classify` UI)
-### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ 3c→3h pending)
+### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ A011 frontend✅ 3c→3h pending)
 ### ⏳ Phase 3.5 — Soft Launch (Discovery free → Coach paid)
 ### ⏳ Phase 4 — Visual Problem Recognition
 ### ⏳ Phase 5 — Expert Video Comparison

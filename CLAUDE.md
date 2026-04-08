@@ -39,17 +39,19 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B008 + Phase 3b Complete — 6 April 2026)
+## 📦 Current State (A011 Complete — 8 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
 ✅ **B001:** Codebase rationalization — single endpoint set, clean migrations, all tests green
 ✅ **B007:** Kilter Board-specific prompt rework — board detection, 5 scores, drills per issue
 ✅ **B008:** Kilter Board completion rules added to prompt — match on finish hold = send, post-match drop = dismount not fall
+✅ **D010:** Backend pytest CI fix — env vars added to GitHub Actions workflow
 ✅ **Phase 3a:** BoardLib DB setup — climb_service.py, test fixture DB
-✅ **Phase 3b:** Climb search + detail API endpoints
+✅ **Phase 3b:** Climb search + detail API (extended in A011 with grade/ascents/quality/sort filters)
+✅ **A011:** Discovery frontend — `/discover` (search + filter panel) + `/discover/[uuid]` (board visualization with role colors). BottomNav added.
 ✅ **HC-2:** 12x12 board map (composite background, annotated, mobile-friendly)
-✅ **HC-5:** Hold classification validation UI (mobile, board map per hold, AI guess + override)
+✅ **HC-5:** Hold classification UI (`/classify` — mobile, board map per hold, manual classification flow)
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -57,14 +59,14 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 - `GET /api/videos` → paginated list
 - `DELETE /api/videos/{id}` → delete
 
-**Climb API surface (Phase 3b):**
-- `GET /api/climbs/search?q={name}&angle={angle}` → autocomplete search
+**Climb API surface (Phase 3b + A011):**
+- `GET /api/climbs/search?q=&angle=&grade_min=&grade_max=&min_ascents=&min_quality=&sort=` → search with filters
 - `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
 - `GET /api/climbs/stats` → DB health stats
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`.
 
-**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-4 AI batch classification, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
+**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -154,10 +156,25 @@ kilter-training-app/
 │   └── requirements.txt
 ├── app/ (Next.js 14 frontend)
 │   ├── page.tsx                    ✅ Homepage
-│   ├── upload/page.tsx             ✅ Drag-drop upload
+│   ├── upload/page.tsx             ✅ Drag-drop upload (Coach)
 │   ├── login/page.tsx              ✅
 │   ├── dashboard/page.tsx          ✅
-│   └── videos/[id]/page.tsx        ✅
+│   ├── videos/[id]/page.tsx        ✅
+│   ├── classify/page.tsx           ✅ Hold classification UI (HC-5)
+│   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
+│   ├── discover/page.tsx           ✅ Discovery: search + filters (A011)
+│   ├── discover/[climb_uuid]/page.tsx ✅ Discovery: climb detail + board viz (A011)
+│   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video/auth APIs
+│   └── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
+├── components/
+│   ├── BoardMap.tsx                ✅ 12x12 board canvas (HC-2)
+│   ├── ClimbBoardView.tsx          ✅ Climb detail board wrapper (A011)
+│   ├── ClimbCard.tsx               ✅ Search result card (A011)
+│   ├── FilterPanel.tsx             ✅ Discovery filters (A011)
+│   ├── GradeDisplay.tsx            ✅ Font/V grade display (A011)
+│   ├── StarRating.tsx              ✅ 5-star widget (A011)
+│   ├── BottomNav.tsx               ✅ App bottom navigation (A011)
+│   └── AuthGuard.tsx               ✅
 ├── CLAUDE.md                       ✅ This file
 ├── PROJECT_STATUS.md               ✅ Decisions log
 ├── ROADMAP_ACTIVE.md               ✅ Phase plan
@@ -240,5 +257,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.7 (B008 completion rules + D002 doc sync 2026-04-06)
+**Version:** 2.8 (A011 Discovery frontend + backend filter extension 2026-04-08)
 **Owner:** Daniele Somensi + Claude Code
