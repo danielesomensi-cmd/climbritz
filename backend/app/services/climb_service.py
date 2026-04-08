@@ -35,7 +35,7 @@ SORT_OPTIONS: dict[str, str] = {
 
 
 def search_climbs(
-    query: str,
+    query: str | None = None,
     angle: int | None = None,
     grade_min: int | None = None,
     grade_max: int | None = None,
@@ -44,12 +44,15 @@ def search_climbs(
     sort: str = "popularity",
     limit: int = 10,
 ) -> list[dict]:
-    """Search climbs by name with prefix matching. Autocomplete-friendly.
+    """Search/browse climbs. Autocomplete-friendly when `query` is provided,
+    pure browse-by-filter when it's None or empty.
 
     Filters: layout_id=1 (Kilter Original), is_listed=1, ascensionist_count > 0.
 
     Args:
-        query: Search string (matched with LIKE %query%).
+        query: Optional search string (matched with LIKE %query%). If None
+               or empty, no name filter is applied — useful for browsing
+               with grade/angle/ascents filters alone.
         angle: Optional wall angle filter.
         grade_min: Minimum numeric difficulty (inclusive, e.g. 16 for 6a/V3).
         grade_max: Maximum numeric difficulty (inclusive).
@@ -72,12 +75,15 @@ def search_climbs(
         JOIN climb_stats cs ON c.uuid = cs.climb_uuid
         JOIN difficulty_grades dg
             ON CAST(ROUND(cs.display_difficulty) AS INT) = dg.difficulty
-        WHERE c.name LIKE ?
-          AND c.layout_id = 1
+        WHERE c.layout_id = 1
           AND c.is_listed = 1
           AND cs.ascensionist_count > 0
     """
-    params: list = [f"%{query}%"]
+    params: list = []
+
+    if query:
+        sql += " AND c.name LIKE ?"
+        params.append(f"%{query}%")
 
     if angle is not None:
         sql += " AND cs.angle = ?"

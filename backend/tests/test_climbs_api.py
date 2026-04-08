@@ -41,9 +41,28 @@ class TestSearchEndpoint:
         assert resp.status_code == 200
         assert resp.json() == []
 
-    def test_search_requires_query(self):
+    def test_search_without_query_returns_all(self):
+        # B012: q is now optional. With no q, return everything matching
+        # the rest of the filters (here: nothing else, so all 4 fixture rows).
         resp = client.get("/api/climbs/search")
-        assert resp.status_code == 422
+        assert resp.status_code == 200
+        assert len(resp.json()) == 4
+
+    def test_search_empty_query_string_returns_all(self):
+        resp = client.get("/api/climbs/search?q=")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 4
+
+    def test_search_no_query_with_filters(self):
+        # Browse-by-filter: angle=40 + grade_min=18 → Beta(20) + Crimp(22)
+        resp = client.get(
+            "/api/climbs/search?angle=40&grade_min=18&sort=quality"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        # quality sort: Beta (4.0) before Crimp (3.8)
+        assert data[0]["name"] == "Benchmark Beta"
 
     def test_search_with_limit(self):
         resp = client.get("/api/climbs/search?q=Benchmark&limit=1")

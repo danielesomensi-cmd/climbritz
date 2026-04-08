@@ -71,19 +71,16 @@ function DiscoverPageInner() {
     router.replace(`/discover?${qs.toString()}`, { scroll: false });
   }, [query, angle, filters, router]);
 
-  // Debounced search.
+  // Debounced search. B012: query is now optional — when it's empty we
+  // still fetch using the active filters (browse-by-filter mode).
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runSearch = useCallback(async () => {
-    if (!query.trim()) {
-      setResults([]);
-      setError(null);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
+      const trimmed = query.trim();
       const res = await searchClimbs({
-        q: query.trim(),
+        q: trimmed || undefined,
         angle,
         grade_min: filters.gradeMin,
         grade_max: filters.gradeMax,
@@ -111,10 +108,9 @@ function DiscoverPageInner() {
 
   const emptyState = useMemo(() => {
     if (loading) return null;
-    if (!query.trim()) return 'Start typing to search 160k+ Kilter Board climbs.';
     if (results.length === 0) return 'No climbs match these filters. Try widening them.';
     return null;
-  }, [loading, query, results.length]);
+  }, [loading, results.length]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24">

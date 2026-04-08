@@ -45,6 +45,28 @@ class TestSearchClimbs:
         results = search_climbs("xyznonexistent")
         assert results == []
 
+    def test_search_without_query_returns_all(self):
+        # B012: query is now optional. With no query, the LIKE clause is
+        # skipped and we get every listed Kilter row.
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs()
+        assert len(results) == 4  # Alpha@40, Alpha@45, Beta@40, Crimp@40
+
+    def test_search_empty_string_query_returns_all(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("")
+        assert len(results) == 4
+
+    def test_search_no_query_with_filters(self):
+        from app.services.climb_service import search_climbs
+
+        # Pure browse-by-filter: no name, just angle + grade range
+        results = search_climbs(angle=40, grade_min=18, grade_max=22)
+        # Beta@40 (20) + Crimp@40 (22)
+        assert len(results) == 2
+
     def test_search_excludes_unlisted(self):
         from app.services.climb_service import search_climbs
 

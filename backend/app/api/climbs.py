@@ -14,7 +14,10 @@ SortField = Literal["popularity", "quality", "grade_asc", "grade_desc"]
 
 @router.get("/search", response_model=list[ClimbSearchResult])
 async def search(
-    q: str = Query(..., min_length=1, description="Search query (climb name)"),
+    q: str | None = Query(
+        default=None,
+        description="Optional search query (climb name). Omit for pure browse-by-filter.",
+    ),
     angle: int | None = Query(default=None, description="Filter by wall angle"),
     grade_min: int | None = Query(
         default=None,

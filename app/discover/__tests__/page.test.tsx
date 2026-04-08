@@ -59,16 +59,23 @@ describe('DiscoverPage', () => {
     expect(screen.getByTestId('angle-40').className).toMatch(/bg-orange-500/);
   });
 
-  it('shows the empty hint when no query is entered', () => {
+  it('fetches results immediately on mount with no query (browse-by-filter)', async () => {
     render(<DiscoverPage />);
-    expect(screen.getByTestId('results-empty').textContent).toMatch(/Start typing/);
+    await waitFor(() => {
+      expect(searchClimbsMock).toHaveBeenCalled();
+    });
+    // First call should have no q (browse mode), only the default angle
+    const firstCallArgs = searchClimbsMock.mock.calls[0][0];
+    expect(firstCallArgs.q).toBeUndefined();
+    expect(firstCallArgs.angle).toBe(40);
   });
 
-  it('does not call the API with an empty query', async () => {
+  it('shows results from the initial browse-by-filter fetch', async () => {
     render(<DiscoverPage />);
-    // Wait past debounce window
-    await new Promise((r) => setTimeout(r, 350));
-    expect(searchClimbsMock).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText('Test Climb One')).toBeInTheDocument();
+      expect(screen.getByText('Test Climb Two')).toBeInTheDocument();
+    });
   });
 
   it('debounces the API call and renders results', async () => {

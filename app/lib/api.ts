@@ -227,7 +227,8 @@ export interface ClimbDetail {
 }
 
 export interface ClimbSearchParams {
-  q: string;
+  /** Optional name query. Omit for browse-by-filter mode (B012). */
+  q?: string;
   angle?: number;
   grade_min?: number;
   grade_max?: number;
@@ -247,7 +248,7 @@ export async function searchClimbs(
   params: ClimbSearchParams,
 ): Promise<ClimbSearchResult[]> {
   const qs = new URLSearchParams();
-  qs.set('q', params.q);
+  if (params.q) qs.set('q', params.q);
   if (params.angle !== undefined) qs.set('angle', String(params.angle));
   if (params.grade_min !== undefined) qs.set('grade_min', String(params.grade_min));
   if (params.grade_max !== undefined) qs.set('grade_max', String(params.grade_max));
