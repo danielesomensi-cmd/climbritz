@@ -182,7 +182,7 @@ for frame in frames:
 
 ### ✅ Phase 1 — Foundation (Done)
 ### ✅ Phase 2 — Video Analysis (Done)
-### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [IN PROGRESS — HC-1✅ HC-2✅ HC-3⏳ HC-4⏳ HC-5✅ HC-6⏳ HC-7⏳]
+### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [IN PROGRESS — HC-1✅ HC-2✅ HC-3⏳ HC-5✅ HC-6⏳ HC-7⏳] (HC-4 removed — manual classification via `/classify` UI)
 ### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ 3c→3h pending)
 ### ⏳ Phase 3.5 — Soft Launch (Discovery free → Coach paid)
 ### ⏳ Phase 4 — Visual Problem Recognition
