@@ -70,6 +70,103 @@ class TestSearchClimbs:
         results = search_climbs("Benchmark", limit=1)
         assert len(results) == 1
 
+    # ── New filter tests (A011) ─────────────────────────────────────────────
+    # Fixture rows (listed, layout=1):
+    #   Alpha@40  diff=16 asc=5000 q=3.5
+    #   Alpha@45  diff=18 asc=2000 q=3.2
+    #   Beta@40   diff=20 asc=3000 q=4.0
+    #   Crimp@40  diff=22 asc=1500 q=3.8
+
+    def test_search_grade_min(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", grade_min=18)
+        # Excludes Alpha@40 (diff=16). Keeps Alpha@45, Beta@40, Crimp@40.
+        assert len(results) == 3
+        names = {(r["name"], r["angle"]) for r in results}
+        assert ("Benchmark Alpha", 40) not in names
+
+    def test_search_grade_max(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", grade_max=18)
+        assert len(results) == 2  # Alpha@40, Alpha@45
+        names = {r["name"] for r in results}
+        assert names == {"Benchmark Alpha"}
+
+    def test_search_grade_range(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", grade_min=18, grade_max=20)
+        # Alpha@45 (18) + Beta@40 (20)
+        assert len(results) == 2
+
+    def test_search_min_ascents(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", min_ascents=2000)
+        # Excludes Crimp@40 (1500). Keeps Alpha@40 (5000), Beta@40 (3000), Alpha@45 (2000).
+        assert len(results) == 3
+        assert all(r["ascensionist_count"] >= 2000 for r in results)
+
+    def test_search_min_quality(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", min_quality=3.8)
+        # Beta@40 (4.0), Crimp@40 (3.8)
+        assert len(results) == 2
+        assert all(r["quality_average"] >= 3.8 for r in results)
+
+    def test_search_sort_popularity_default(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e")
+        # Desc by asc count: 5000, 3000, 2000, 1500
+        counts = [r["ascensionist_count"] for r in results]
+        assert counts == sorted(counts, reverse=True)
+
+    def test_search_sort_quality(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", sort="quality")
+        # Top quality: Beta (4.0)
+        assert results[0]["name"] == "Benchmark Beta"
+
+    def test_search_sort_grade_asc(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", sort="grade_asc")
+        # Easiest first: Alpha@40 (diff 16)
+        assert results[0]["name"] == "Benchmark Alpha"
+        assert results[0]["angle"] == 40
+
+    def test_search_sort_grade_desc(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", sort="grade_desc")
+        # Hardest first: The Crimp Test (diff 22)
+        assert results[0]["name"] == "The Crimp Test"
+
+    def test_search_unknown_sort_falls_back_to_popularity(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs("e", sort="not-a-real-sort")
+        counts = [r["ascensionist_count"] for r in results]
+        assert counts == sorted(counts, reverse=True)
+
+    def test_search_combined_filters(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(
+            "a", angle=40, grade_min=18, min_ascents=2000, sort="quality"
+        )
+        # angle=40 → Alpha@40(diff16), Beta@40(diff20), Crimp@40(diff22)
+        # grade_min=18 → drops Alpha@40
+        # min_ascents=2000 → Beta@40(3000), Crimp@40(1500 DROPPED)
+        # → only Beta
+        assert len(results) == 1
+        assert results[0]["name"] == "Benchmark Beta"
+
     def test_search_result_structure(self):
         from app.services.climb_service import search_climbs
 

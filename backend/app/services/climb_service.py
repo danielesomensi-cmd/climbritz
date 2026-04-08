@@ -26,23 +26,41 @@ def _get_connection():
         conn.close()
 
 
+SORT_OPTIONS: dict[str, str] = {
+    "popularity": "cs.ascensionist_count DESC",
+    "quality": "cs.quality_average DESC, cs.ascensionist_count DESC",
+    "grade_asc": "cs.display_difficulty ASC, cs.ascensionist_count DESC",
+    "grade_desc": "cs.display_difficulty DESC, cs.ascensionist_count DESC",
+}
+
+
 def search_climbs(
     query: str,
     angle: int | None = None,
+    grade_min: int | None = None,
+    grade_max: int | None = None,
+    min_ascents: int | None = None,
+    min_quality: float | None = None,
+    sort: str = "popularity",
     limit: int = 10,
 ) -> list[dict]:
     """Search climbs by name with prefix matching. Autocomplete-friendly.
 
     Filters: layout_id=1 (Kilter Original), is_listed=1, ascensionist_count > 0.
-    Returns results sorted by popularity (ascent count descending).
 
     Args:
         query: Search string (matched with LIKE %query%).
         angle: Optional wall angle filter.
+        grade_min: Minimum numeric difficulty (inclusive, e.g. 16 for 6a/V3).
+        grade_max: Maximum numeric difficulty (inclusive).
+        min_ascents: Minimum ascensionist count.
+        min_quality: Minimum quality average (0–5 scale).
+        sort: One of "popularity", "quality", "grade_asc", "grade_desc".
+              Defaults to "popularity". Unknown values fall back to popularity.
         limit: Max results to return (default 10).
 
     Returns:
-        List of dicts with: uuid, name, setter, grade, grade_v, angle,
+        List of dicts with: uuid, name, setter, grade, angle,
         ascensionist_count, quality_average.
     """
     sql = """
@@ -65,7 +83,25 @@ def search_climbs(
         sql += " AND cs.angle = ?"
         params.append(angle)
 
-    sql += " ORDER BY cs.ascensionist_count DESC LIMIT ?"
+    if grade_min is not None:
+        sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) >= ?"
+        params.append(grade_min)
+
+    if grade_max is not None:
+        sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) <= ?"
+        params.append(grade_max)
+
+    if min_ascents is not None:
+        sql += " AND cs.ascensionist_count >= ?"
+        params.append(min_ascents)
+
+    if min_quality is not None:
+        sql += " AND cs.quality_average >= ?"
+        params.append(min_quality)
+
+    # Whitelist sort to prevent SQL injection. Unknown → popularity.
+    order_clause = SORT_OPTIONS.get(sort, SORT_OPTIONS["popularity"])
+    sql += f" ORDER BY {order_clause} LIMIT ?"
     params.append(limit)
 
     with _get_connection() as conn:

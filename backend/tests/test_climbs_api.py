@@ -62,6 +62,66 @@ class TestSearchEndpoint:
         assert "ascensionist_count" in r
         assert "quality_average" in r
 
+    # ── New filter endpoint tests (A011) ────────────────────────────────────
+
+    def test_search_grade_range(self):
+        resp = client.get("/api/climbs/search?q=e&grade_min=18&grade_max=20")
+        assert resp.status_code == 200
+        # Alpha@45 (18) + Beta@40 (20)
+        assert len(resp.json()) == 2
+
+    def test_search_min_ascents(self):
+        resp = client.get("/api/climbs/search?q=e&min_ascents=3000")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert all(r["ascensionist_count"] >= 3000 for r in data)
+
+    def test_search_min_quality(self):
+        resp = client.get("/api/climbs/search?q=e&min_quality=3.8")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert all(r["quality_average"] >= 3.8 for r in data)
+
+    def test_search_sort_quality(self):
+        resp = client.get("/api/climbs/search?q=e&sort=quality")
+        assert resp.status_code == 200
+        data = resp.json()
+        # First result must be the highest-quality row
+        assert data[0]["quality_average"] == max(r["quality_average"] for r in data)
+
+    def test_search_sort_grade_asc(self):
+        resp = client.get("/api/climbs/search?q=e&sort=grade_asc")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data[0]["name"] == "Benchmark Alpha"
+        assert data[0]["angle"] == 40
+
+    def test_search_sort_grade_desc(self):
+        resp = client.get("/api/climbs/search?q=e&sort=grade_desc")
+        data = resp.json()
+        assert data[0]["name"] == "The Crimp Test"
+
+    def test_search_invalid_sort_rejected(self):
+        resp = client.get("/api/climbs/search?q=e&sort=bogus")
+        assert resp.status_code == 422
+
+    def test_search_grade_min_out_of_range_rejected(self):
+        resp = client.get("/api/climbs/search?q=e&grade_min=5")
+        assert resp.status_code == 422
+
+    def test_search_min_quality_out_of_range_rejected(self):
+        resp = client.get("/api/climbs/search?q=e&min_quality=6")
+        assert resp.status_code == 422
+
+    def test_search_combined_filters(self):
+        resp = client.get(
+            "/api/climbs/search?q=e&angle=40&grade_min=18&min_ascents=2000&sort=quality"
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "Benchmark Beta"
+
 
 class TestDetailEndpoint:
     def test_get_climb_detail(self):
