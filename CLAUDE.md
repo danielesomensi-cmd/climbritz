@@ -64,7 +64,10 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 - `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
 - `GET /api/climbs/stats` → DB health stats
 
-**Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`.
+**Admin API surface (B013):**
+- `POST /api/admin/sync-db` → JWT-protected, runs `boardlib database kilter` to download/sync the BoardLib DB
+
+**Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`).
 
 **Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
 
@@ -120,6 +123,7 @@ kilter-training-app/
 │   │   │   ├── auth.py             ✅ JWT auth (register, login, /me)
 │   │   │   ├── videos.py           ✅ Upload, list, get, delete
 │   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
+│   │   │   ├── admin.py            ✅ Protected: POST /sync-db (B013)
 │   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── core/
 │   │   │   ├── config.py           ✅
@@ -150,6 +154,7 @@ kilter-training-app/
 │   │   ├── test_videos.py          ✅ video + gemini tests
 │   │   ├── test_climb_service.py   ✅ climb service tests
 │   │   ├── test_climbs_api.py      ✅ climb API tests
+│   │   ├── test_admin_api.py       ✅ admin sync-db tests (B013)
 │   │   ├── test_kilter_parser.py   ✅
 │   │   └── fixtures/test_kilter.db ✅ test fixture DB
 │   ├── conftest.py                 ✅
@@ -257,5 +262,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.8 (A011 Discovery frontend + backend filter extension 2026-04-08)
+**Version:** 2.9 (B012 browse-by-filter + B013 Railway kilter.db auto-provision 2026-04-08)
 **Owner:** Daniele Somensi + Claude Code

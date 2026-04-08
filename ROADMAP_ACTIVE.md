@@ -202,6 +202,18 @@ Three levels of coaching intelligence (Coach tier):
 - [x] 42 new frontend tests — total 91 frontend, 161 backend
 - [x] Backend filter extension (grade_min/max, min_ascents, min_quality, sort)
 
+### B012 — Browse-by-Filter (✅ Complete, 8 April 2026)
+- [x] Backend `q` is now optional — omit for pure browse-by-filter mode
+- [x] Frontend fetches on mount; "Start typing…" empty state removed
+- [x] 4 new backend tests + 2 updated frontend tests
+
+### B013 — Deploy kilter.db to Railway (✅ Complete, 8 April 2026)
+- [x] `railway_start.sh` + `backend/railway.toml` download kilter.db via
+      `boardlib database kilter` on first boot if `$BOARDLIB_DB_PATH` missing
+- [x] `POST /api/admin/sync-db` — JWT-protected manual re-sync endpoint
+- [x] 5 new backend tests (auth, success, subprocess failure, timeout)
+- [x] Requires Railway env var `BOARDLIB_DB_PATH=/data/kilter-up/kilter.db`
+
 ### 3c — AI Session Builder (1-2 weeks)
 - [ ] `POST /api/sessions/build` — natural language OR structured input (dropdowns)
 - [ ] Gemini Flash parses natural language → structured query
