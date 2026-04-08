@@ -187,3 +187,92 @@ export async function getVideos(page = 1, perPage = 20): Promise<Video[]> {
 export async function deleteVideo(videoId: string): Promise<void> {
   return apiFetch<void>(`/api/videos/${videoId}`, { method: 'DELETE' });
 }
+
+// --- Climb / Discovery API ---
+
+export type SortField = 'popularity' | 'quality' | 'grade_asc' | 'grade_desc';
+
+export interface ClimbSearchResult {
+  uuid: string;
+  name: string;
+  setter: string;
+  grade: string;        // "6a/V3"
+  angle: number;
+  ascensionist_count: number;
+  quality_average: number;
+}
+
+export interface HoldPosition {
+  placement_id: number;
+  role: string;         // 'start' | 'middle' | 'finish' | 'foot_only'
+  x: number | null;
+  y: number | null;
+}
+
+export interface ClimbStats {
+  angle: number;
+  grade: string;
+  difficulty: number;
+  ascensionist_count: number;
+  quality_average: number;
+}
+
+export interface ClimbDetail {
+  uuid: string;
+  name: string;
+  setter: string;
+  description: string;
+  holds: HoldPosition[];
+  stats: ClimbStats[];
+}
+
+export interface ClimbSearchParams {
+  q: string;
+  angle?: number;
+  grade_min?: number;
+  grade_max?: number;
+  min_ascents?: number;
+  min_quality?: number;
+  sort?: SortField;
+  limit?: number;
+}
+
+/**
+ * Unauthenticated climb search. Discovery is the free tier, so no
+ * Authorization header is required — we call the raw fetch path directly
+ * so we don't accidentally trigger the 401 → /login redirect baked into
+ * apiFetch when no token is present.
+ */
+export async function searchClimbs(
+  params: ClimbSearchParams,
+): Promise<ClimbSearchResult[]> {
+  const qs = new URLSearchParams();
+  qs.set('q', params.q);
+  if (params.angle !== undefined) qs.set('angle', String(params.angle));
+  if (params.grade_min !== undefined) qs.set('grade_min', String(params.grade_min));
+  if (params.grade_max !== undefined) qs.set('grade_max', String(params.grade_max));
+  if (params.min_ascents !== undefined) qs.set('min_ascents', String(params.min_ascents));
+  if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
+  if (params.sort) qs.set('sort', params.sort);
+  if (params.limit !== undefined) qs.set('limit', String(params.limit));
+
+  const res = await fetch(`${API_BASE}/api/climbs/search?${qs.toString()}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ detail: 'Search failed' }));
+    throw new ApiError(res.status, data.detail || 'Search failed');
+  }
+  return res.json();
+}
+
+export async function getClimbDetail(
+  uuid: string,
+  angle?: number,
+): Promise<ClimbDetail> {
+  const qs = angle !== undefined ? `?angle=${angle}` : '';
+  const res = await fetch(`${API_BASE}/api/climbs/${uuid}${qs}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ detail: 'Climb not found' }));
+    throw new ApiError(res.status, data.detail || 'Climb not found');
+  }
+  return res.json();
+}
