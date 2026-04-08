@@ -67,7 +67,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 **Admin API surface (B013):**
 - `POST /api/admin/sync-db` → JWT-protected, runs `boardlib database kilter` to download/sync the BoardLib DB
 
-**Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`).
+**Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
 **Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
 
@@ -155,6 +155,7 @@ kilter-training-app/
 │   │   ├── test_climb_service.py   ✅ climb service tests
 │   │   ├── test_climbs_api.py      ✅ climb API tests
 │   │   ├── test_admin_api.py       ✅ admin sync-db tests (B013)
+│   │   ├── test_startup_validation.py ✅ D014 boardlib DB checks
 │   │   ├── test_kilter_parser.py   ✅
 │   │   └── fixtures/test_kilter.db ✅ test fixture DB
 │   ├── conftest.py                 ✅
@@ -262,5 +263,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.9 (B012 browse-by-filter + B013 Railway kilter.db auto-provision 2026-04-08)
+**Version:** 2.10 (D014 BoardLib DB schema validation + auto-reprovision 2026-04-08)
 **Owner:** Daniele Somensi + Claude Code

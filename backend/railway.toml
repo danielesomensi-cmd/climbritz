@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "if [ ! -f \"${BOARDLIB_DB_PATH:-data/kilter.db}\" ]; then mkdir -p \"$(dirname \"${BOARDLIB_DB_PATH:-data/kilter.db}\")\" && python -m boardlib database kilter \"${BOARDLIB_DB_PATH:-data/kilter.db}\"; fi && python -m alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"
+startCommand = "DB_PATH=\"${BOARDLIB_DB_PATH:-data/kilter.db}\"; if [ ! -f \"$DB_PATH\" ] || ! python -c \"import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute('SELECT 1 FROM climbs LIMIT 1'); c.close()\" \"$DB_PATH\" 2>/dev/null; then echo \"[startup] BoardLib DB missing or invalid at $DB_PATH — re-downloading\"; rm -f \"$DB_PATH\"; mkdir -p \"$(dirname \"$DB_PATH\")\" && python -m boardlib database kilter \"$DB_PATH\"; fi && python -m alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"

@@ -214,6 +214,16 @@ Three levels of coaching intelligence (Coach tier):
 - [x] 5 new backend tests (auth, success, subprocess failure, timeout)
 - [x] Requires Railway env var `BOARDLIB_DB_PATH=/data/kilter-up/kilter.db`
 
+### D014 — Poisoned kilter.db on Railway (✅ Complete, 8 April 2026)
+- [x] Root cause: pre-B013 deploy left an empty SQLite file at
+      `/data/kilter-up/kilter.db` (sqlite3.connect auto-creates on open).
+      B013's `[ ! -f ]` check then skipped the download → `no such table: climbs`.
+- [x] Startup scripts now also probe `SELECT 1 FROM climbs LIMIT 1` and
+      `rm -f` + re-download if the table is missing
+- [x] `app/main.py::_validate_boardlib_db()` fails startup in production
+      when the BoardLib DB is missing or invalid; warns-only in dev/test
+- [x] 5 new backend tests for the validation helper (total 176 backend)
+
 ### 3c — AI Session Builder (1-2 weeks)
 - [ ] `POST /api/sessions/build` — natural language OR structured input (dropdowns)
 - [ ] Gemini Flash parses natural language → structured query

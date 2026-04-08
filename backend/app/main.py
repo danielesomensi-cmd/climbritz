@@ -15,6 +15,44 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+def _validate_boardlib_db():
+    """D014: verify the BoardLib DB exists AND has the `climbs` table.
+
+    sqlite3.connect silently creates empty files on open, so file-presence
+    alone is not enough — a poisoned empty DB on a persistent volume would
+    make every /api/climbs/* request return 500. In production we fail
+    startup loudly; in dev/test we only warn so local work isn't blocked.
+    """
+    import sqlite3
+    from pathlib import Path
+
+    db_path = Path(settings.boardlib_db_path)
+    is_production = settings.environment == "production"
+
+    if not db_path.exists():
+        msg = (
+            f"BoardLib DB missing at {db_path}. Set BOARDLIB_DB_PATH and/or "
+            f"run `boardlib database kilter {db_path}`."
+        )
+        if is_production:
+            raise RuntimeError(msg)
+        logger.warning("BoardLib DB check skipped: %s", msg)
+        return
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("SELECT 1 FROM climbs LIMIT 1")
+        conn.close()
+    except sqlite3.DatabaseError as e:
+        msg = (
+            f"BoardLib DB at {db_path} is invalid or missing 'climbs' table: "
+            f"{e}. Delete the file and redeploy to trigger a fresh download."
+        )
+        if is_production:
+            raise RuntimeError(msg)
+        logger.warning("BoardLib DB check failed: %s", msg)
+
+
 def _validate_startup():
     """Fail fast if critical resources are missing."""
     from pathlib import Path
@@ -30,7 +68,12 @@ def _validate_startup():
     except Exception as e:
         raise RuntimeError(f"Database connectivity check failed: {e}")
 
-    logger.info("Startup validation passed: DB connected, upload dir writable")
+    _validate_boardlib_db()
+
+    logger.info(
+        "Startup validation passed: app DB connected, BoardLib DB valid, "
+        "upload dir writable"
+    )
 
 
 @asynccontextmanager
