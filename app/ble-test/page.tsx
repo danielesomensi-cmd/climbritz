@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useKilterBle } from './use-kilter-ble';
 import { PRESETS } from './presets';
+import { BoardPreview } from './board-preview';
 import type { BleStatus } from './use-kilter-ble';
+import type { LedHold } from './presets';
 
 const STATUS_COLORS: Record<BleStatus, string> = {
   disconnected: 'bg-gray-500',
@@ -22,6 +24,7 @@ const STATUS_LABELS: Record<BleStatus, string> = {
 export default function BleTestPage() {
   const { status, errorMessage, connect, disconnect, sendLeds, allOff } = useKilterBle();
   const [activePreset, setActivePreset] = useState<number | null>(null);
+  const [activeHolds, setActiveHolds] = useState<LedHold[]>([]);
   const [sending, setSending] = useState(false);
 
   const handlePreset = async (id: number) => {
@@ -29,13 +32,15 @@ export default function BleTestPage() {
     if (!preset) return;
     setSending(true);
     setActivePreset(id);
-    await sendLeds(preset.leds);
+    setActiveHolds(preset.holds);
+    await sendLeds(preset.holds);
     setSending(false);
   };
 
   const handleAllOff = async () => {
     setSending(true);
     setActivePreset(null);
+    setActiveHolds([]);
     await allOff();
     setSending(false);
   };
@@ -88,13 +93,13 @@ export default function BleTestPage() {
         <button
           onClick={handleAllOff}
           disabled={status !== 'connected' || sending}
-          className="w-full mb-6 py-3 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-lg tracking-wide"
+          className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-lg tracking-wide"
         >
           Spegni tutto (All Off)
         </button>
 
         {/* Preset grid */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {PRESETS.map((preset) => {
             const isActive = activePreset === preset.id;
             return (
@@ -112,7 +117,7 @@ export default function BleTestPage() {
               >
                 <div className="flex items-start justify-between mb-1">
                   <span className="text-xs text-gray-400">#{preset.id}</span>
-                  <span className="text-xs text-gray-500">{preset.leds.length} LED</span>
+                  <span className="text-xs text-gray-500">{preset.holds.length} LED</span>
                 </div>
                 <p className="font-semibold text-sm leading-tight">{preset.name}</p>
                 <p className="text-xs text-gray-400 mt-1 leading-tight">{preset.description}</p>
@@ -121,8 +126,21 @@ export default function BleTestPage() {
           })}
         </div>
 
+        {/* Board visual preview */}
+        <div className="mb-6">
+          <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+            Anteprima visiva
+            {activePreset !== null && (
+              <span className="ml-2 text-blue-400 normal-case font-normal">
+                — Preset #{activePreset}: {PRESETS.find(p => p.id === activePreset)?.name}
+              </span>
+            )}
+          </p>
+          <BoardPreview holds={activeHolds} />
+        </div>
+
         {/* Legend */}
-        <div className="mt-8 p-3 bg-gray-800 rounded-lg">
+        <div className="p-3 bg-gray-800 rounded-lg">
           <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Colori ruolo</p>
           <div className="grid grid-cols-2 gap-1 text-xs">
             {[

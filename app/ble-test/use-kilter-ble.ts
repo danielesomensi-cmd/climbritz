@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
-import type { LedEntry } from './presets';
+import type { LedHold } from './presets';
 
 export type BleStatus = 'disconnected' | 'scanning' | 'connected' | 'error';
 
@@ -10,7 +10,7 @@ export interface UseKilterBle {
   errorMessage: string | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  sendLeds: (leds: LedEntry[]) => Promise<void>;
+  sendLeds: (holds: LedHold[]) => Promise<void>;
   allOff: () => Promise<void>;
 }
 
@@ -60,10 +60,12 @@ export function useKilterBle(): UseKilterBle {
     setErrorMessage(null);
   }, []);
 
-  const sendLeds = useCallback(async (leds: LedEntry[]) => {
+  const sendLeds = useCallback(async (holds: LedHold[]) => {
     if (!boardRef.current || status !== 'connected') return;
+    // Grip Connect only needs position + role_id/color, strip the x/y visual fields
+    const payload = holds.map(({ position, role_id, color }) => ({ position, role_id, color }));
     try {
-      await boardRef.current.led(leds);
+      await boardRef.current.led(payload);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
