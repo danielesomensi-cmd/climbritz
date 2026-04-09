@@ -224,6 +224,14 @@ Three levels of coaching intelligence (Coach tier):
       when the BoardLib DB is missing or invalid; warns-only in dev/test
 - [x] 5 new backend tests for the validation helper (total 176 backend)
 
+### B016 — Board Visualization Fixes (✅ Complete, 9 April 2026)
+- [x] `HoldPosition.set_id` plumbed from BoardLib DB → schema → climb_service → API → frontend types
+- [x] Active holds render as hollow colored rings (transparent fill + thick border + glow) so the physical hold photo stays visible
+- [x] Screw-on footholds (`set_id=20`) drawn ~half the size of bolt-on handholds (`set_id=1`), matching the real board
+- [x] Board bounds extended from y∈[12,156] to y∈[0,156] to include the kickboard row
+- [x] `backend/scripts/regenerate_board_assets.py` — reproducible dump of `placements_12x12.json` (514 placements = 361 bolt + 153 screw) and composite `board_original_12x12.png`
+- [x] 1 new backend test + 2 new frontend tests (total 177 backend, 92 frontend)
+
 ### 3c — AI Session Builder (1-2 weeks)
 - [ ] `POST /api/sessions/build` — natural language OR structured input (dropdowns)
 - [ ] Gemini Flash parses natural language → structured query

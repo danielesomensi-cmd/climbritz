@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (A011 Complete — 8 April 2026)
+## 📦 Current State (B016 Complete — 9 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -52,6 +52,9 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **A011:** Discovery frontend — `/discover` (search + filter panel) + `/discover/[uuid]` (board visualization with role colors). BottomNav added.
 ✅ **HC-2:** 12x12 board map (composite background, annotated, mobile-friendly)
 ✅ **HC-5:** Hold classification UI (`/classify` — mobile, board map per hold, manual classification flow)
+✅ **B013:** Auto-provision BoardLib kilter.db on Railway first boot
+✅ **D014:** Railway DB startup validation — probe `SELECT 1 FROM climbs` + `_validate_boardlib_db()`
+✅ **B016:** Board visualization fixes — hollow rings for active holds, screw-on footholds sized smaller, kickboard row included (y∈[0,156]), HoldPosition.set_id plumbed through backend → frontend
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -158,6 +161,8 @@ kilter-training-app/
 │   │   ├── test_startup_validation.py ✅ D014 boardlib DB checks
 │   │   ├── test_kilter_parser.py   ✅
 │   │   └── fixtures/test_kilter.db ✅ test fixture DB
+│   ├── scripts/
+│   │   └── regenerate_board_assets.py ✅ B016 — dumps placements_12x12.json + composite board PNG
 │   ├── conftest.py                 ✅
 │   └── requirements.txt
 ├── app/ (Next.js 14 frontend)
@@ -263,5 +268,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.10 (D014 BoardLib DB schema validation + auto-reprovision 2026-04-08)
+**Version:** 2.11 (B016 Board visualization — hollow rings, screw-on sizing, kickboard 2026-04-09)
 **Owner:** Daniele Somensi + Claude Code

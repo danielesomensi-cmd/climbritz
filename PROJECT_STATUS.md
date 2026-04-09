@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 8 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 9 Aprile 2026
 
 ---
 
@@ -22,9 +22,9 @@
 | Climb endpoints | ✅ Done | GET search, GET detail, GET stats (Phase 3b) |
 | BoardLib DB | ✅ Done | 344k+ climbs, climb_service.py, test fixture DB |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 176 backend + 91 frontend passing, CI on GitHub Actions |
+| Tests | ✅ Done | 177 backend + 92 frontend passing, CI on GitHub Actions |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
-| Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). Grip-type filter wired but disabled. |
+| Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
 | BoardLib integration | ✅ Phase 3a+3b | DB setup + search/detail API. Phase 3d (Level 2 analysis) next |
 | Training logs | ⏳ Da fare | Phase 6 |
