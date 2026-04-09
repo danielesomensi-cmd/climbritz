@@ -256,14 +256,13 @@ Three levels of coaching intelligence (Coach tier):
   - If yes → proceed. If no → fix prompt before launch.
 
 ### 3e — Capacitor + BLE Integration (1-2 weeks)
-- [ ] Capacitor project setup wrapping Next.js frontend
-- [ ] `@capacitor-community/bluetooth-le` plugin
-- [ ] BLE scan → discover Kilter Board → connect
-- [ ] Light up a problem from search results (layout string → LED mapping via `leds` table)
+- [x] **A006:** Capacitor Android project setup, BLE permissions, `build:mobile` script
+- [x] **A006:** `@hangtime/grip-connect` KilterBoard + `/ble-test` page — 10 LED presets (real positions from `leds` table), connect/disconnect/allOff
+- [ ] BLE scan → light up a problem from search results (layout string → LED mapping via `leds` table)
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems
 - [ ] Connection management (reconnect, error states, disconnect on background)
-- [ ] iOS + Android builds
+- [ ] iOS build (Apple Developer account needed)
 - [ ] Tests
 
 ### 3f — Problem Generation (1-2 weeks)
