@@ -35,13 +35,18 @@ describe('BoardMap component', () => {
     });
   });
 
-  it('renders all 336 holds from real data', async () => {
+  it('renders all holds from the 12x12-with-kickboard real data', async () => {
     const data = await import('@/app/data/placements_12x12.json');
     const placements = data.default as Placement[];
     render(<BoardMap placements={placements} />);
     expect(screen.getByTestId('board-map')).toBeInTheDocument();
     const holdElements = placements.map((p) => screen.getByTestId(`hold-${p.placement_id}`));
-    expect(holdElements).toHaveLength(336);
+    // B016: 514 total = 361 bolt-ons + 153 screw-ons (product_size 10)
+    expect(holdElements).toHaveLength(514);
+    const boltOns = placements.filter((p) => p.set_id === 1);
+    const screwOns = placements.filter((p) => p.set_id === 20);
+    expect(boltOns).toHaveLength(361);
+    expect(screwOns).toHaveLength(153);
   });
 
   it('highlights the specified hold', () => {
@@ -83,9 +88,41 @@ describe('BoardMap component', () => {
     for (const p of data) {
       expect(p.x).toBeGreaterThanOrEqual(0);
       expect(p.x).toBeLessThanOrEqual(144);
-      expect(p.y).toBeGreaterThanOrEqual(16);
-      expect(p.y).toBeLessThanOrEqual(152);
+      // B016: with kickboard → y∈[0,156]
+      expect(p.y).toBeGreaterThanOrEqual(0);
+      expect(p.y).toBeLessThanOrEqual(156);
     }
+  });
+
+  it('draws screw-on footholds smaller than bolt-on handholds', () => {
+    const bolt: Placement = {
+      placement_id: 2001,
+      hole_id: 3001,
+      x: 40,
+      y: 80,
+      hole_name: 'bolt',
+      default_role: 'middle',
+      set_name: 'Bolt Ons',
+      set_id: 1,
+      role_id: 13,
+    };
+    const screw: Placement = {
+      placement_id: 2002,
+      hole_id: 3002,
+      x: 60,
+      y: 80,
+      hole_name: 'screw',
+      default_role: 'foot',
+      set_name: 'Screw Ons',
+      set_id: 20,
+      role_id: 15,
+    };
+    render(<BoardMap placements={[bolt, screw]} />);
+    const boltEl = screen.getByTestId('hold-2001');
+    const screwEl = screen.getByTestId('hold-2002');
+    const boltWidth = parseFloat((boltEl as HTMLElement).style.width);
+    const screwWidth = parseFloat((screwEl as HTMLElement).style.width);
+    expect(screwWidth).toBeLessThan(boltWidth);
   });
 
   it('handles empty placements array gracefully', () => {

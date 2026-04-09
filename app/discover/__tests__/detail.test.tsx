@@ -34,9 +34,9 @@ const SAMPLE_CLIMB = {
   setter: 'tester',
   description: 'A nice warmup problem.',
   holds: [
-    { placement_id: 1001, role: 'start', x: 0, y: 152 },
-    { placement_id: 1002, role: 'middle', x: 8, y: 144 },
-    { placement_id: 1003, role: 'finish', x: 16, y: 136 },
+    { placement_id: 1001, role: 'start', x: 0, y: 152, set_id: 1 },
+    { placement_id: 1002, role: 'middle', x: 8, y: 144, set_id: 1 },
+    { placement_id: 1003, role: 'finish', x: 16, y: 136, set_id: 1 },
   ],
   stats: [
     { angle: 40, grade: '6a/V3', difficulty: 16, ascensionist_count: 1500, quality_average: 4.0 },
@@ -72,10 +72,11 @@ describe('ClimbDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('climb-board-view')).toBeInTheDocument();
     });
-    // Active holds carry the role color from ROLE_COLORS
-    expect(screen.getByTestId('hold-1001').style.backgroundColor).not.toBe('');
-    expect(screen.getByTestId('hold-1002').style.backgroundColor).not.toBe('');
-    expect(screen.getByTestId('hold-1003').style.backgroundColor).not.toBe('');
+    // B016: active holds render as hollow rings — role color is on
+    // borderColor, not backgroundColor.
+    expect(screen.getByTestId('hold-1001').style.borderColor).not.toBe('');
+    expect(screen.getByTestId('hold-1002').style.borderColor).not.toBe('');
+    expect(screen.getByTestId('hold-1003').style.borderColor).not.toBe('');
   });
 
   it('shows other available angles as links', async () => {

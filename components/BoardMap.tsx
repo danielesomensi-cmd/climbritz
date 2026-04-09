@@ -1,13 +1,18 @@
 'use client';
 
-// Board coordinate bounds match the cached 12x12 board image crop
-// (12x12 Square region: x=[0,144], y=[12,156]).
+// Board coordinate bounds match the 12x12 WITH KICKBOARD product size
+// (product_size_id=10): x∈[0,144], y∈[0,156]. B016 extended from the old
+// 12x12-no-kickboard crop (y≥12) to include the kickboard row.
 export const BOARD_X_MIN = 0;
 export const BOARD_X_MAX = 144;
-export const BOARD_Y_MIN = 12;
+export const BOARD_Y_MIN = 0;
 export const BOARD_Y_MAX = 156;
 const BOARD_W = BOARD_X_MAX - BOARD_X_MIN; // 144
-const BOARD_H = BOARD_Y_MAX - BOARD_Y_MIN; // 144
+const BOARD_H = BOARD_Y_MAX - BOARD_Y_MIN; // 156
+
+// BoardLib set IDs for Kilter Board Original (layout_id=1)
+const SET_BOLT_ONS = 1;    // big bolt-on handholds
+const SET_SCREW_ONS = 20;  // small screw-on footholds
 
 export interface Placement {
   placement_id: number;
@@ -66,8 +71,10 @@ export default function BoardMap({
   holdColors,
 }: BoardMapProps) {
   const isMini = size === 'mini';
-  // Circle diameter as % of board width. Mini stays small; full is generous enough to click.
-  const holdPct = isMini ? '3.2%' : '4.2%';
+  // Circle diameter as % of board width. Screw-on footholds are physically
+  // much smaller than bolt-on handholds, so we draw them roughly half-size.
+  const boltPct = isMini ? '3.2%' : '4.2%';
+  const screwPct = isMini ? '1.8%' : '2.3%';
 
   return (
     <div
@@ -89,16 +96,27 @@ export default function BoardMap({
         const pos = toPosition(hold.x, hold.y);
         const isHighlighted = hold.placement_id === highlightId;
         const customColor = holdColors?.[hold.placement_id];
+        const isScrewOn = hold.set_id === SET_SCREW_ONS;
+        const holdPct = isScrewOn ? screwPct : boltPct;
 
-        // Base (unclassified) look: translucent gray.
-        // With a custom color: colored fill + matching border.
-        // Highlighted: pulsing yellow ring overlay regardless of fill.
+        // Active hold (has a role color): hollow ring — transparent fill +
+        // thick colored border — so you can still see the physical hold
+        // through the circle, matching the kilterboard.io look.
+        // Inactive: translucent gray fill.
         const baseClass = customColor
-          ? 'border-white/80'
+          ? 'bg-transparent'
           : 'border-zinc-300/70 bg-zinc-400/25 hover:bg-zinc-300/40';
         const highlightClass = isHighlighted
           ? 'ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent shadow-[0_0_10px_3px_rgba(250,204,21,0.7)] animate-pulse'
           : '';
+
+        const ringBorder = customColor
+          ? {
+              borderColor: customColor,
+              borderWidth: isScrewOn ? '1.5px' : '2.5px',
+              boxShadow: `0 0 4px ${customColor}`,
+            }
+          : {};
 
         return (
           <button
@@ -118,7 +136,7 @@ export default function BoardMap({
               width: holdPct,
               aspectRatio: '1',
               padding: 0,
-              backgroundColor: customColor ?? undefined,
+              ...ringBorder,
             }}
             title={showLabels ? `${hold.placement_id} (${hold.hole_name})` : undefined}
           >

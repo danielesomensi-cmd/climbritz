@@ -12,9 +12,9 @@ jest.mock('@/app/data/placements_12x12.json', () => [
 ]);
 
 const HOLDS: HoldPosition[] = [
-  { placement_id: 1001, role: 'start', x: 0, y: 152 },
-  { placement_id: 1002, role: 'middle', x: 8, y: 144 },
-  { placement_id: 1003, role: 'finish', x: 16, y: 136 },
+  { placement_id: 1001, role: 'start', x: 0, y: 152, set_id: 1 },
+  { placement_id: 1002, role: 'middle', x: 8, y: 144, set_id: 1 },
+  { placement_id: 1003, role: 'finish', x: 16, y: 136, set_id: 1 },
 ];
 
 describe('ClimbBoardView', () => {
@@ -24,30 +24,33 @@ describe('ClimbBoardView', () => {
     expect(screen.getByTestId('board-map')).toBeInTheDocument();
   });
 
-  it('applies role colors to active holds', () => {
+  it('draws active holds as hollow colored rings (border, not fill)', () => {
     render(<ClimbBoardView holds={HOLDS} />);
-    // BoardMap puts holdColors on the inline background-color.
-    const start = screen.getByTestId('hold-1001');
-    const middle = screen.getByTestId('hold-1002');
-    const finish = screen.getByTestId('hold-1003');
-    expect(start).toHaveStyle({ backgroundColor: ROLE_COLORS.start });
-    expect(middle).toHaveStyle({ backgroundColor: ROLE_COLORS.middle });
-    expect(finish).toHaveStyle({ backgroundColor: ROLE_COLORS.finish });
+    const start = screen.getByTestId('hold-1001') as HTMLElement;
+    const middle = screen.getByTestId('hold-1002') as HTMLElement;
+    const finish = screen.getByTestId('hold-1003') as HTMLElement;
+    // B016: hollow rings — borderColor carries the role color, no solid fill.
+    expect(start.style.borderColor).toBe(ROLE_COLORS.start);
+    expect(middle.style.borderColor).toBe(ROLE_COLORS.middle);
+    expect(finish.style.borderColor).toBe(ROLE_COLORS.finish);
+    // And the fill is transparent (class-based), not a solid color.
+    expect(start.style.backgroundColor).toBe('');
+    expect(start.className).toMatch(/bg-transparent/);
   });
 
   it('leaves inactive holds uncolored (base gray look)', () => {
     render(<ClimbBoardView holds={HOLDS} />);
     const inactive = screen.getByTestId('hold-1004');
-    // No inline backgroundColor means BoardMap's base style applies
-    expect(inactive.style.backgroundColor).toBe('');
+    // No inline borderColor means BoardMap's base class applies
+    expect(inactive.style.borderColor).toBe('');
   });
 
   it('silently ignores unknown roles', () => {
     const mixed: HoldPosition[] = [
-      { placement_id: 1001, role: 'weird_role', x: 0, y: 152 },
+      { placement_id: 1001, role: 'weird_role', x: 0, y: 152, set_id: 1 },
     ];
     render(<ClimbBoardView holds={mixed} />);
     const hold = screen.getByTestId('hold-1001');
-    expect(hold.style.backgroundColor).toBe('');
+    expect(hold.style.borderColor).toBe('');
   });
 });
