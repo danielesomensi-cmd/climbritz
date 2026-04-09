@@ -175,6 +175,20 @@ class TestDetailEndpoint:
             assert hold["x"] is not None
             assert hold["y"] is not None
 
+    def test_get_climb_holds_carry_set_id(self):
+        """B016: holds must include set_id so the frontend can render
+        screw-on footholds (set_id=20) at a smaller size than bolt-ons."""
+        resp = client.get("/api/climbs/UUID-BENCH-001")
+        data = resp.json()
+        # Every hold exposes set_id
+        assert all("set_id" in hold for hold in data["holds"])
+        sets = {hold["set_id"] for hold in data["holds"]}
+        # Fixture: 5 bolt-ons (set_id=1) + 1 screw-on foot (set_id=20)
+        assert sets == {1, 20}
+        screw_ons = [h for h in data["holds"] if h["set_id"] == 20]
+        assert len(screw_ons) == 1
+        assert screw_ons[0]["role"] == "foot_only"
+
     def test_get_nonexistent_climb(self):
         resp = client.get("/api/climbs/UUID-DOES-NOT-EXIST")
         assert resp.status_code == 404

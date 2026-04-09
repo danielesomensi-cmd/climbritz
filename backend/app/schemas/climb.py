@@ -10,6 +10,10 @@ class HoldPosition(BaseModel):
     role: str = Field(..., description="start, middle, finish, or foot_only")
     x: int | None = Field(default=None, description="X coordinate on the board")
     y: int | None = Field(default=None, description="Y coordinate on the board")
+    set_id: int | None = Field(
+        default=None,
+        description="Hold set: 1=Bolt Ons (handholds), 20=Screw Ons (small footholds)",
+    )
 
 
 class ClimbStats(BaseModel):

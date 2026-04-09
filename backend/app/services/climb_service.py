@@ -185,18 +185,22 @@ def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
             placeholders = ",".join("?" for _ in placement_ids)
             pos_rows = conn.execute(
                 f"""
-                SELECT p.id AS placement_id, h.x, h.y
+                SELECT p.id AS placement_id, p.set_id, h.x, h.y
                 FROM placements p
                 JOIN holes h ON p.hole_id = h.id
                 WHERE p.id IN ({placeholders})
                 """,
                 placement_ids,
             ).fetchall()
-            pos_map = {row["placement_id"]: (row["x"], row["y"]) for row in pos_rows}
+            pos_map = {
+                row["placement_id"]: (row["x"], row["y"], row["set_id"])
+                for row in pos_rows
+            }
         else:
             pos_map = {}
 
-        # Enrich holds with positions
+        # Enrich holds with positions + set_id (so the frontend can render
+        # small screw-on footholds at a different size than bolt-on handholds)
         enriched_holds = []
         for h in holds:
             pos = pos_map.get(h["placement_id"])
@@ -205,6 +209,7 @@ def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
                 "role": h["role"],
                 "x": pos[0] if pos else None,
                 "y": pos[1] if pos else None,
+                "set_id": pos[2] if pos else None,
             })
 
         # Build stats list

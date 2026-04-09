@@ -207,6 +207,7 @@ export interface HoldPosition {
   role: string;         // 'start' | 'middle' | 'finish' | 'foot_only'
   x: number | null;
   y: number | null;
+  set_id: number | null; // 1 = Bolt Ons (handholds), 20 = Screw Ons (footholds)
 }
 
 export interface ClimbStats {
