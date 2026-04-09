@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kilter Up</string>
+    <string name="title_activity_main">Kilter Up</string>
+    <string name="package_name">com.kilterup.app</string>
+    <string name="custom_url_scheme">com.kilterup.app</string>
+</resources>
