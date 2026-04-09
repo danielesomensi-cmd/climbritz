@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (A006 Complete — 9 April 2026)
+## 📦 Current State (B009 Complete — 9 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -56,6 +56,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **D014:** Railway DB startup validation — probe `SELECT 1 FROM climbs` + `_validate_boardlib_db()`
 ✅ **B016:** Board visualization fixes — hollow rings for active holds, screw-on footholds sized smaller, kickboard row included (y∈[0,156]), HoldPosition.set_id plumbed through backend → frontend
 ✅ **A006:** BLE LED test — Capacitor Android project, `/ble-test` page with 10 LED presets sourced from `leds` table (layout_id=1), `use-kilter-ble` hook wrapping `@hangtime/grip-connect`
+✅ **B009:** Visual board preview on `/ble-test` — board image + colored circles at correct hold positions, pre-computed from product_size_id=10 coordinates
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -176,8 +177,9 @@ kilter-training-app/
 │   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
 │   ├── discover/page.tsx           ✅ Discovery: search + filters (A011)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Discovery: climb detail + board viz (A011)
-│   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets (A006)
-│   ├── ble-test/presets.ts         ✅ LED preset data from leds table (A006)
+│   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009)
+│   ├── ble-test/presets.ts         ✅ LED preset data + x/y coords from leds+holes tables (B009)
+│   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
 │   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/led/disconnect (A006)
 │   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video/auth APIs
 │   └── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
@@ -274,5 +276,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.12 (A006 BLE LED test — Capacitor Android + Grip Connect 2026-04-09)
+**Version:** 2.13 (B009 Visual board preview on BLE test page 2026-04-09)
 **Owner:** Daniele Somensi + Claude Code
