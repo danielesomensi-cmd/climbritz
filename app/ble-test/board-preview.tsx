@@ -55,6 +55,7 @@ export function BoardPreview({ holds }: BoardPreviewProps) {
               height: '3.5%',
               backgroundColor: color,
               boxShadow: `0 0 6px 2px ${color}88`,
+              zIndex: 10,
             }}
           />
         );

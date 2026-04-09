@@ -30,11 +30,15 @@ export default function BleTestPage() {
   const handlePreset = async (id: number) => {
     const preset = PRESETS.find((p) => p.id === id);
     if (!preset) return;
-    setSending(true);
+    // Always update visual preview immediately (no BLE required)
     setActivePreset(id);
     setActiveHolds(preset.holds);
-    await sendLeds(preset.holds);
-    setSending(false);
+    // Send via BLE only when connected
+    if (status === 'connected') {
+      setSending(true);
+      await sendLeds(preset.holds);
+      setSending(false);
+    }
   };
 
   const handleAllOff = async () => {
@@ -106,7 +110,7 @@ export default function BleTestPage() {
               <button
                 key={preset.id}
                 onClick={() => handlePreset(preset.id)}
-                disabled={status !== 'connected' || sending}
+                disabled={sending}
                 className={[
                   'p-3 rounded-lg text-left transition-all',
                   'disabled:opacity-40 disabled:cursor-not-allowed',
