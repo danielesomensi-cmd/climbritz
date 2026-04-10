@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useKilterBle } from './use-kilter-ble';
 import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
@@ -52,6 +53,9 @@ export default function BleTestPage() {
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-lg mx-auto">
+        <Link href="/" className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200 mb-3">
+          &larr; Home
+        </Link>
         <h1 className="text-2xl font-bold mb-1">BLE LED Test</h1>
         <p className="text-gray-400 text-sm mb-6">
           Kilter Board Original 12x12 — layout_id=1

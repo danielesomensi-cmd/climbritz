@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import type { LedHold } from './presets';
 
 // Coordinate bounds match product_size_id=10 ("12x12 with kickboard")
@@ -32,12 +31,13 @@ export function BoardPreview({ holds }: BoardPreviewProps) {
 
   return (
     <div className="relative w-full" style={{ aspectRatio: `${BOARD_W}/${BOARD_H}` }}>
-      <Image
+      {/* Plain <img> instead of next/image — works in Capacitor static export */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/holds/board_original_12x12.png"
         alt="Kilter Board 12x12"
-        fill
-        className="object-fill rounded"
-        priority
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
+        className="rounded"
       />
       {visible.map((h, i) => {
         const pctLeft = ((h.x as number) / BOARD_W) * 100;

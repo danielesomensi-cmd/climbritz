@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useReducer, useState } from 'react';
+import Link from 'next/link';
 import BoardMap, { type Placement, getHoldImageUrl } from '@/components/BoardMap';
 import {
   ALL_HOLDS,
@@ -84,6 +85,10 @@ export default function ClassifyPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
       <div className="max-w-6xl mx-auto space-y-4">
+
+        <Link href="/" className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200">
+          &larr; Home
+        </Link>
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
