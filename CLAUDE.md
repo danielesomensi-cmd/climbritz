@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B009 Complete — 9 April 2026)
+## 📦 Current State (B010 Complete — 10 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -49,7 +49,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **D010:** Backend pytest CI fix — env vars added to GitHub Actions workflow
 ✅ **Phase 3a:** BoardLib DB setup — climb_service.py, test fixture DB
 ✅ **Phase 3b:** Climb search + detail API (extended in A011 with grade/ascents/quality/sort filters)
-✅ **A011:** Discovery frontend — `/discover` (search + filter panel) + `/discover/[uuid]` (board visualization with role colors). BottomNav added.
+✅ **A011:** Discovery frontend — `/discover` (search + filter panel) + `/discover/detail?id=` (board visualization with role colors). BottomNav added.
 ✅ **HC-2:** 12x12 board map (composite background, annotated, mobile-friendly)
 ✅ **HC-5:** Hold classification UI (`/classify` — mobile, board map per hold, manual classification flow)
 ✅ **B013:** Auto-provision BoardLib kilter.db on Railway first boot
@@ -57,6 +57,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B016:** Board visualization fixes — hollow rings for active holds, screw-on footholds sized smaller, kickboard row included (y∈[0,156]), HoldPosition.set_id plumbed through backend → frontend
 ✅ **A006:** BLE LED test — Capacitor Android project, `/ble-test` page with 10 LED presets sourced from `leds` table (layout_id=1), `use-kilter-ble` hook wrapping `@hangtime/grip-connect`
 ✅ **B009:** Visual board preview on `/ble-test` — board image + colored circles at correct hold positions, pre-computed from product_size_id=10 coordinates
+✅ **B010:** Homepage redesign (4-tile hub) + Play Store release build (signed AAB/APK) + privacy policy + Capacitor mobile fixes (CORS, dynamic routes → query params, board image, back buttons, network security)
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -74,7 +75,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e Capacitor + BLE
+**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -293,5 +294,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.13 (B009 Visual board preview on BLE test page 2026-04-09)
+**Version:** 2.14 (B010 Homepage + Play Store build + Capacitor fixes 2026-04-10)
 **Owner:** Daniele Somensi + Claude Code

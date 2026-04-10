@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 8 April 2026
+> Updated: 10 April 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -254,6 +254,24 @@ Three levels of coaching intelligence (Coach tier):
   - Run 10-15 test videos through both levels
   - Document: is L2 visibly better?
   - If yes → proceed. If no → fix prompt before launch.
+
+### B010 — Homepage Redesign + Play Store Release Build (✅ Complete, 10 April 2026)
+- [x] Homepage rewritten: 4-tile hub (Demo LED, Discover, Classify, Video Analysis with lock icon)
+- [x] Privacy policy page at `/privacy` (required for Play Store)
+- [x] Gradle signing config from `keystore.properties` (gitignored), versionName `0.1.0`
+- [x] Signed AAB + APK built for Play Store upload
+- [x] Keystore credentials saved to `~/kilter-up-credentials.txt`
+
+### Capacitor Mobile Fixes (✅ Complete, 10 April 2026)
+- [x] API base URL uses `NEXT_PUBLIC_MOBILE` to switch to Railway in mobile builds
+- [x] Board preview image: plain `<img>` instead of `next/image` (broken in static export)
+- [x] Back buttons added to `/ble-test` and `/classify`
+- [x] CORS: `https://localhost` added to allowed origins (Capacitor Android WebView origin)
+- [x] Dynamic routes replaced with query-param routes (`/discover/detail?id=`, `/videos/detail?id=`) — dynamic `[param]` segments don't work in Capacitor static export
+- [x] Network security config + `usesCleartextTraffic` for Android
+- [x] `/debug` diagnostic page for network troubleshooting
+- [x] Capacitor Compatibility Rules documented in CLAUDE.md (8 rules)
+- [x] Temporary `POST /api/admin/upload-db` endpoint for volume uploads
 
 ### 3e — Capacitor + BLE Integration (1-2 weeks)
 - [x] **A006:** Capacitor Android project setup, BLE permissions, `build:mobile` script

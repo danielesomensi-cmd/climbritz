@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 9 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 10 Aprile 2026
 
 ---
 
@@ -23,6 +23,7 @@
 | BoardLib DB | ✅ Done | 344k+ climbs, climb_service.py, test fixture DB |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
 | Tests | ✅ Done | 177 backend + 92 frontend passing, CI on GitHub Actions |
+| B010 Homepage + APK | ✅ Done | 4-tile hub, privacy policy, signed AAB/APK, Capacitor fixes |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
