@@ -36,6 +36,6 @@ describe('ClimbCard', () => {
   it('links to the climb detail page with angle query param', () => {
     render(<ClimbCard climb={SAMPLE} />);
     const link = screen.getByTestId('climb-card-abc-123');
-    expect(link).toHaveAttribute('href', '/discover/abc-123?angle=40');
+    expect(link).toHaveAttribute('href', '/discover/detail?id=abc-123&angle=40');
   });
 });

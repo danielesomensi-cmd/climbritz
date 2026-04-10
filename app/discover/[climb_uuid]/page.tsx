@@ -1,6 +1,4 @@
-// Server component wrapper for Next.js static export (Capacitor mobile build).
-// A dummy path is required — Next.js needs at least one pre-rendered route.
-// Real climb UUIDs are resolved by client-side routing (no static file needed).
+import { Suspense } from 'react';
 import ClientPage from './Client';
 
 export function generateStaticParams() {
@@ -8,5 +6,9 @@ export function generateStaticParams() {
 }
 
 export default function ClimbDetailPage() {
-  return <ClientPage />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <ClientPage />
+    </Suspense>
+  );
 }

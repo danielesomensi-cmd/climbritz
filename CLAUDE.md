@@ -172,11 +172,13 @@ kilter-training-app/
 │   ├── upload/page.tsx             ✅ Drag-drop upload (Coach)
 │   ├── login/page.tsx              ✅
 │   ├── dashboard/page.tsx          ✅
-│   ├── videos/[id]/page.tsx        ✅
+│   ├── videos/detail/page.tsx       ✅ Video detail ?id= (query-param route for Capacitor)
+│   ├── videos/[id]/page.tsx        ✅ Legacy redirect → /videos/detail?id=
 │   ├── classify/page.tsx           ✅ Hold classification UI (HC-5)
 │   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
 │   ├── discover/page.tsx           ✅ Discovery: search + filters (A011)
-│   ├── discover/[climb_uuid]/page.tsx ✅ Discovery: climb detail + board viz (A011)
+│   ├── discover/detail/page.tsx    ✅ Climb detail ?id=&angle= (query-param route for Capacitor)
+│   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009)
 │   ├── ble-test/presets.ts         ✅ LED preset data + x/y coords from leds+holes tables (B009)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
@@ -224,6 +226,21 @@ git status && git diff
 git add . && git commit -m "feat: description"
 git push origin main
 ```
+
+---
+
+## 📱 Capacitor Compatibility Rules (Non-Negotiable)
+
+The app ships as a Capacitor Android APK via `next build` with `output: 'export'`. These rules **MUST** be followed for every frontend change:
+
+1. **NO dynamic routes (`[param]`)** for pages that must work in Capacitor. Use query params instead: `/discover/detail?id=xxx` not `/discover/[id]`. Dynamic route segments produce a single `_.html` fallback that Capacitor's WebView cannot resolve for arbitrary paths.
+2. **Use plain `<img>` tags, NOT `next/image` `Image` component.** The Next.js image optimizer doesn't exist in static export — images silently fail to load.
+3. **API base URL must use `NEXT_PUBLIC_MOBILE` env var** to switch between `localhost` (dev) and Railway (prod). See `app/lib/api.ts`.
+4. **CORS on backend must include `https://localhost`** — Capacitor Android WebView sends `Origin: https://localhost`. Also allow `capacitor://localhost` (iOS) and `http://localhost` (dev).
+5. **All navigation must work as SPA** — no server-side redirects, no middleware redirects. Use `router.push()` or `<Link>`.
+6. **No Next.js API routes (`app/api/`)** — all API calls go to the FastAPI backend.
+7. **Test every new page in Capacitor build**, not just browser. Run `NEXT_PUBLIC_MOBILE=true npm run build && npx cap sync android` and verify in the APK.
+8. **Use `localStorage` for auth tokens**, not cookies. Cookies may not work reliably in WebView.
 
 ---
 

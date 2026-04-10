@@ -1,13 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ClimbDetailPage from '../[climb_uuid]/page';
+import ClimbDetailPage from '../detail/page';
 
-let pathParams: { climb_uuid: string } = { climb_uuid: 'uuid-1' };
-let searchParamsString = 'angle=40';
+let searchParamsString = 'id=uuid-1&angle=40';
 jest.mock('next/navigation', () => ({
-  useParams: () => pathParams,
   useSearchParams: () => new URLSearchParams(searchParamsString),
-  usePathname: () => '/discover/uuid-1',
+  usePathname: () => '/discover/detail',
 }));
 
 jest.mock('@/app/lib/api', () => {
@@ -46,8 +44,7 @@ const SAMPLE_CLIMB = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  pathParams = { climb_uuid: 'uuid-1' };
-  searchParamsString = 'angle=40';
+  searchParamsString = 'id=uuid-1&angle=40';
   getClimbDetailMock.mockResolvedValue(SAMPLE_CLIMB);
 });
 
@@ -72,8 +69,6 @@ describe('ClimbDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('climb-board-view')).toBeInTheDocument();
     });
-    // B016: active holds render as hollow rings — role color is on
-    // borderColor, not backgroundColor.
     expect(screen.getByTestId('hold-1001').style.borderColor).not.toBe('');
     expect(screen.getByTestId('hold-1002').style.borderColor).not.toBe('');
     expect(screen.getByTestId('hold-1003').style.borderColor).not.toBe('');
@@ -84,7 +79,6 @@ describe('ClimbDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('other-angles')).toBeInTheDocument();
     });
-    // 45° is the second angle in stats
     expect(screen.getByText(/45° · 6b/)).toBeInTheDocument();
   });
 
@@ -104,7 +98,7 @@ describe('ClimbDetailPage', () => {
   });
 
   it('calls the API with the angle from the URL', async () => {
-    searchParamsString = 'angle=50';
+    searchParamsString = 'id=uuid-1&angle=50';
     render(<ClimbDetailPage />);
     await waitFor(() => {
       expect(getClimbDetailMock).toHaveBeenCalledWith('uuid-1', 50);

@@ -17,7 +17,7 @@ function formatAscents(count: number): string {
 export default function ClimbCard({ climb }: ClimbCardProps) {
   return (
     <Link
-      href={`/discover/${climb.uuid}?angle=${climb.angle}`}
+      href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
       data-testid={`climb-card-${climb.uuid}`}
       className="flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
     >

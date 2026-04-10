@@ -96,7 +96,7 @@ function DashboardContent() {
               return (
                 <Link
                   key={video.id}
-                  href={`/videos/${video.id}`}
+                  href={`/videos/detail?id=${video.id}`}
                   className="block bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 transition-colors"
                 >
                   <div className="flex items-center justify-between">

@@ -60,7 +60,7 @@ function UploadContent() {
       const video = await uploadVideo(file, title || undefined);
       setProgress(100);
       clearInterval(progressInterval);
-      setTimeout(() => router.push(`/videos/${video.id}`), 500);
+      setTimeout(() => router.push(`/videos/detail?id=${video.id}`), 500);
     } catch (err) {
       clearInterval(progressInterval);
       setProgress(0);
