@@ -89,7 +89,7 @@ Three levels of coaching intelligence (Coach tier):
 
 ### B001–B005 — Cleanup & Migrations ✅
 - Codebase rationalization, docs, SDK migration, settings migration
-- 161 backend + 91 frontend tests passing
+- 161 backend + 91 frontend tests passing (snapshot at B005 completion)
 - Backend live on Railway, frontend on Vercel
 
 ### B007 — Kilter Board Prompt Rework ✅
@@ -126,7 +126,7 @@ Three levels of coaching intelligence (Coach tier):
 
 **Taxonomy (6 categories):** Jug, Good Crimp, Crimp, Sloper, Undercling, Pinch
 
-**Target board:** 12x12 Original Layout (323 handholds + 153 footholds). Smaller boards (7x10, 8x12) are subsets — automatically covered.
+**Target board:** 12x12 Original Layout (336 handholds + 153 footholds). Smaller boards (7x10, 8x12) are subsets — automatically covered.
 
 | # | Task | Owner | Effort | Notes |
 |---|------|-------|--------|-------|
@@ -208,7 +208,7 @@ Three levels of coaching intelligence (Coach tier):
 - [x] 4 new backend tests + 2 updated frontend tests
 
 ### B013 — Deploy kilter.db to Railway (✅ Complete, 8 April 2026)
-- [x] `railway_start.sh` + `backend/railway.toml` download kilter.db via
+- [x] `backend/railway.toml` startCommand downloads kilter.db via
       `boardlib database kilter` on first boot if `$BOARDLIB_DB_PATH` missing
 - [x] `POST /api/admin/sync-db` — JWT-protected manual re-sync endpoint
 - [x] 5 new backend tests (auth, success, subprocess failure, timeout)
@@ -356,53 +356,9 @@ Three levels of coaching intelligence (Coach tier):
 
 ### PoC Results (April 2026)
 
-**Setup:** Instagram photo (@higuera82kilter — "Straight outta Brione" 7C+ @ 40°, Kilter Board Original 12x12). Tool: Gemini 2.5 Flash via Gemini App (manual test).
+Gemini 2.5 Flash validated as capable of detecting LEDs from a non-ideal gym photo. Start/finish holds detected reliably; cyan middle holds are hardest (missed or hallucinated). Single-pass insufficient — multi-pass or disambiguation needed. **Approach B (count holds from board edges)** is the leading coordinate mapping candidate — immune to perspective distortion.
 
-**Ground truth:** 1 green (start) + 4 cyan (middle) + 1 magenta (finish) + 1 orange (foot).
-
-| Test | Prompt | Result |
-|------|--------|--------|
-| Test 1 | Basic | 1 green ✅, 2/4 cyan ❌ (missed 2), 1 magenta ✅, 1 orange ✅. Board type (Original 12x12) correctly identified. |
-| Test 2 | Aggressive (look harder for faint LEDs) | 1 green ✅, 5 cyan (4 real + 1 ghost) ✅⚠️, 1 magenta ✅, 1 orange ✅. Better recall, one false positive. |
-
-**Conclusions:**
-- Gemini CAN detect LEDs from a non-ideal gym photo — concept validated
-- Start (green) and finish (magenta) reliably detected — bright, distinctive colors
-- Cyan middle holds are hardest — can be dim, blend with hold color
-- Confidence levels are meaningful: high-confidence LEDs reliable, medium needs verification
-- Single-pass prompting insufficient — aggressive prompt helps recall but adds false positives
-
-### Coordinate Mapping Challenge (from D005)
-
-**Board coordinate system (Kilter Board Original 12x12 Square — source: D005 Q7):**
-- `product_size` bounds: `edge_left=0, edge_right=144, edge_bottom=12, edge_top=156`
-- Grid is interlaced (KB1/KB2 sub-grids), minimum spacing between holes = 4 units
-
-**Problem:** Gemini reports LED positions visually ("column 6, row 4"). We need BoardLib DB coordinates (board units, e.g. x=40, y=40) to match against `holes.x/y` for the reverse-lookup strategy described in D005 Q4.
-
-### Coordinate Approach — Under Evaluation
-
-**Approach A — Percentage-based positioning:**
-Gemini estimates "this LED is at 40% from left, 25% from bottom" → convert to DB coords.
-- **Pro:** Continuous scale, direct conversion formula
-- **Con:** Very vulnerable to perspective distortion. A LED at true 50% can appear at 45–55% from a non-frontal camera angle. Error compounds with distance from center.
-
-**Approach B — Count physical holds from edges (leading candidate):**
-Gemini counts "this LED has N holds to its left on the same row, M holds below it in the same column" → maps to discrete grid position.
-- **Pro:** Immune to perspective distortion — hold count from an edge is invariant to camera angle. Discrete values map naturally to DB grid structure.
-- **Con:** Dense board (~47 distinct x positions) — counting many holds risks off-by-one errors. Interlaced KB1/KB2 sub-grids add complexity.
-
-**Status:** Approach B is the leading candidate — pending one more PoC test with a count-holds prompt before any implementation decision.
-
-### Matching Strategy (proposed, not implemented)
-
-Three-level matching against BoardLib DB (reverse-lookup design from D005 Q4):
-
-1. **Filter 1 — Role fingerprint:** Count holds per role from Gemini output (e.g., 1 start + 4 middle + 1 finish + 1 foot). Discard climbs that don't match. Uses `climbs.frames` layout string parsing.
-2. **Filter 2 — High-confidence positions:** Map high-confidence LEDs to nearest `holes.x/y` with tolerance (±1–2 grid positions). Further narrow candidates.
-3. **Filter 3 — Medium-confidence disambiguation:** Use medium-confidence LEDs to narrow remaining candidates. If still ambiguous → show top 3 to user for manual selection.
-4. **Angle:** Always manual input — cannot be inferred from photo.
-5. **Fallback:** If recognition fails entirely → redirect to text search/autocomplete (Phase 3b, already working).
+See `RESEARCH.md` → "Visual Problem Recognition — PoC Results" and "Coordinate Mapping" sections for full test results, approach comparison, and coordinate system details.
 
 ### Tasks
 
@@ -491,7 +447,7 @@ Three-level matching against BoardLib DB (reverse-lookup design from D005 Q4):
 - [ ] **Recreate API_SPECIFICATION.md** — after Phase 3 stabilizes
 - [ ] **Recreate DATABASE_SCHEMA.sql** — after Phase 3 stabilizes
 - [ ] **Retry with backoff on Gemini 503/429** — fails immediately on transient errors
-- [ ] **Clean up dead files** — Procfile, railway_start.sh, backend/Procfile
+- [x] **Clean up dead files** — Procfile, railway_start.sh, backend/Procfile (removed in B009)
 - [ ] **Evaluate gemini-2.5-pro** — when availability improves
 - [ ] **Update Railway source repo** — from OpenClawDani → danielesomensi-cmd
 - [ ] **Set up Vercel–GitHub auto-deploy**

@@ -22,7 +22,7 @@
 | Climb endpoints | ✅ Done | GET search, GET detail, GET stats (Phase 3b) |
 | BoardLib DB | ✅ Done | 344k+ climbs, climb_service.py, test fixture DB |
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
-| Tests | ✅ Done | 177 backend + 92 frontend passing, CI on GitHub Actions |
+| Tests | ✅ Done | Backend + frontend passing, CI on GitHub Actions |
 | B010 Homepage + APK | ✅ Done | 4-tile hub, privacy policy, signed AAB/APK, Capacitor fixes |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
@@ -134,7 +134,7 @@ for frame in frames:
 
 ### 2. FastAPI + SQLite (dev) / PostgreSQL (prod)
 **Decisione:** Backend Python perché l'ML ecosystem è Python-first.
-**Perché:** MediaPipe, YOLO, google-generativeai sono tutti Python.
+**Perché:** MediaPipe, YOLO, e le librerie Google AI sono tutti Python.
 
 ### 3. Video = async processing
 **Decisione:** Upload video → 202 Accepted → job in background → polling status.
@@ -207,47 +207,7 @@ See ROADMAP_ACTIVE.md for full details.
 
 ## 📁 STRUTTURA REPOSITORY
 
-```
-kilter-training-app/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth.py             ✅ JWT auth (register, login, /me)
-│   │   │   ├── videos.py           ✅ Upload, list, get, delete + background analysis
-│   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
-│   │   │   └── circuits.py         ✅ Stub (legacy)
-│   │   ├── models/
-│   │   │   ├── user.py             ✅
-│   │   │   └── video.py            ✅ Consolidated model
-│   │   ├── schemas/
-│   │   │   ├── user.py, auth.py    ✅
-│   │   │   ├── video.py            ✅ VideoResponse, FormFeedbackResponse
-│   │   │   └── climb.py            ✅ ClimbSearchResult, ClimbDetail
-│   │   ├── services/
-│   │   │   ├── auth_service.py     ✅
-│   │   │   ├── gemini_service.py   ✅ File API, lazy init
-│   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries
-│   │   │   ├── video_service.py    ✅ ffmpeg utils
-│   │   │   └── storage_service.py  ✅ Local filesystem
-│   │   ├── utils/
-│   │   │   └── kilter_parser.py    ✅ Layout parser for BoardLib
-│   │   ├── core/                   ✅ config, database, security, deps
-│   │   └── main.py                 ✅
-│   ├── alembic/versions/           ✅ 001 + 002 (single head)
-│   ├── tests/                      ✅ 136 passing
-│   ├── conftest.py                 ✅ In-memory SQLite fixtures
-│   ├── requirements.txt            ✅
-│   └── .env                        (gitignored)
-├── app/ (Next.js 14 frontend)
-│   ├── upload/page.tsx             ✅ Drag-drop upload
-│   ├── login/page.tsx              ✅
-│   └── ...
-├── docs/archive/                   Historical sprint docs
-├── CLAUDE.md                       ✅ Dev guidelines
-├── PROJECT_STATUS.md               ✅ This file
-├── ROADMAP_ACTIVE.md               ✅ Phase plan
-└── RESEARCH.md                     ✅ Ecosystem audit
-```
+See `CLAUDE.md` for the complete, up-to-date project structure tree.
 
 ---
 
@@ -282,5 +242,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 6 Aprile 2026*
+*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 10 Aprile 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*

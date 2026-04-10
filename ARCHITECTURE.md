@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Updated: April 2026
+> Last updated: 10 April 2026
 
 ---
 
@@ -22,8 +22,8 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 │  Capacitor Native App (iOS / Android — Phase 3e)                     │
 │  ┌─────────────────┐                          ┌────────────────────┐ │
 │  │   Next.js 14    │──────────────────────────▶  Kilter Board      │ │
-│  │   (Frontend)    │  BLE (@capacitor-        │  (Hardware)        │ │
-│  │   Port 3000     │   community/bluetooth-le) │  LED control       │ │
+│  │   (Frontend)    │  BLE (@hangtime/         │  (Hardware)        │ │
+│  │   Port 3000     │   grip-connect)          │  LED control       │ │
 │  └────────┬────────┘                          └────────────────────┘ │
 └───────────┼──────────────────────────────────────────────────────────┘
             │ HTTP
@@ -38,8 +38,9 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 ┌──────────┴────────────────────────────────────────────┐
 │  SQLite (dev + prod*)          BoardLib SQLite DB      │
 │  users + video_uploads         ~189MB, gitignored      │
-│  hold_classifications          kilter.db (344k+ climbs)│
-│  *PostgreSQL planned           + hold_classifications   │
+│  *PostgreSQL planned           kilter.db (344k+ climbs)│
+│                                # hold_classifications   │
+│                                # (planned — HC-7)       │
 └───────────────────────────────────────────────────────┘
 ```
 
@@ -80,11 +81,15 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | **Auth API** | `api/auth.py` | Register, login, /me (JWT) |
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
 | **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries) |
-| **Gemini Service** | `services/gemini_service.py` | File API upload + Kilter Board-specific prompt (B007) |
+| **Holds API** | `api/holds.py` | Board composite image + individual hold images |
+| **Admin API** | `api/admin.py` | BoardLib DB sync + upload (Railway maintenance) |
+| **Circuits API** | `api/circuits.py` | Stub (legacy) |
+| **Gemini Service** | `services/gemini_service.py` | File API upload + Kilter Board-specific prompt (B007+B008) |
 | **Climb Service** | `services/climb_service.py` | Read-only sqlite3 queries against BoardLib DB |
 | **Storage Service** | `services/storage_service.py` | Local filesystem (dev), S3 planned (prod) |
 | **Auth Service** | `services/auth_service.py` | Password hashing, token generation |
 | **Video Service** | `services/video_service.py` | ffmpeg utilities |
+| **Kilter Parser** | `utils/kilter_parser.py` | Layout string parser for BoardLib data |
 | **Config** | `core/config.py` | Pydantic Settings (env vars, BOARDLIB_DB_PATH) |
 | **Database** | `core/database.py` | SQLAlchemy engine + SessionLocal |
 | **Security** | `core/security.py` | JWT encode/decode |
@@ -94,11 +99,20 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 | Page | Path | What it does |
 |------|------|-------------|
-| Homepage | `page.tsx` | Landing page |
+| Homepage | `page.tsx` | 4-tile hub (Demo LED, Discover, Classify, Video Analysis) |
 | Login | `login/page.tsx` | Auth form |
 | Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
 | Dashboard | `dashboard/page.tsx` | User overview |
-| Video detail | `videos/[id]/page.tsx` | Analysis results display |
+| Discover | `discover/page.tsx` | Climb search + filter panel (A011) |
+| Climb detail | `discover/detail/page.tsx` | Board visualization with role colors (query-param route) |
+| Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
+| Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
+| BLE test | `ble-test/page.tsx` | BLE LED presets + board preview (A006/B009) |
+| Video detail | `videos/detail/page.tsx` | Analysis results display (query-param route) |
+| Privacy | `privacy/page.tsx` | Privacy policy (Play Store requirement) |
+| Debug | `debug/page.tsx` | Network diagnostics (dev tool) |
+
+Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the query-param routes above for Capacitor compatibility.
 
 ### Database (SQLite / PostgreSQL)
 
@@ -109,6 +123,8 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 Processing statuses: `pending` → `processing` → `completed` / `failed`
 
+> **Planned:** `hold_classifications` table (HC-7) — will store grip-type tags per hold for Discovery features.
+
 ---
 
 ## Deployment Topology (Current)
@@ -117,13 +133,14 @@ Processing statuses: `pending` → `processing` → `completed` / `failed`
 ┌──────────────────────────────────────────┐
 │               Railway                     │
 │  URL: web-production-cea9.up.railway.app  │
+│  Config: backend/railway.toml             │
 │  ┌────────────────────────────────────┐  │
 │  │  FastAPI (uvicorn)                 │  │
 │  │  Port: $PORT (8080)                │  │
 │  │  startCommand:                     │  │
-│  │    alembic upgrade head &&         │  │
-│  │    uvicorn app.main:app            │  │
-│  │    --host 0.0.0.0 --port $PORT    │  │
+│  │    1. Check/download BoardLib DB   │  │
+│  │    2. alembic upgrade head         │  │
+│  │    3. uvicorn app.main:app         │  │
 │  │  Health: GET /health → 200         │  │
 │  ├────────────────────────────────────┤  │
 │  │  SQLite (file-based, on Railway)   │  │
@@ -132,13 +149,13 @@ Processing statuses: `pending` → `processing` → `completed` / `failed`
 │  └────────────────────────────────────┘  │
 └──────────────────────────────────────────┘
 
-Frontend: kilter-up-coach.vercel.app (deployed)
+Frontend: kilter-up-coach.vercel.app (deployed via Vercel)
 Video storage: local filesystem (S3 planned)
 ```
 
-**Note:** SQLite is on a persistent Railway volume (`/data/kilter-up`) — data survives redeploys. Migration to PostgreSQL is still planned for Phase 7.
+**Note:** SQLite is on a persistent Railway volume (`/data/kilter-up`) — data survives redeploys. The startup command (in `backend/railway.toml`) checks for a valid BoardLib DB (`SELECT 1 FROM climbs`), re-downloads if missing or invalid (D014), then runs migrations and starts uvicorn. Migration to PostgreSQL is planned for Phase 7.
 
-**Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via `@capacitor-community/bluetooth-le`. Same frontend codebase, zero rewrite.
+**Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via `@hangtime/grip-connect` (high-level API wrapping `@capacitor-community/bluetooth-le`). Same frontend codebase, zero rewrite.
 
 ---
 
@@ -227,20 +244,32 @@ POST /api/videos/upload + climb_id + angle
 | UUID storage | String(36) | SQLite + PostgreSQL compatibility |
 | Dev database | SQLite | Simple, no setup, PostgreSQL for prod |
 | Native app | Capacitor (wraps Next.js) | BLE plugin available, zero frontend rewrite, iOS + Android |
-| BLE | @capacitor-community/bluetooth-le | Web Bluetooth insufficient for iOS Safari |
-| Hold classification | Gemini Flash batch + manual validation | Proprietary asset, one-time pipeline, prerequisite for Discovery |
+| BLE | `@hangtime/grip-connect` over `@capacitor-community/bluetooth-le` | grip-connect provides high-level KilterBoard API; Capacitor plugin handles native BLE. Web Bluetooth insufficient for iOS Safari |
+| Hold classification | Manual classification via `/classify` UI | HC-4 (AI batch) removed — manual-first by Daniele + Christie in gym. Proprietary asset, prerequisite for Discovery |
+| Routing (Capacitor) | Query-param routes (`/discover/detail?id=`) | Dynamic `[param]` segments don't work in Capacitor static export |
 
 ---
 
 ## Environment Variables
 
-| Variable | Purpose | Where |
-|----------|---------|-------|
-| `GEMINI_API_KEY` | Google AI Studio API key | `.env` (local), Railway env vars (prod) |
-| `DATABASE_URL` | SQLAlchemy connection string | `.env` |
-| `JWT_SECRET` | Token signing key | `.env` |
-| `UPLOAD_DIR` | Video file storage path | `.env` |
+| Variable | Purpose | Default | Where |
+|----------|---------|---------|-------|
+| `DATABASE_URL` | SQLAlchemy connection string | — (required) | `.env` |
+| `JWT_SECRET` | Token signing key | — (required) | `.env` |
+| `GEMINI_API_KEY` | Google AI Studio API key | `""` | `.env`, Railway |
+| `GEMINI_MODEL` | Gemini model to use | `gemini-2.5-flash` | `.env` |
+| `UPLOAD_DIR` | Video file storage path | `uploads` | `.env` |
+| `BOARDLIB_DB_PATH` | Path to BoardLib SQLite DB | `data/kilter.db` | `.env`, Railway |
+| `ENVIRONMENT` | `development` / `production` | `development` | `.env`, Railway |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins | `http://localhost:3000` | Railway |
+| `ADMIN_SECRET` | Secret for admin upload-db endpoint | `""` | Railway |
+| `NEXT_PUBLIC_MOBILE` | Switch API base URL to Railway (frontend) | unset | Capacitor build |
+
+See `backend/app/core/config.py` for the full Pydantic Settings model.
 
 ---
 
-*Architecture doc created: March 2026 — B002 Documentation Rationalization*
+For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
+For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
+
+*Architecture doc created: March 2026 (B002) — Last updated: 10 April 2026 (B009)*

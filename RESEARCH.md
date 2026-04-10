@@ -1,5 +1,5 @@
 # Kilter-Up — Ecosystem Research & Technical Audit
-> Date: March 2026
+> Last updated: April 2026
 > Purpose: Map existing tools, data sources, and technical feasibility for AI climbing coaching
 
 ---

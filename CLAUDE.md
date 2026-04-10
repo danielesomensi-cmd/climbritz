@@ -26,7 +26,7 @@
 **Key asset — hold classification database:**
 Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / Sloper / Undercling / Pinch. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
 
-**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app with `@capacitor-community/bluetooth-le`. Web Bluetooth is insufficient for iOS.
+**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app. `@hangtime/grip-connect` provides the high-level KilterBoard API, backed by `@capacitor-community/bluetooth-le` for native BLE. Web Bluetooth is insufficient for iOS.
 
 **Discovery competitors:** Climbdex (free, open-source, no AI), Kilter Lookup (limited filters, no AI), kilterboard.io (official new Kilter app, no AI, no grip-type filter).
 
@@ -70,8 +70,13 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 - `GET /api/climbs/{climb_uuid}?angle={angle}` → full detail with holds
 - `GET /api/climbs/stats` → DB health stats
 
+**Holds API surface (HC-5):**
+- `GET /api/holds/board-image` → full board composite image
+- `GET /api/holds/{placement_id}/image` → individual hold image
+
 **Admin API surface (B013):**
 - `POST /api/admin/sync-db` → JWT-protected, runs `boardlib database kilter` to download/sync the BoardLib DB
+- `POST /api/admin/upload-db` → upload BoardLib DB to Railway volume (temporary, ADMIN_SECRET-protected)
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
@@ -129,7 +134,8 @@ kilter-training-app/
 │   │   │   ├── auth.py             ✅ JWT auth (register, login, /me)
 │   │   │   ├── videos.py           ✅ Upload, list, get, delete
 │   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
-│   │   │   ├── admin.py            ✅ Protected: POST /sync-db (B013)
+│   │   │   ├── holds.py            ✅ Board image + hold images (HC-5)
+│   │   │   ├── admin.py            ✅ Protected: sync-db + upload-db (B013)
 │   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── core/
 │   │   │   ├── config.py           ✅
@@ -160,6 +166,7 @@ kilter-training-app/
 │   │   ├── test_videos.py          ✅ video + gemini tests
 │   │   ├── test_climb_service.py   ✅ climb service tests
 │   │   ├── test_climbs_api.py      ✅ climb API tests
+│   │   ├── test_holds_api.py       ✅ holds API tests
 │   │   ├── test_admin_api.py       ✅ admin sync-db tests (B013)
 │   │   ├── test_startup_validation.py ✅ D014 boardlib DB checks
 │   │   ├── test_kilter_parser.py   ✅
@@ -176,14 +183,20 @@ kilter-training-app/
 │   ├── videos/detail/page.tsx       ✅ Video detail ?id= (query-param route for Capacitor)
 │   ├── videos/[id]/page.tsx        ✅ Legacy redirect → /videos/detail?id=
 │   ├── classify/page.tsx           ✅ Hold classification UI (HC-5)
+│   ├── classify/state.ts           ✅ Classification state management
+│   ├── classify/__tests__/         ✅ Classification tests
 │   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
 │   ├── discover/page.tsx           ✅ Discovery: search + filters (A011)
 │   ├── discover/detail/page.tsx    ✅ Climb detail ?id=&angle= (query-param route for Capacitor)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
+│   ├── discover/__tests__/         ✅ Discovery tests
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009)
 │   ├── ble-test/presets.ts         ✅ LED preset data + x/y coords from leds+holes tables (B009)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
 │   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/led/disconnect (A006)
+│   ├── privacy/page.tsx            ✅ Privacy policy (Play Store requirement, B010)
+│   ├── debug/page.tsx              ✅ Network diagnostics (dev tool, B010)
+│   ├── data/                       ✅ Frontend data files
 │   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video/auth APIs
 │   └── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
 ├── components/
@@ -194,7 +207,8 @@ kilter-training-app/
 │   ├── GradeDisplay.tsx            ✅ Font/V grade display (A011)
 │   ├── StarRating.tsx              ✅ 5-star widget (A011)
 │   ├── BottomNav.tsx               ✅ App bottom navigation (A011)
-│   └── AuthGuard.tsx               ✅
+│   ├── AuthGuard.tsx               ✅
+│   └── __tests__/                  ✅ Component tests
 ├── capacitor.config.ts             ✅ Capacitor config (appId=com.kilterup.app, webDir=out)
 ├── android/                        ✅ Capacitor Android project (A006)
 ├── CLAUDE.md                       ✅ This file
@@ -294,5 +308,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.14 (B010 Homepage + Play Store build + Capacitor fixes 2026-04-10)
+**Version:** 2.15 (B009 Doc audit fixes + single source of truth 2026-04-10)
 **Owner:** Daniele Somensi + Claude Code

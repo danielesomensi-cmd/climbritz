@@ -2,7 +2,7 @@
 
 > **Type:** Audit / Read-Only
 > **Date:** 2026-04-01
-> **Author:** Daniele Somensi + Sam (Claude Code)
+> **Author:** Daniele Somensi + Claude Code
 > **DB:** `backend/data/kilter.db` — downloaded via `boardlib database kilter`
 
 ---

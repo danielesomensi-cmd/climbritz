@@ -34,19 +34,13 @@ cd backend && pytest -v
 ## Deployment
 - **Backend:** Railway (FastAPI + SQLite, auto-migrates on deploy)
 - **Frontend:** Vercel — kilter-up-coach.vercel.app
-- **CI:** Alembic migrations run automatically via `startCommand` in `railway.toml`
+- **CI:** Alembic migrations run automatically via `startCommand` in `backend/railway.toml`
 
 ## API Endpoints
-- `POST /api/videos/upload` — Upload video for analysis (202 Accepted)
-- `GET /api/videos/{id}` — Get video status and results
-- `GET /api/videos` — List videos (paginated)
-- `DELETE /api/videos/{id}` — Delete video
-- `GET /api/climbs/search?q={name}&angle={angle}` — Search Kilter Board climbs
-- `GET /api/climbs/{climb_uuid}` — Full climb detail with holds
-- `GET /api/climbs/stats` — BoardLib database stats
-- `POST /api/auth/register` — Register
-- `POST /api/auth/login` — Login
-- `GET /api/auth/me` — Current user
+
+Core endpoints: auth (register/login/me), videos (upload/list/get/delete), climbs (search/detail/stats), holds (board-image/hold-image), admin (sync-db/upload-db).
+
+See `CLAUDE.md` for the complete API surface with parameters and response codes.
 
 ## Repo
 https://github.com/danielesomensi-cmd/kilter-up

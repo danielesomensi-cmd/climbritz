@@ -22,7 +22,7 @@
 |----------|--------|-----------|
 | Product architecture | One product, two tiers (Discovery free + Coach paid) | Council unanimous verdict |
 | Hold taxonomy | 6 categories: Jug, Good Crimp, Crimp, Sloper, Undercling, Pinch | Validated with Christie Palmer. Edge too ambiguous, Volume too rare on Kilter. |
-| First board to classify | 12x12 Original Layout (323 handholds + 153 footholds) | Most common gym board. Smaller boards are subsets. |
+| First board to classify | 12x12 Original Layout (336 handholds + 153 footholds) | Most common gym board. Smaller boards are subsets. |
 | BLE | Non-negotiable. In plan from day 1. | Two apps open = friction that kills habitual use |
 | Native framework | Capacitor (wraps existing Next.js) | Zero frontend rewrite. BLE plugin available. iOS + Android. |
 | Launch sequence | Web first (weeks 1-3), then Capacitor wrap + BLE (week 4) | Web = fast dev environment. Same codebase becomes the native app. |
@@ -55,7 +55,7 @@ Without hold classification, Discovery is just Climbdex with a different UI. Wit
 ### Classification Pipeline (6 Steps)
 
 **Step 1 — Build the canonical board map**
-- Target: Original Layout 12x12 (323 bolt-on handholds + 153 screw-on footholds)
+- Target: Original Layout 12x12 (336 bolt-on handholds + 153 screw-on footholds)
 - Create annotated image showing every hold position with numbering
 - Use `holes` table (x/y) + `placements` table from BoardLib
 - Output: reference image + JSON mapping position → hold_id
@@ -74,7 +74,7 @@ Without hold classification, Discovery is just Climbdex with a different UI. Wit
 - Feed each hold image to Gemini 2.5 Flash with structured prompt
 - Prompt: hold image + taxonomy definitions + example images per category
 - Output: JSON with hold_id, primary_category, confidence, optional secondary_category
-- Batch all ~323 handholds (12x12)
+- Batch all ~336 handholds (12x12)
 - Cost: ~$0.01-0.02 total
 
 **Step 5 — Manual validation by Daniele**
@@ -196,7 +196,7 @@ Connect directly to the Kilter Board via Bluetooth from the app.
 | HC-3 | Finalize taxonomy (test with 3-5 climbers if possible) | 0.5 day |
 | HC-4 | AI batch classification script (Gemini Flash) | 1 day |
 | HC-5 | Build validation UI (simple web page) | 1 day |
-| HC-6 | Daniele validates all ~323 holds | 0.5 day |
+| HC-6 | Daniele validates all ~336 holds | 0.5 day |
 | HC-7 | Store in DB table (`hold_classifications`) + apply to board sizes | 0.5 day |
 
 ### Phase 3a — BoardLib Database Setup (1 week)
@@ -282,7 +282,7 @@ Connect directly to the Kilter Board via Bluetooth from the app.
 | Risk | Severity | Mitigation |
 |------|----------|------------|
 | Classification is subjective | Medium | Daniele as single source of truth. Allow dual-category. |
-| ~323 holds to validate manually | Low | 2-3 hours one-time. AI does 80%, human reviews. |
+| ~336 holds to validate manually | Low | 2-3 hours one-time. AI does 80%, human reviews. |
 | Fullride holds need separate pass | Medium | Delays Homewall support. Doesn't block Original board launch. |
 
 ### Session Builder
