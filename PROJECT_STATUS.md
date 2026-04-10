@@ -113,6 +113,14 @@ for frame in frames:
 
 ---
 
+### ❌ PROBLEMA 3: Capacitor APK "Failed to fetch" — CORS origin mismatch
+**Quando:** 10 April 2026 (B010 Play Store build)
+**Problema:** Capacitor Android WebView sends `Origin: https://localhost` on all fetch requests. The backend CORS config only allowed `http://localhost` and `capacitor://localhost`, so every API call was rejected with a CORS preflight failure — `TypeError: Failed to fetch` with no further detail. Worked fine in Chrome on the same device (different origin). Diagnosed via a `/debug` page that tested fetch to multiple URLs and reported `window.location.origin`.
+**Soluzione:** ✅ Add `https://localhost` to CORS allowed origins in `backend/app/main.py`. All three Capacitor origins must be listed: `capacitor://localhost` (iOS), `http://localhost` (Capacitor dev), `https://localhost` (Android production WebView).
+**File:** `backend/app/main.py`
+
+---
+
 ## ✅ DECISIONI ARCHITETTURALI PRESE
 
 ### 1. Gemini 2.5 Flash (non MediaPipe/YOLO)

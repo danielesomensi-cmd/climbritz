@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { searchClimbs, type ClimbSearchResult, type SortField } from '@/app/lib/api';
+import { searchClimbs, API_BASE, type ClimbSearchResult, type SortField } from '@/app/lib/api';
 import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
@@ -91,7 +91,8 @@ function DiscoverPageInner() {
       });
       setResults(res);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Search failed');
+      const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+      setError(`[API_BASE=${API_BASE}] ${msg}`);
       setResults([]);
     } finally {
       setLoading(false);
@@ -114,6 +115,11 @@ function DiscoverPageInner() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24">
+      {/* DEBUG banner — remove after fixing Capacitor fetch issue */}
+      <div className="bg-yellow-900/80 text-yellow-200 text-xs px-3 py-1.5 font-mono break-all">
+        API: {API_BASE}
+      </div>
+
       {/* Header */}
       <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-3 space-y-3">
@@ -162,7 +168,7 @@ function DiscoverPageInner() {
           )}
 
           {error && (
-            <div className="text-center py-8 text-red-400 text-sm" data-testid="results-error">
+            <div className="py-4 px-3 bg-red-950 border border-red-700 rounded-lg text-red-300 text-xs font-mono break-all" data-testid="results-error">
               {error}
             </div>
           )}

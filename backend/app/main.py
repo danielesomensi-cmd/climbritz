@@ -92,9 +92,10 @@ app = FastAPI(
 )
 
 # CORS — read from ALLOWED_ORIGINS env var, fallback to localhost for dev.
-# Capacitor WebView uses capacitor://localhost (iOS) and http://localhost (Android).
+# Capacitor Android WebView sends Origin: https://localhost (not http://).
+# iOS uses capacitor://localhost. All three must be listed.
 origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-for cap_origin in ("capacitor://localhost", "http://localhost"):
+for cap_origin in ("capacitor://localhost", "http://localhost", "https://localhost"):
     if cap_origin not in origins:
         origins.append(cap_origin)
 

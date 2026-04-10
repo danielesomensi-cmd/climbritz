@@ -1,4 +1,4 @@
-const API_BASE =
+export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NEXT_PUBLIC_MOBILE === 'true'
     ? 'https://web-production-cea9.up.railway.app'

@@ -36,6 +36,12 @@ const TILES: Tile[] = [
     icon: '🎬',
     locked: true,
   },
+  {
+    href: '/debug',
+    label: 'Debug',
+    subtitle: 'Network diagnostics',
+    icon: '🔧',
+  },
 ];
 
 export default function Home() {
