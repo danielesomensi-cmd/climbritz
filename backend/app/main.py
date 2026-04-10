@@ -91,8 +91,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — read from ALLOWED_ORIGINS env var, fallback to localhost for dev
+# CORS — read from ALLOWED_ORIGINS env var, fallback to localhost for dev.
+# Capacitor WebView uses capacitor://localhost (iOS) and http://localhost (Android).
 origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+for cap_origin in ("capacitor://localhost", "http://localhost"):
+    if cap_origin not in origins:
+        origins.append(cap_origin)
 
 app.add_middleware(
     CORSMiddleware,
