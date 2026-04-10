@@ -5,32 +5,34 @@ import Home from '../page';
 describe('Home Page', () => {
   it('renders the KILTER UP heading', () => {
     render(<Home />);
-    const heading = screen.getByText('KILTER UP');
-    expect(heading).toBeInTheDocument();
+    expect(screen.getByText('KILTER UP')).toBeInTheDocument();
   });
 
   it('renders the subtitle', () => {
     render(<Home />);
-    const subtitle = screen.getByText(/AI-Powered Circuit Generation/);
-    expect(subtitle).toBeInTheDocument();
+    expect(screen.getByText('AI Climbing Companion')).toBeInTheDocument();
   });
 
-  it('renders the Kilterboard image', () => {
+  it('renders all four tiles', () => {
     render(<Home />);
-    const image = screen.getByAltText('Kilterboard climbing wall');
-    expect(image).toBeInTheDocument();
-  });
-
-  it('renders the CTA button', () => {
-    render(<Home />);
-    const button = screen.getByText(/Inizia/);
-    expect(button).toBeInTheDocument();
-  });
-
-  it('renders feature hints', () => {
-    render(<Home />);
+    expect(screen.getByText('Demo LED Light')).toBeInTheDocument();
+    expect(screen.getByText('Discover')).toBeInTheDocument();
+    expect(screen.getByText('Classify')).toBeInTheDocument();
     expect(screen.getByText('Video Analysis')).toBeInTheDocument();
-    expect(screen.getByText('AI Circuits')).toBeInTheDocument();
-    expect(screen.getByText('Training Plans')).toBeInTheDocument();
+  });
+
+  it('renders tile subtitles', () => {
+    render(<Home />);
+    expect(screen.getByText('Test BLE connection')).toBeInTheDocument();
+    expect(screen.getByText('Search 160k+ climbs')).toBeInTheDocument();
+    expect(screen.getByText('Tag hold grip types')).toBeInTheDocument();
+    expect(screen.getByText('AI technique coaching')).toBeInTheDocument();
+  });
+
+  it('shows lock icon on Video Analysis tile', () => {
+    render(<Home />);
+    // The Video Analysis tile links to /login
+    const videoLink = screen.getByText('Video Analysis').closest('a');
+    expect(videoLink).toHaveAttribute('href', '/login');
   });
 });

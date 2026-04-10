@@ -35,3 +35,8 @@ yarn-error.log*
 *.swp
 *.swo
 uploads/
+
+# Android signing
+android/keystore.properties
+*.keystore
+*.jks

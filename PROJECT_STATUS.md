@@ -64,6 +64,7 @@ See ROADMAP_ACTIVE.md for detailed implementation plan.
 | `JWT_SECRET` | Già in `.env` ✅ | Generato |
 | `UPLOAD_DIR` | `uploads/` | Locale |
 | GitHub | `danielesomensi-cmd/kilter-up` | Main repo |
+| Play Store keystore | `~/kilter-up-release.keystore` | Credentials in `~/kilter-up-credentials.txt` — back up to 1Password |
 
 ---
 
