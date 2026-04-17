@@ -15,6 +15,7 @@ const STATUS_COLORS: Record<BleStatus, string> = {
   connecting: 'bg-yellow-400 animate-pulse',
   connected: 'bg-green-500',
   disconnecting: 'bg-yellow-400 animate-pulse',
+  sending: 'bg-blue-400 animate-pulse',
   error: 'bg-red-500',
 };
 
@@ -25,31 +26,53 @@ const STATUS_LABELS: Record<BleStatus, string> = {
   connecting: 'Connessione...',
   connected: 'Connesso',
   disconnecting: 'Disconnessione...',
+  sending: 'Invio...',
   error: 'Errore',
 };
 
 const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
 
 export default function BleTestPage() {
-  const { status, errorMessage, connectedDevice, connect, disconnect, isCapacitorNative } =
-    useKilterBle();
+  const {
+    status,
+    errorMessage,
+    lastError,
+    connectedDevice,
+    connect,
+    disconnect,
+    sendLEDs,
+    sendAllOffLEDs,
+    clearError,
+    isCapacitorNative,
+  } = useKilterBle();
   const [activePreset, setActivePreset] = useState<number | null>(null);
   const [activeHolds, setActiveHolds] = useState<LedHold[]>([]);
 
   const handlePreset = (id: number) => {
     const preset = PRESETS.find((p) => p.id === id);
     if (!preset) return;
-    // Preview-only: no BLE write in this flow.
     setActivePreset(id);
     setActiveHolds(preset.holds);
   };
 
-  const handleResetPreview = () => {
+  const handleResetPreview = async () => {
     setActivePreset(null);
     setActiveHolds([]);
+    // When connected, also clear the physical board
+    if (status === 'connected') {
+      await sendAllOffLEDs();
+    }
+  };
+
+  const handleIllumina = async () => {
+    if (activeHolds.length === 0) return;
+    await sendLEDs(activeHolds);
   };
 
   const busy = BUSY_STATUSES.includes(status);
+  const isSending = status === 'sending';
+  const isConnected = status === 'connected' || isSending;
+  const canSend = status === 'connected' && activePreset !== null;
 
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4">
@@ -68,14 +91,20 @@ export default function BleTestPage() {
           <div className="flex-1 min-w-0">
             <div className="font-medium">{STATUS_LABELS[status]}</div>
             {connectedDevice && (
-              <div className="text-xs text-gray-400 truncate">{connectedDevice.name}</div>
+              <div className="text-xs text-gray-400 truncate">
+                {connectedDevice.name}
+                {connectedDevice.apiLevel && (
+                  <span className="ml-1 text-gray-500">API v{connectedDevice.apiLevel}</span>
+                )}
+              </div>
             )}
           </div>
           <div className="flex gap-2">
-            {!isCapacitorNative ? null : status === 'connected' ? (
+            {!isCapacitorNative ? null : isConnected ? (
               <button
                 onClick={disconnect}
-                className="px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm font-medium"
+                disabled={isSending}
+                className="px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Disconnetti
               </button>
@@ -99,7 +128,7 @@ export default function BleTestPage() {
 
         {!isCapacitorNative && (
           <div className="mb-4 p-3 bg-amber-900/40 border border-amber-600 rounded text-sm text-amber-200">
-            Questa funzione richiede l’app Kilter-Up installata.
+            Questa funzione richiede l&apos;app Kilter-Up installata.
           </div>
         )}
 
@@ -109,12 +138,43 @@ export default function BleTestPage() {
           </div>
         )}
 
-        {/* Reset preview — local state only, does NOT touch the physical board */}
+        {/* Dismissible inline error banner for send errors */}
+        {lastError && (
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-600 rounded text-sm text-red-300 flex items-start gap-2">
+            <span className="flex-1">{lastError}</span>
+            <button
+              onClick={clearError}
+              className="text-red-400 hover:text-red-200 font-bold text-lg leading-none flex-shrink-0"
+              aria-label="Chiudi errore"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+
+        {/* Illumina board button */}
+        {isConnected && (
+          <button
+            onClick={handleIllumina}
+            disabled={!canSend || isSending}
+            className={[
+              'w-full mb-4 py-3 rounded-lg font-semibold text-lg tracking-wide transition-colors',
+              canSend && !isSending
+                ? 'bg-green-600 hover:bg-green-500 text-white'
+                : 'bg-gray-700 text-gray-500 cursor-not-allowed',
+            ].join(' ')}
+          >
+            {isSending ? 'Invio...' : 'Illumina board'}
+          </button>
+        )}
+
+        {/* Reset preview — clears preview + physical board when connected */}
         <button
           onClick={handleResetPreview}
-          className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-lg tracking-wide"
+          disabled={isSending}
+          className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Reset anteprima
+          {isSending ? 'Invio...' : 'Reset anteprima'}
         </button>
 
         {/* Preset grid */}
@@ -175,7 +235,7 @@ export default function BleTestPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          Richiede l’app Kilter-Up (BLE via Capacitor)
+          Richiede l&apos;app Kilter-Up (BLE via Capacitor)
         </p>
       </div>
     </main>
