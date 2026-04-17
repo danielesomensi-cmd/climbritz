@@ -9,46 +9,47 @@ import type { BleStatus } from './use-kilter-ble';
 import type { LedHold } from './presets';
 
 const STATUS_COLORS: Record<BleStatus, string> = {
-  disconnected: 'bg-gray-500',
+  idle: 'bg-gray-500',
+  requesting: 'bg-yellow-400 animate-pulse',
   scanning: 'bg-yellow-400 animate-pulse',
+  connecting: 'bg-yellow-400 animate-pulse',
   connected: 'bg-green-500',
+  disconnecting: 'bg-yellow-400 animate-pulse',
   error: 'bg-red-500',
 };
 
 const STATUS_LABELS: Record<BleStatus, string> = {
-  disconnected: 'Disconnesso',
+  idle: 'Disconnesso',
+  requesting: 'Richiesta...',
   scanning: 'Scansione...',
+  connecting: 'Connessione...',
   connected: 'Connesso',
+  disconnecting: 'Disconnessione...',
   error: 'Errore',
 };
 
+const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
+
 export default function BleTestPage() {
-  const { status, errorMessage, connect, disconnect, sendLeds, allOff } = useKilterBle();
+  const { status, errorMessage, connectedDevice, connect, disconnect, isCapacitorNative } =
+    useKilterBle();
   const [activePreset, setActivePreset] = useState<number | null>(null);
   const [activeHolds, setActiveHolds] = useState<LedHold[]>([]);
-  const [sending, setSending] = useState(false);
 
-  const handlePreset = async (id: number) => {
+  const handlePreset = (id: number) => {
     const preset = PRESETS.find((p) => p.id === id);
     if (!preset) return;
-    // Always update visual preview immediately (no BLE required)
+    // Preview-only: no BLE write in this flow.
     setActivePreset(id);
     setActiveHolds(preset.holds);
-    // Send via BLE only when connected
-    if (status === 'connected') {
-      setSending(true);
-      await sendLeds(preset.holds);
-      setSending(false);
-    }
   };
 
-  const handleAllOff = async () => {
-    setSending(true);
+  const handleResetPreview = () => {
     setActivePreset(null);
     setActiveHolds([]);
-    await allOff();
-    setSending(false);
   };
+
+  const busy = BUSY_STATUSES.includes(status);
 
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4">
@@ -64,32 +65,43 @@ export default function BleTestPage() {
         {/* Connection status bar */}
         <div className="flex items-center gap-3 mb-4 p-3 bg-gray-800 rounded-lg">
           <div className={`w-3 h-3 rounded-full flex-shrink-0 ${STATUS_COLORS[status]}`} />
-          <span className="font-medium">{STATUS_LABELS[status]}</span>
-          <div className="ml-auto flex gap-2">
-            {status === 'disconnected' || status === 'error' ? (
-              <button
-                onClick={connect}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-sm font-medium"
-              >
-                Connetti
-              </button>
-            ) : status === 'scanning' ? (
-              <button
-                disabled
-                className="px-4 py-1.5 bg-gray-600 rounded text-sm font-medium cursor-not-allowed"
-              >
-                Scansione...
-              </button>
-            ) : (
+          <div className="flex-1 min-w-0">
+            <div className="font-medium">{STATUS_LABELS[status]}</div>
+            {connectedDevice && (
+              <div className="text-xs text-gray-400 truncate">{connectedDevice.name}</div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {!isCapacitorNative ? null : status === 'connected' ? (
               <button
                 onClick={disconnect}
                 className="px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm font-medium"
               >
                 Disconnetti
               </button>
+            ) : busy ? (
+              <button
+                disabled
+                className="px-4 py-1.5 bg-gray-600 rounded text-sm font-medium cursor-not-allowed"
+              >
+                {STATUS_LABELS[status]}
+              </button>
+            ) : (
+              <button
+                onClick={connect}
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-sm font-medium"
+              >
+                Connetti
+              </button>
             )}
           </div>
         </div>
+
+        {!isCapacitorNative && (
+          <div className="mb-4 p-3 bg-amber-900/40 border border-amber-600 rounded text-sm text-amber-200">
+            Questa funzione richiede l’app Kilter-Up installata.
+          </div>
+        )}
 
         {errorMessage && (
           <div className="mb-4 p-3 bg-red-900/50 border border-red-600 rounded text-sm text-red-300">
@@ -97,13 +109,12 @@ export default function BleTestPage() {
           </div>
         )}
 
-        {/* All Off button */}
+        {/* Reset preview — local state only, does NOT touch the physical board */}
         <button
-          onClick={handleAllOff}
-          disabled={status !== 'connected' || sending}
-          className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-lg tracking-wide"
+          onClick={handleResetPreview}
+          className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-lg tracking-wide"
         >
-          Spegni tutto (All Off)
+          Reset anteprima
         </button>
 
         {/* Preset grid */}
@@ -114,10 +125,8 @@ export default function BleTestPage() {
               <button
                 key={preset.id}
                 onClick={() => handlePreset(preset.id)}
-                disabled={sending}
                 className={[
                   'p-3 rounded-lg text-left transition-all',
-                  'disabled:opacity-40 disabled:cursor-not-allowed',
                   isActive
                     ? 'bg-blue-700 ring-2 ring-blue-400'
                     : 'bg-gray-800 hover:bg-gray-700',
@@ -166,7 +175,7 @@ export default function BleTestPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          Richiede Web Bluetooth (Chrome Android / Capacitor)
+          Richiede l’app Kilter-Up (BLE via Capacitor)
         </p>
       </div>
     </main>
