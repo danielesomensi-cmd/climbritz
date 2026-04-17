@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:mobile": "NEXT_PUBLIC_MOBILE=true next build && npx cap sync android",
+    "build:mobile": "NEXT_PUBLIC_MOBILE=true next build",
+    "sync:android": "npx cap sync android",
+    "sync:ios": "npx cap sync ios",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --passWithNoTests"
@@ -15,6 +19,7 @@
     "@capacitor/android": "^8.3.0",
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.1",
     "@hangtime/grip-connect": "^0.12.0",
     "@tailwindcss/postcss": "^4.2.0",
     "next": "^14.0.0",
