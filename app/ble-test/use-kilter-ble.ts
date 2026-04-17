@@ -5,8 +5,11 @@ import { Capacitor } from '@capacitor/core';
 import {
   connectToKilterBoard,
   disconnectFromKilterBoard,
+  sendLEDPreset,
+  sendAllOff,
   type ConnectedKilterBoard,
 } from '../../lib/ble/kilter-board-service';
+import type { EncoderHold } from '../../lib/ble/kilter-protocol';
 
 export type BleStatus =
   | 'idle'
@@ -15,23 +18,33 @@ export type BleStatus =
   | 'connecting'
   | 'connected'
   | 'disconnecting'
+  | 'sending'
   | 'error';
 
 export interface UseKilterBle {
   status: BleStatus;
   errorMessage: string | null;
+  lastError: string | null;
   connectedDevice: ConnectedKilterBoard | null;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  sendLEDs: (holds: EncoderHold[]) => Promise<void>;
+  sendAllOffLEDs: () => Promise<void>;
+  clearError: () => void;
   isCapacitorNative: boolean;
 }
 
 export function useKilterBle(): UseKilterBle {
   const [status, setStatus] = useState<BleStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [connectedDevice, setConnectedDevice] = useState<ConnectedKilterBoard | null>(null);
   const deviceIdRef = useRef<string | null>(null);
   const isCapacitorNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+
+  const clearError = useCallback(() => {
+    setLastError(null);
+  }, []);
 
   const handleDisconnected = useCallback(() => {
     deviceIdRef.current = null;
@@ -41,15 +54,14 @@ export function useKilterBle(): UseKilterBle {
 
   const connect = useCallback(async () => {
     if (!isCapacitorNative) {
-      setErrorMessage('Questa funzione richiede l’app Kilter-Up installata.');
+      setErrorMessage('Questa funzione richiede l\u2019app Kilter-Up installata.');
       setStatus('error');
       return;
     }
     setErrorMessage(null);
+    setLastError(null);
     setStatus('requesting');
     try {
-      // requestDevice spawns the native picker — treat that phase as "scanning"
-      // so the UI can show the yellow indicator while the dialog is open.
       setStatus('scanning');
       const device = await connectToKilterBoard(handleDisconnected);
       setStatus('connecting');
@@ -85,6 +97,36 @@ export function useKilterBle(): UseKilterBle {
     setStatus('idle');
   }, []);
 
+  const sendLEDs = useCallback(async (holds: EncoderHold[]) => {
+    const id = deviceIdRef.current;
+    if (!id) return;
+    setStatus('sending');
+    setLastError(null);
+    try {
+      await sendLEDPreset(id, holds);
+      setStatus('connected');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setLastError(msg);
+      setStatus('connected');
+    }
+  }, []);
+
+  const sendAllOffLEDs = useCallback(async () => {
+    const id = deviceIdRef.current;
+    if (!id) return;
+    setStatus('sending');
+    setLastError(null);
+    try {
+      await sendAllOff(id);
+      setStatus('connected');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setLastError(msg);
+      setStatus('connected');
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       const id = deviceIdRef.current;
@@ -97,9 +139,13 @@ export function useKilterBle(): UseKilterBle {
   return {
     status,
     errorMessage,
+    lastError,
     connectedDevice,
     connect,
     disconnect,
+    sendLEDs,
+    sendAllOffLEDs,
+    clearError,
     isCapacitorNative,
   };
 }
