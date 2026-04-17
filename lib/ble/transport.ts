@@ -29,6 +29,15 @@ export async function disconnect(deviceId: string): Promise<void> {
   await BleClient.disconnect(deviceId);
 }
 
+export async function writeWithoutResponse(
+  deviceId: string,
+  service: string,
+  characteristic: string,
+  value: DataView,
+): Promise<void> {
+  await BleClient.writeWithoutResponse(deviceId, service, characteristic, value);
+}
+
 export async function isAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
