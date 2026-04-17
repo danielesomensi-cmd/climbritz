@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B012 Complete — 17 April 2026)
+## 📦 Current State (A016 Complete — 17 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -60,6 +60,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B010:** Homepage redesign (4-tile hub) + Play Store release build (signed AAB/APK) + privacy policy + Capacitor mobile fixes (CORS, dynamic routes → query params, board image, back buttons, network security)
 ✅ **B011:** Fix Android manifest BLE permissions — bounded ACCESS_FINE/COARSE_LOCATION to maxSdkVersion=30, no spurious location prompt on Android 12+
 ✅ **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts`), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner in `/ble-test`, API level 3 only
+✅ **A016:** iOS Capacitor setup — `@capacitor/ios ^8.3.1`, `ios/` Xcode project initialized (SPM-based, no CocoaPods), `NSBluetoothAlwaysUsageDescription` in Info.plist, `build:mobile` split into platform-agnostic build + `sync:ios`/`sync:android`/`open:ios`/`open:android`, first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -82,7 +83,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** B012 Phase 2 gym validation, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
+**Next:** B012 + A016 gym validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -217,6 +218,7 @@ kilter-training-app/
 │   └── __tests__/                  ✅ Component tests
 ├── capacitor.config.ts             ✅ Capacitor config (appId=com.kilterup.app, webDir=out)
 ├── android/                        ✅ Capacitor Android project (A006)
+├── ios/                            ✅ Capacitor iOS Xcode project — SPM-based, Info.plist has NSBluetoothAlwaysUsageDescription (A016)
 ├── CLAUDE.md                       ✅ This file
 ├── PROJECT_STATUS.md               ✅ Decisions log
 ├── ROADMAP_ACTIVE.md               ✅ Phase plan
@@ -242,6 +244,13 @@ npm test
 npm run build
 npm run lint
 
+# Mobile (Capacitor)
+npm run build:mobile      # NEXT_PUBLIC_MOBILE=true next build (static export to out/)
+npm run sync:android      # npx cap sync android
+npm run sync:ios          # npx cap sync ios
+npm run open:android      # open Android Studio
+npm run open:ios          # open Xcode workspace
+
 # Git
 git status && git diff
 git add . && git commit -m "feat: description"
@@ -252,7 +261,7 @@ git push origin main
 
 ## 📱 Capacitor Compatibility Rules (Non-Negotiable)
 
-The app ships as a Capacitor Android APK via `next build` with `output: 'export'`. These rules **MUST** be followed for every frontend change:
+The app ships as a Capacitor Android APK + iOS app via `next build` with `output: 'export'`. These rules **MUST** be followed for every frontend change:
 
 1. **NO dynamic routes (`[param]`)** for pages that must work in Capacitor. Use query params instead: `/discover/detail?id=xxx` not `/discover/[id]`. Dynamic route segments produce a single `_.html` fallback that Capacitor's WebView cannot resolve for arbitrary paths.
 2. **Use plain `<img>` tags, NOT `next/image` `Image` component.** The Next.js image optimizer doesn't exist in static export — images silently fail to load.
@@ -260,7 +269,7 @@ The app ships as a Capacitor Android APK via `next build` with `output: 'export'
 4. **CORS on backend must include `https://localhost`** — Capacitor Android WebView sends `Origin: https://localhost`. Also allow `capacitor://localhost` (iOS) and `http://localhost` (dev).
 5. **All navigation must work as SPA** — no server-side redirects, no middleware redirects. Use `router.push()` or `<Link>`.
 6. **No Next.js API routes (`app/api/`)** — all API calls go to the FastAPI backend.
-7. **Test every new page in Capacitor build**, not just browser. Run `NEXT_PUBLIC_MOBILE=true npm run build && npx cap sync android` and verify in the APK.
+7. **Test every new page in Capacitor build**, not just browser. Run `npm run build:mobile && npm run sync:android` (and `sync:ios` when iOS-relevant) and verify in the device build.
 8. **Use `localStorage` for auth tokens**, not cookies. Cookies may not work reliably in WebView.
 9. **Capacitor builds require `NEXT_PUBLIC_MOBILE=true`** — without it, `next build` produces a server build (`.next/`) instead of a static export (`out/`), and `npx cap sync android` silently fails to copy assets.
 
@@ -315,5 +324,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.16 (B012 BLE LED packet transmission 2026-04-17)
+**Version:** 2.17 (A016 iOS Capacitor setup + first device build 2026-04-17)
 **Owner:** Daniele Somensi + Claude Code

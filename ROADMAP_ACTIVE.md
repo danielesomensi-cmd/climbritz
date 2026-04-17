@@ -78,7 +78,7 @@ Three levels of coaching intelligence (Coach tier):
 
 > These run alongside Claude Code development work.
 
-- [x] **Register Apple Developer Account** — application submitted 3 April 2026, awaiting approval (1-3 days)
+- [x] **Register Apple Developer Account** — approved + active; first iOS device build running via A016 (17 April 2026)
 - [ ] **Write pro climber list** — names + Instagram/YouTube handles of known strong Kilter Board climbers (Daniele's knowledge)
 - [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check if 6 categories make sense
 - [ ] **Validate hold classifications** in gym — use mobile validation tool, physically check ambiguous holds (~2-3 hours)
@@ -173,7 +173,7 @@ Three levels of coaching intelligence (Coach tier):
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems
 - [ ] Connection management (reconnect, error states, disconnect on background)
-- [ ] iOS build (Apple Developer account needed)
+- [x] **A016:** iOS Capacitor setup — `@capacitor/ios ^8.3.1`, `ios/` Xcode project initialized (SPM-based, no CocoaPods), `NSBluetoothAlwaysUsageDescription` in Info.plist, build scripts split (`build:mobile` + `sync:ios`/`sync:android`/`open:ios`/`open:android`), first device build running on iPhone 15 (iOS 26.2)
 - [ ] Tests
 
 ### 3f — Problem Generation (1-2 weeks)
