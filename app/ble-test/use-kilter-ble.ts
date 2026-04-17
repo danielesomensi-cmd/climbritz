@@ -1,86 +1,105 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
-import type { LedHold } from './presets';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import {
+  connectToKilterBoard,
+  disconnectFromKilterBoard,
+  type ConnectedKilterBoard,
+} from '../../lib/ble/kilter-board-service';
 
-export type BleStatus = 'disconnected' | 'scanning' | 'connected' | 'error';
+export type BleStatus =
+  | 'idle'
+  | 'requesting'
+  | 'scanning'
+  | 'connecting'
+  | 'connected'
+  | 'disconnecting'
+  | 'error';
 
 export interface UseKilterBle {
   status: BleStatus;
   errorMessage: string | null;
+  connectedDevice: ConnectedKilterBoard | null;
   connect: () => Promise<void>;
-  disconnect: () => void;
-  sendLeds: (holds: LedHold[]) => Promise<void>;
-  allOff: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  isCapacitorNative: boolean;
 }
 
 export function useKilterBle(): UseKilterBle {
-  const [status, setStatus] = useState<BleStatus>('disconnected');
+  const [status, setStatus] = useState<BleStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // KilterBoard instance persists across renders
-  const boardRef = useRef<InstanceType<Awaited<typeof import('@hangtime/grip-connect')>['KilterBoard']> | null>(null);
+  const [connectedDevice, setConnectedDevice] = useState<ConnectedKilterBoard | null>(null);
+  const deviceIdRef = useRef<string | null>(null);
+  const isCapacitorNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+
+  const handleDisconnected = useCallback(() => {
+    deviceIdRef.current = null;
+    setConnectedDevice(null);
+    setStatus('idle');
+  }, []);
 
   const connect = useCallback(async () => {
-    setStatus('scanning');
+    if (!isCapacitorNative) {
+      setErrorMessage('Questa funzione richiede l’app Kilter-Up installata.');
+      setStatus('error');
+      return;
+    }
     setErrorMessage(null);
-
+    setStatus('requesting');
     try {
-      // Dynamic import avoids SSR issues — KilterBoard uses navigator.bluetooth
-      const { KilterBoard } = await import('@hangtime/grip-connect');
-
-      if (!boardRef.current) {
-        boardRef.current = new KilterBoard();
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        boardRef.current!.connect(
-          () => {
-            setStatus('connected');
-            resolve();
-          },
-          (err: Error) => {
-            reject(err);
-          }
-        );
-      });
+      // requestDevice spawns the native picker — treat that phase as "scanning"
+      // so the UI can show the yellow indicator while the dialog is open.
+      setStatus('scanning');
+      const device = await connectToKilterBoard(handleDisconnected);
+      setStatus('connecting');
+      deviceIdRef.current = device.deviceId;
+      setConnectedDevice(device);
+      setStatus('connected');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
       setStatus('error');
-      boardRef.current = null;
+      deviceIdRef.current = null;
+      setConnectedDevice(null);
     }
-  }, []);
+  }, [isCapacitorNative, handleDisconnected]);
 
-  const disconnect = useCallback(() => {
-    if (boardRef.current) {
-      boardRef.current.disconnect();
-      boardRef.current = null;
+  const disconnect = useCallback(async () => {
+    const id = deviceIdRef.current;
+    if (!id) {
+      setStatus('idle');
+      return;
     }
-    setStatus('disconnected');
-    setErrorMessage(null);
-  }, []);
-
-  const sendLeds = useCallback(async (holds: LedHold[]) => {
-    if (!boardRef.current || status !== 'connected') return;
-    // Grip Connect only needs position + role_id/color, strip the x/y visual fields
-    const payload = holds.map(({ position, role_id, color }) => ({ position, role_id, color }));
+    setStatus('disconnecting');
     try {
-      await boardRef.current.led(payload);
+      await disconnectFromKilterBoard(id);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
+      setStatus('error');
+      return;
     }
-  }, [status]);
+    deviceIdRef.current = null;
+    setConnectedDevice(null);
+    setStatus('idle');
+  }, []);
 
-  const allOff = useCallback(async () => {
-    if (!boardRef.current || status !== 'connected') return;
-    try {
-      await boardRef.current.led([]);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setErrorMessage(msg);
-    }
-  }, [status]);
+  useEffect(() => {
+    return () => {
+      const id = deviceIdRef.current;
+      if (id) {
+        disconnectFromKilterBoard(id).catch(() => {});
+      }
+    };
+  }, []);
 
-  return { status, errorMessage, connect, disconnect, sendLeds, allOff };
+  return {
+    status,
+    errorMessage,
+    connectedDevice,
+    connect,
+    disconnect,
+    isCapacitorNative,
+  };
 }
