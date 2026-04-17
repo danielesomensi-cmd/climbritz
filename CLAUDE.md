@@ -26,7 +26,7 @@
 **Key asset — hold classification database:**
 Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / Sloper / Undercling / Pinch. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
 
-**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app. `@hangtime/grip-connect` provides the high-level KilterBoard API, backed by `@capacitor-community/bluetooth-le` for native BLE. Web Bluetooth is insufficient for iOS.
+**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app. BLE runtime path is `lib/ble/transport.ts` (thin wrapper over `@capacitor-community/bluetooth-le`) + `lib/ble/kilter-board-service.ts` (Kilter-specific orchestration + UUIDs). Web Bluetooth / Grip Connect are NOT on the runtime path — they don't work in Capacitor WebView or on iOS.
 
 **Discovery competitors:** Climbdex (free, open-source, no AI), Kilter Lookup (limited filters, no AI), kilterboard.io (official new Kilter app, no AI, no grip-type filter).
 
