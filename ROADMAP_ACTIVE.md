@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 10 April 2026
+> Updated: 17 April 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -165,8 +165,10 @@ Three levels of coaching intelligence (Coach tier):
 
 ### 3e — Capacitor + BLE Integration (1-2 weeks)
 - [x] **A006:** Capacitor Android project setup, BLE permissions, `build:mobile` script
-- [x] **A006:** `@hangtime/grip-connect` KilterBoard + `/ble-test` page — 10 LED presets (real positions from `leds` table), connect/disconnect/allOff
+- [x] **A006:** `@hangtime/grip-connect` KilterBoard + `/ble-test` page — 10 LED presets (real positions from `leds` table), connect/disconnect
 - [x] **B009:** Visual board preview — board image + colored circles at correct hold positions (coords from product_size_id=10)
+- [x] **B011:** Fix Android manifest BLE permissions — bounded location permissions to maxSdkVersion=30
+- [x] **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts` API level 3), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner, 22 encoder unit tests
 - [ ] BLE scan → light up a problem from search results (layout string → LED mapping via `leds` table)
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems

@@ -1,7 +1,8 @@
 import {
   encodeColor,
   encodePreset,
-  encodeAllOff,
+  encodeAllOffEmpty,
+  encodeAllOffBlackout,
   parseApiLevel,
   PLACEMENT_ROLES,
   type EncoderHold,
@@ -82,9 +83,9 @@ describe('encodePreset', () => {
     expect(chunks[0]).toEqual(expected);
   });
 
-  test('empty holds array produces same output as encodeAllOff', () => {
+  test('empty holds array produces same output as encodeAllOffEmpty', () => {
     const emptyChunks = encodePreset([]);
-    const allOffChunks = encodeAllOff();
+    const allOffChunks = encodeAllOffEmpty();
     expect(emptyChunks).toEqual(allOffChunks);
   });
 
@@ -130,6 +131,28 @@ describe('chunking', () => {
       expect(chunk).toBeInstanceOf(Uint8Array);
       expect(chunk.length).toBeLessThanOrEqual(20);
     }
+  });
+
+  test('multi-body preset has R (0x52) first marker and S (0x53) last marker', () => {
+    // 85 holds × 3 bytes = 255 data + 1 marker = 256 → exceeds 255-byte body max
+    // → 2 wrapped bodies: first starts R=0x52, last starts S=0x53
+    const holds: EncoderHold[] = Array.from({ length: 85 }, (_, i) => ({
+      position: i,
+      role_id: 12,
+    }));
+    const chunks = encodePreset(holds);
+    const flat: number[] = [];
+    for (const c of chunks) flat.push(...Array.from(c));
+
+    // Find all wrapped packet starts: 0x01 followed by length, checksum, 0x02
+    // The first body's marker (byte after first 0x02) should be R=0x52
+    const firstStx = flat.indexOf(0x02);
+    expect(flat[firstStx + 1]).toBe(0x52); // V3_FIRST = 'R'
+
+    // The last body's marker should be S=0x53
+    const lastStx = flat.lastIndexOf(0x02);
+    expect(lastStx).not.toBe(firstStx); // must be a different packet
+    expect(flat[lastStx + 1]).toBe(0x53); // V3_LAST = 'S'
   });
 
   test('reassembled chunks form a valid wrapped packet', () => {
@@ -194,17 +217,53 @@ describe('checksum integrity', () => {
   });
 });
 
-// --- encodeAllOff ---
+// --- encodeAllOffEmpty ---
 
-describe('encodeAllOff', () => {
+describe('encodeAllOffEmpty', () => {
   test('produces a valid single-chunk packet with T marker only', () => {
-    const chunks = encodeAllOff();
+    const chunks = encodeAllOffEmpty();
     expect(chunks).toHaveLength(1);
 
     // Body = [T=84], wrapped = [1, 1, checksum(84), 2, 84, 3]
     // checksum(84) = ~(84 & 255) & 255 = ~84 & 255 = 171
     const expected = new Uint8Array([1, 1, 171, 2, 84, 3]);
     expect(chunks[0]).toEqual(expected);
+  });
+});
+
+// --- encodeAllOffBlackout ---
+
+describe('encodeAllOffBlackout', () => {
+  test('sends all positions with color 0x00 (black)', () => {
+    const positions = [0, 33, 68, 476];
+    const chunks = encodeAllOffBlackout(positions);
+    expect(chunks.length).toBeGreaterThanOrEqual(1);
+
+    // Flatten and check body contains 4 holds with color byte 0x00
+    const flat: number[] = [];
+    for (const c of chunks) flat.push(...Array.from(c));
+
+    const stxIdx = flat.indexOf(0x02);
+    const etxIdx = flat.lastIndexOf(0x03);
+    const body = flat.slice(stxIdx + 1, etxIdx);
+
+    // Marker + 4 holds × 3 bytes = 13 bytes
+    expect(body[0]).toBe(84); // V3_ONLY (T)
+    // Each hold's 3rd byte (color) should be 0x00 (black)
+    expect(body[3]).toBe(0);  // hold 0 color
+    expect(body[6]).toBe(0);  // hold 33 color
+    expect(body[9]).toBe(0);  // hold 68 color
+    expect(body[12]).toBe(0); // hold 476 color
+  });
+
+  test('differs from encodeAllOffEmpty', () => {
+    const emptyChunks = encodeAllOffEmpty();
+    const blackoutChunks = encodeAllOffBlackout([0, 33]);
+    // Blackout has hold data, empty does not
+    const emptyFlat = Array.from(emptyChunks[0]);
+    const blackoutFlat: number[] = [];
+    for (const c of blackoutChunks) blackoutFlat.push(...Array.from(c));
+    expect(blackoutFlat.length).toBeGreaterThan(emptyFlat.length);
   });
 });
 

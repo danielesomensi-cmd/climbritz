@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 10 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 17 Aprile 2026
 
 ---
 
@@ -24,6 +24,8 @@
 | Alembic migrations | ✅ Done | 001 (initial) + 002 (form analysis) — single head |
 | Tests | ✅ Done | Backend + frontend passing, CI on GitHub Actions |
 | B010 Homepage + APK | ✅ Done | 4-tile hub, privacy policy, signed AAB/APK, Capacitor fixes |
+| B011 BLE Permissions | ✅ Done | Bounded location permissions to maxSdkVersion=30, no spurious prompt on Android 12+ |
+| B012 BLE LED Transmission | ✅ Done | Pure encoder (kilter-protocol.ts, API level 3), sendLEDPreset/sendAllOff, "Illumina board" button, error banner, 22 encoder tests. Pending gym validation. |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |
@@ -194,7 +196,7 @@ for frame in frames:
 ### ✅ Phase 1 — Foundation (Done)
 ### ✅ Phase 2 — Video Analysis (Done)
 ### 🎯 Pre-Phase 3 — Hold Classification HC-1→HC-7 [IN PROGRESS — HC-1✅ HC-2✅ HC-3⏳ HC-5✅ HC-6⏳ HC-7⏳] (HC-4 removed — manual classification via `/classify` UI)
-### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ A011 frontend✅ 3c→3h pending)
+### 🎯 Phase 3 — Discovery + Coach Build (3a✅ 3b✅ A011 frontend✅ 3e: B011✅ B012✅ — 3c→3h pending)
 ### ⏳ Phase 3.5 — Soft Launch (Discovery free → Coach paid)
 ### ⏳ Phase 4 — Visual Problem Recognition
 ### ⏳ Phase 5 — Expert Video Comparison
@@ -242,5 +244,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 10 Aprile 2026*
+*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 17 Aprile 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*

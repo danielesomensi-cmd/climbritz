@@ -2,7 +2,7 @@
 // on top of the generic transport.
 
 import * as transport from './transport';
-import { encodePreset, encodeAllOff, parseApiLevel, type EncoderHold } from './kilter-protocol';
+import { encodePreset, encodeAllOffEmpty, encodeAllOffBlackout, parseApiLevel, type EncoderHold } from './kilter-protocol';
 
 // Aurora Climbing advertisement service UUID (filter for requestDevice).
 // Source: @hangtime/grip-connect kilterboard.model.ts
@@ -27,8 +27,9 @@ export interface ConnectedKilterBoard {
   apiLevel: number;
 }
 
-// Per-device API level cache
+// Per-device caches (keyed by deviceId)
 const apiLevelCache = new Map<string, number>();
+const nameCache = new Map<string, string>();
 
 export async function connectToKilterBoard(
   onDisconnect: () => void,
@@ -40,13 +41,37 @@ export async function connectToKilterBoard(
   const name = device.name ?? 'Kilter Board';
   const apiLevel = parseApiLevel(name);
   apiLevelCache.set(device.deviceId, apiLevel);
+  nameCache.set(device.deviceId, name);
 
   return { deviceId: device.deviceId, name, apiLevel };
 }
 
 export async function disconnectFromKilterBoard(deviceId: string): Promise<void> {
   apiLevelCache.delete(deviceId);
+  nameCache.delete(deviceId);
   await transport.disconnect(deviceId);
+}
+
+/** Write chunks to the board's UART TX characteristic. */
+async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void> {
+  for (const chunk of chunks) {
+    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+    await transport.writeWithoutResponse(
+      deviceId,
+      KILTER_BOARD_UART_SERVICE_UUID,
+      KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
+      dataView,
+    );
+  }
+}
+
+function assertApiLevel3(deviceId: string): void {
+  const apiLevel = apiLevelCache.get(deviceId);
+  if (apiLevel !== undefined && apiLevel < 3) {
+    throw new UnsupportedBoardError(
+      'Kilter Board API level 2 is not supported. Update your board firmware to API level 3.',
+    );
+  }
 }
 
 /** Send LED placement data to the connected board. */
@@ -54,42 +79,30 @@ export async function sendLEDPreset(
   deviceId: string,
   holds: EncoderHold[],
 ): Promise<void> {
-  const apiLevel = apiLevelCache.get(deviceId);
-  if (apiLevel !== undefined && apiLevel < 3) {
-    throw new UnsupportedBoardError(
-      'Kilter Board API level 2 is not supported. Update your board firmware to API level 3.',
-    );
-  }
-
+  assertApiLevel3(deviceId);
+  const name = nameCache.get(deviceId) ?? deviceId;
+  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  console.log(`[BLE] sendLEDPreset → device="${name}" apiLevel=${apiLevel} holds=${holds.length}`);
   const chunks = encodePreset(holds);
-  for (const chunk of chunks) {
-    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-    await transport.writeWithoutResponse(
-      deviceId,
-      KILTER_BOARD_UART_SERVICE_UUID,
-      KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
-      dataView,
-    );
-  }
+  await writeChunks(deviceId, chunks);
 }
 
-/** Turn off all LEDs on the connected board. */
+/** Turn off all LEDs on the connected board (empty packet, primary approach). */
 export async function sendAllOff(deviceId: string): Promise<void> {
-  const apiLevel = apiLevelCache.get(deviceId);
-  if (apiLevel !== undefined && apiLevel < 3) {
-    throw new UnsupportedBoardError(
-      'Kilter Board API level 2 is not supported. Update your board firmware to API level 3.',
-    );
-  }
+  assertApiLevel3(deviceId);
+  const name = nameCache.get(deviceId) ?? deviceId;
+  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  console.log(`[BLE] sendAllOff (empty) → device="${name}" apiLevel=${apiLevel}`);
+  const chunks = encodeAllOffEmpty();
+  await writeChunks(deviceId, chunks);
+}
 
-  const chunks = encodeAllOff();
-  for (const chunk of chunks) {
-    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-    await transport.writeWithoutResponse(
-      deviceId,
-      KILTER_BOARD_UART_SERVICE_UUID,
-      KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
-      dataView,
-    );
-  }
+/** Turn off all LEDs — blackout fallback (sends color 0x00 to every position). */
+export async function sendAllOffBlackout(deviceId: string, positions: number[]): Promise<void> {
+  assertApiLevel3(deviceId);
+  const name = nameCache.get(deviceId) ?? deviceId;
+  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  console.log(`[BLE] sendAllOff (blackout) → device="${name}" apiLevel=${apiLevel} positions=${positions.length}`);
+  const chunks = encodeAllOffBlackout(positions);
+  await writeChunks(deviceId, chunks);
 }

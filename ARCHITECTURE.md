@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Last updated: 10 April 2026
+> Last updated: 17 April 2026
 
 ---
 
@@ -22,8 +22,8 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 │  Capacitor Native App (iOS / Android — Phase 3e)                     │
 │  ┌─────────────────┐                          ┌────────────────────┐ │
 │  │   Next.js 14    │──────────────────────────▶  Kilter Board      │ │
-│  │   (Frontend)    │  BLE (@hangtime/         │  (Hardware)        │ │
-│  │   Port 3000     │   grip-connect)          │  LED control       │ │
+│  │   (Frontend)    │  BLE (kilter-protocol.ts │  (Hardware)        │ │
+│  │   Port 3000     │   + @cap-community/ble)  │  LED control       │ │
 │  └────────┬────────┘                          └────────────────────┘ │
 └───────────┼──────────────────────────────────────────────────────────┘
             │ HTTP
@@ -155,7 +155,20 @@ Video storage: local filesystem (S3 planned)
 
 **Note:** SQLite is on a persistent Railway volume (`/data/kilter-up`) — data survives redeploys. The startup command (in `backend/railway.toml`) checks for a valid BoardLib DB (`SELECT 1 FROM climbs`), re-downloads if missing or invalid (D014), then runs migrations and starts uvicorn. Migration to PostgreSQL is planned for Phase 7.
 
-**Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via `@hangtime/grip-connect` (high-level API wrapping `@capacitor-community/bluetooth-le`). Same frontend codebase, zero rewrite.
+**Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via a custom protocol stack:
+
+```
+app/ble-test/page.tsx          UI — "Illumina board" button, preset grid, error banner
+  └─ use-kilter-ble.ts         React hook — state machine (8 states incl. 'sending')
+       └─ kilter-board-service  Kilter-specific orchestration — connect, sendLEDPreset, sendAllOff
+            ├─ kilter-protocol  Pure encoder (API level 3) — holds → BLE-ready Uint8Array chunks
+            │                   Color compression: 24-bit RGB → 8-bit 0bRRRGGGBB
+            │                   Packet format: [SOH, len, checksum, STX, body, ETX]
+            │                   Chunked to 20-byte BLE writes
+            └─ transport.ts     Generic @capacitor-community/bluetooth-le wrapper
+```
+
+`@hangtime/grip-connect` remains in `package.json` as protocol reference only (never imported at runtime). `UnsupportedBoardError` is thrown for API level 2 boards. Protocol docs: https://github.com/1-max-1/fake_kilter_board
 
 ---
 
@@ -244,7 +257,7 @@ POST /api/videos/upload + climb_id + angle
 | UUID storage | String(36) | SQLite + PostgreSQL compatibility |
 | Dev database | SQLite | Simple, no setup, PostgreSQL for prod |
 | Native app | Capacitor (wraps Next.js) | BLE plugin available, zero frontend rewrite, iOS + Android |
-| BLE | `@hangtime/grip-connect` over `@capacitor-community/bluetooth-le` | grip-connect provides high-level KilterBoard API; Capacitor plugin handles native BLE. Web Bluetooth insufficient for iOS Safari |
+| BLE | Custom encoder (`kilter-protocol.ts`) over `@capacitor-community/bluetooth-le` | Pure encoder reimplemented from grip-connect reference. API level 3 only. grip-connect stays as reference, not imported. Web Bluetooth insufficient for iOS Safari |
 | Hold classification | Manual classification via `/classify` UI | HC-4 (AI batch) removed — manual-first by Daniele + Christie in gym. Proprietary asset, prerequisite for Discovery |
 | Routing (Capacitor) | Query-param routes (`/discover/detail?id=`) | Dynamic `[param]` segments don't work in Capacitor static export |
 
@@ -272,4 +285,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 10 April 2026 (B009)*
+*Architecture doc created: March 2026 (B002) — Last updated: 17 April 2026 (B012)*

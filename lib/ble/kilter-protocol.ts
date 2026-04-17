@@ -142,14 +142,27 @@ export function encodePreset(holds: EncoderHold[]): Uint8Array[] {
 }
 
 /**
- * Encode an "all LEDs off" packet — an empty placement list.
+ * Encode an "all LEDs off" packet — empty placement list.
  * Produces a single V3_ONLY body with just the marker byte, wrapped and chunked.
+ * This is the primary "all off" approach (zero holds).
  */
-export function encodeAllOff(): Uint8Array[] {
-  // Single body: just the T marker, no holds
+export function encodeAllOffEmpty(): Uint8Array[] {
   const body = [V3_ONLY];
   const flat = wrapBytes(body);
   return splitIntoChunks(flat);
+}
+
+/**
+ * Encode an "all LEDs off" packet — blackout variant.
+ * Sends every known LED position with color 0x00 (black).
+ * Fallback if encodeAllOffEmpty doesn't clear the board on some firmware.
+ */
+export function encodeAllOffBlackout(positions: number[]): Uint8Array[] {
+  const holds: EncoderHold[] = positions.map((position) => ({
+    position,
+    color: '000000',
+  }));
+  return encodePreset(holds);
 }
 
 /**
