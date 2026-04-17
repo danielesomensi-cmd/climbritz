@@ -256,6 +256,7 @@ The app ships as a Capacitor Android APK via `next build` with `output: 'export'
 6. **No Next.js API routes (`app/api/`)** — all API calls go to the FastAPI backend.
 7. **Test every new page in Capacitor build**, not just browser. Run `NEXT_PUBLIC_MOBILE=true npm run build && npx cap sync android` and verify in the APK.
 8. **Use `localStorage` for auth tokens**, not cookies. Cookies may not work reliably in WebView.
+9. **Capacitor builds require `NEXT_PUBLIC_MOBILE=true`** — without it, `next build` produces a server build (`.next/`) instead of a static export (`out/`), and `npx cap sync android` silently fails to copy assets.
 
 ---
 
