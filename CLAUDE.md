@@ -26,7 +26,7 @@
 **Key asset — hold classification database:**
 Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / Sloper / Undercling / Pinch. No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]" feature.
 
-**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app. BLE runtime path is `lib/ble/transport.ts` (thin wrapper over `@capacitor-community/bluetooth-le`) + `lib/ble/kilter-board-service.ts` (Kilter-specific orchestration + UUIDs). Web Bluetooth / Grip Connect are NOT on the runtime path — they don't work in Capacitor WebView or on iOS.
+**BLE is in scope** (Phase 3e): Capacitor wraps Next.js → native iOS/Android app. BLE runtime path is `lib/ble/transport.ts` (thin wrapper over `@capacitor-community/bluetooth-le`) + `lib/ble/kilter-board-service.ts` (Kilter-specific orchestration + UUIDs) + `lib/ble/kilter-protocol.ts` (pure packet encoder, API level 3). Web Bluetooth / Grip Connect are NOT on the runtime path — `@hangtime/grip-connect` stays in `package.json` as protocol reference only (never imported). `UnsupportedBoardError` is thrown for API level 2 boards (no `@` or `@2` in device name). Protocol docs: https://github.com/1-max-1/fake_kilter_board
 
 **Discovery competitors:** Climbdex (free, open-source, no AI), Kilter Lookup (limited filters, no AI), kilterboard.io (official new Kilter app, no AI, no grip-type filter).
 
@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B010 Complete — 10 April 2026)
+## 📦 Current State (B012 Complete — 17 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -55,9 +55,11 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B013:** Auto-provision BoardLib kilter.db on Railway first boot
 ✅ **D014:** Railway DB startup validation — probe `SELECT 1 FROM climbs` + `_validate_boardlib_db()`
 ✅ **B016:** Board visualization fixes — hollow rings for active holds, screw-on footholds sized smaller, kickboard row included (y∈[0,156]), HoldPosition.set_id plumbed through backend → frontend
-✅ **A006:** BLE LED test — Capacitor Android project, `/ble-test` page with 10 LED presets sourced from `leds` table (layout_id=1), `use-kilter-ble` hook wrapping `@hangtime/grip-connect`
+✅ **A006:** BLE LED test — Capacitor Android project, `/ble-test` page with 10 LED presets sourced from `leds` table (layout_id=1), `use-kilter-ble` hook over Capacitor BLE
 ✅ **B009:** Visual board preview on `/ble-test` — board image + colored circles at correct hold positions, pre-computed from product_size_id=10 coordinates
 ✅ **B010:** Homepage redesign (4-tile hub) + Play Store release build (signed AAB/APK) + privacy policy + Capacitor mobile fixes (CORS, dynamic routes → query params, board image, back buttons, network security)
+✅ **B011:** Fix Android manifest BLE permissions — bounded ACCESS_FINE/COARSE_LOCATION to maxSdkVersion=30, no spurious location prompt on Android 12+
+✅ **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts`), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner in `/ble-test`, API level 3 only
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -80,7 +82,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, then Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting
+**Next:** B012 Phase 2 gym validation, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -193,12 +195,16 @@ kilter-training-app/
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009)
 │   ├── ble-test/presets.ts         ✅ LED preset data + x/y coords from leds+holes tables (B009)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
-│   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/led/disconnect (A006)
+│   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/send/disconnect + sending state (B012)
 │   ├── privacy/page.tsx            ✅ Privacy policy (Play Store requirement, B010)
 │   ├── debug/page.tsx              ✅ Network diagnostics (dev tool, B010)
 │   ├── data/                       ✅ Frontend data files
 │   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video/auth APIs
-│   └── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
+│   ├── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
+│   ├── lib/ble/kilter-protocol.ts  ✅ Pure packet encoder — API level 3 (B012)
+│   ├── lib/ble/kilter-board-service.ts ✅ Kilter-specific BLE orchestration (B012)
+│   ├── lib/ble/transport.ts        ✅ Generic Capacitor BLE wrapper (B012: +writeWithoutResponse)
+│   └── lib/ble/__tests__/kilter-protocol.test.ts ✅ Encoder unit tests (B012)
 ├── components/
 │   ├── BoardMap.tsx                ✅ 12x12 board canvas (HC-2)
 │   ├── ClimbBoardView.tsx          ✅ Climb detail board wrapper (A011)
@@ -309,5 +315,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.15 (B009 Doc audit fixes + single source of truth 2026-04-10)
+**Version:** 2.16 (B012 BLE LED packet transmission 2026-04-17)
 **Owner:** Daniele Somensi + Claude Code
