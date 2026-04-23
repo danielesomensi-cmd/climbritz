@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getClimbDetail, type ClimbDetail } from '@/app/lib/api';
 import ClimbBoardView, { ROLE_COLORS } from '@/components/ClimbBoardView';
 import ClimbBleControls from '@/components/ClimbBleControls';
@@ -10,6 +10,7 @@ import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
 import { climbToLedCommands } from './climb-to-leds';
+import { resolvePosition } from '../filtered-list-storage';
 
 const ROLE_LABELS: Record<string, string> = {
   start: 'Start',
@@ -32,6 +33,7 @@ export default function ClimbDetailPage() {
 }
 
 function ClimbDetailPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const uuid = searchParams?.get('id') ?? '';
   const angleParam = searchParams?.get('angle');
@@ -40,6 +42,22 @@ function ClimbDetailPageInner() {
   const [climb, setClimb] = useState<ClimbDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // A014: Resolve Next/Prev navigation context from the sessionStorage list
+  // saved by /discover. Recomputed on every uuid change (nav updates query
+  // params, not the mounted component).
+  const position = useMemo(() => (uuid ? resolvePosition(uuid) : null), [uuid]);
+  const hasNav = position !== null;
+  const canPrev = hasNav && position.index > 0;
+  const canNext = hasNav && position.index < position.list.climbIds.length - 1;
+
+  const navigateToNeighbour = (delta: -1 | 1) => {
+    if (!position) return;
+    const targetIndex = position.index + delta;
+    if (targetIndex < 0 || targetIndex >= position.list.climbIds.length) return;
+    const nextUuid = position.list.climbIds[targetIndex];
+    router.push(`/discover/detail?id=${nextUuid}&angle=${position.list.angle}`);
+  };
 
   useEffect(() => {
     if (!uuid) return;
@@ -187,6 +205,40 @@ function ClimbDetailPageInner() {
                 🎬 Analyze with Coach
               </Link>
             </div>
+
+            {/* A014: Next/Prev through the saved filtered list. Hidden on
+                deep links (no saved list OR current uuid not in it). */}
+            {hasNav && (
+              <div
+                data-testid="list-nav"
+                className="flex items-center gap-3 pt-1"
+              >
+                <button
+                  type="button"
+                  data-testid="list-nav-prev"
+                  onClick={() => navigateToNeighbour(-1)}
+                  disabled={!canPrev}
+                  className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-zinc-800 disabled:hover:text-zinc-300"
+                >
+                  ← Prev
+                </button>
+                <span
+                  data-testid="list-nav-position"
+                  className="text-xs text-zinc-500 shrink-0 tabular-nums"
+                >
+                  {position.index + 1} of {position.list.climbIds.length}
+                </span>
+                <button
+                  type="button"
+                  data-testid="list-nav-next"
+                  onClick={() => navigateToNeighbour(1)}
+                  disabled={!canNext}
+                  className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-zinc-800 disabled:hover:text-zinc-300"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>

@@ -1,11 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ClimbDetailPage from '../detail/page';
+import { saveFilteredList, clearFilteredList } from '../filtered-list-storage';
 
 let searchParamsString = 'id=uuid-1&angle=40';
+const routerPushMock = jest.fn();
 jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(searchParamsString),
   usePathname: () => '/discover/detail',
+  useRouter: () => ({ push: routerPushMock, replace: jest.fn(), refresh: jest.fn() }),
 }));
 
 jest.mock('@/app/lib/api', () => {
@@ -46,6 +49,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   searchParamsString = 'id=uuid-1&angle=40';
   getClimbDetailMock.mockResolvedValue(SAMPLE_CLIMB);
+  window.sessionStorage.clear();
 });
 
 describe('ClimbDetailPage', () => {
@@ -102,6 +106,109 @@ describe('ClimbDetailPage', () => {
     render(<ClimbDetailPage />);
     await waitFor(() => {
       expect(getClimbDetailMock).toHaveBeenCalledWith('uuid-1', 50);
+    });
+  });
+
+  describe('Next/Prev navigation (A014)', () => {
+    const withList = (index: number) => {
+      saveFilteredList({
+        climbIds: ['uuid-0', 'uuid-1', 'uuid-2'],
+        angle: 40,
+        timestamp: Date.now(),
+      });
+      searchParamsString = `id=uuid-${index}&angle=40`;
+    };
+
+    it('renders Next/Prev and the position indicator when uuid is in the saved list', async () => {
+      withList(1);
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('list-nav')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('2 of 3');
+      expect(screen.getByTestId('list-nav-prev')).not.toBeDisabled();
+      expect(screen.getByTestId('list-nav-next')).not.toBeDisabled();
+    });
+
+    it('disables Prev on the first climb in the list', async () => {
+      withList(0);
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('list-nav-prev')).toBeDisabled();
+      });
+      expect(screen.getByTestId('list-nav-next')).not.toBeDisabled();
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('1 of 3');
+    });
+
+    it('disables Next on the last climb in the list', async () => {
+      withList(2);
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('list-nav-next')).toBeDisabled();
+      });
+      expect(screen.getByTestId('list-nav-prev')).not.toBeDisabled();
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('3 of 3');
+    });
+
+    it('hides the whole row on a deep link (no saved list)', async () => {
+      clearFilteredList();
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('climb-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+    });
+
+    it('hides the row when the uuid is not in the saved list', async () => {
+      saveFilteredList({
+        climbIds: ['someone-else', 'another-one'],
+        angle: 40,
+        timestamp: Date.now(),
+      });
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('climb-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+    });
+
+    it('hides the row when the saved list is stale (>24h) and clears it', async () => {
+      saveFilteredList({
+        climbIds: ['uuid-0', 'uuid-1', 'uuid-2'],
+        angle: 40,
+        timestamp: Date.now() - 25 * 60 * 60 * 1000,
+      });
+      searchParamsString = 'id=uuid-1&angle=40';
+      render(<ClimbDetailPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('climb-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+      expect(window.sessionStorage.getItem('kilter-up:discover:filtered-list')).toBeNull();
+    });
+
+    it('tapping Next routes to the next climb, keeping the list angle', async () => {
+      withList(1);
+      render(<ClimbDetailPage />);
+      await waitFor(() => expect(screen.getByTestId('list-nav-next')).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId('list-nav-next'));
+      expect(routerPushMock).toHaveBeenCalledWith('/discover/detail?id=uuid-2&angle=40');
+    });
+
+    it('tapping Prev routes to the previous climb', async () => {
+      withList(1);
+      render(<ClimbDetailPage />);
+      await waitFor(() => expect(screen.getByTestId('list-nav-prev')).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId('list-nav-prev'));
+      expect(routerPushMock).toHaveBeenCalledWith('/discover/detail?id=uuid-0&angle=40');
+    });
+
+    it('does not route past the end of the list', async () => {
+      withList(2);
+      render(<ClimbDetailPage />);
+      await waitFor(() => expect(screen.getByTestId('list-nav-next')).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId('list-nav-next'));
+      expect(routerPushMock).not.toHaveBeenCalled();
     });
   });
 });
