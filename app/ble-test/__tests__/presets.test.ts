@@ -56,16 +56,16 @@ describe('PRESETS', () => {
       for (const h of dani.holds) expect(h.color).toBe('FF0000');
     });
 
-    it('Heart uses red + magenta + exactly one white shine', () => {
+    it('Heart uses only red outline + magenta fill (no white)', () => {
       const heart = PRESETS.find((p) => p.id === 8)!;
       const colors = heart.holds.map((h) => h.color);
       const whites = colors.filter((c) => c === 'FFFFFF').length;
       const reds = colors.filter((c) => c === 'FF0000').length;
       const magentas = colors.filter((c) => c === 'FF00FF').length;
-      expect(whites).toBe(1);
+      expect(whites).toBe(0);
       expect(reds).toBeGreaterThan(0);
       expect(magentas).toBeGreaterThan(0);
-      expect(reds + magentas + whites).toBe(heart.holds.length);
+      expect(reds + magentas).toBe(heart.holds.length);
     });
   });
 });

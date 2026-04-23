@@ -299,7 +299,7 @@ export const PRESETS: Preset[] = [
   {
     id: 8,
     name: 'Heart',
-    description: 'Cuore multicolor',
+    description: 'Cuore rosso e magenta',
     holds: [
       // Red outline
       ...[
@@ -310,15 +310,13 @@ export const PRESETS: Preset[] = [
         [7, 7],[ 9, 7],                                // narrower
         [8, 6],                                        // bottom tip
       ].map(([c, r]) => hold(grid(c, r), { color: RED })),
-      // Magenta fill (one inner cell reserved for white shine)
+      // Magenta fill (solid — no white shine)
       ...[
-        [6,10],[8,10],[9,10],[10,10],                  // row 10 inside (7 is white)
+        [6,10],[7,10],[8,10],[9,10],[10,10],           // row 10 inside
         [6, 9],[7, 9],[8, 9],[9, 9],[10, 9],           // row 9 inside
         [7, 8],[8, 8],[9, 8],                          // row 8 inside
         [8, 7],                                        // row 7 inside
       ].map(([c, r]) => hold(grid(c, r), { color: MAGENTA })),
-      // White shine highlight
-      hold(grid(7, 10), { color: WHITE }),
     ],
   },
   {
