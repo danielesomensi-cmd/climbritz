@@ -142,12 +142,6 @@ export interface Preset {
   holds: LedHold[];
 }
 
-// Role IDs from placement_roles table
-const START = 12;   // green   #00FF00
-const MIDDLE = 13;  // cyan    #00FFFF
-const FINISH = 14;  // magenta #FF00FF
-const FOOT = 15;    // orange  #FFB600
-
 function hold(
   position: number,
   roleOrColor: { role_id: number } | { color: string }
@@ -191,6 +185,29 @@ const CYAN = '00FFFF';      // 0/7/3
 const BLUE = '0000FF';      // 0/0/3
 const MAGENTA = 'FF00FF';   // 7/0/3
 const WHITE = 'FFFFFF';     // 7/7/3
+
+// Stress-test preset: light every LED in POSITION_COORDS, grouped into
+// horizontal y-bands (8-unit bands matching the grid step). Bands cycle through
+// the 8-colour rainbow from bottom to top.
+const STRESS_PALETTE = [RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, MAGENTA, WHITE];
+
+function buildAllLedsStressTest(): LedHold[] {
+  const bands = new Map<number, Array<{ pos: number; x: number; y: number }>>();
+  for (const [posStr, [x, y]] of Object.entries(POSITION_COORDS)) {
+    const band = Math.floor(y / 8);
+    if (!bands.has(band)) bands.set(band, []);
+    bands.get(band)!.push({ pos: Number(posStr), x, y });
+  }
+  const holds: LedHold[] = [];
+  const bandKeys = [...bands.keys()].sort((a, b) => a - b);
+  bandKeys.forEach((bandIdx, i) => {
+    const color = STRESS_PALETTE[i % STRESS_PALETTE.length];
+    for (const led of bands.get(bandIdx)!) {
+      holds.push({ position: led.pos, color, x: led.x, y: led.y });
+    }
+  });
+  return holds;
+}
 
 export const PRESETS: Preset[] = [
   {
@@ -432,5 +449,12 @@ export const PRESETS: Preset[] = [
         [7, 6],[8, 6],[9, 6],                          // bottom of smile
       ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
     ],
+  },
+  // ─── Stress test (B014-iter-2) ────────────────────────────────────────
+  {
+    id: 11,
+    name: 'All LEDs Diagnostic',
+    description: 'Stress test — tutte le LED, strisce arcobaleno dal basso',
+    holds: buildAllLedsStressTest(),
   },
 ];

@@ -217,15 +217,19 @@ export default function BleTestPage() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           {PRESETS.map((preset) => {
             const isActive = activePreset === preset.id;
+            const isStressTest = preset.id === 11;
             return (
               <button
                 key={preset.id}
                 onClick={() => handlePreset(preset.id)}
                 className={[
                   'p-3 rounded-lg text-left transition-all',
+                  isStressTest ? 'col-span-2 border border-amber-600/60' : '',
                   isActive
                     ? 'bg-blue-700 ring-2 ring-blue-400'
-                    : 'bg-gray-800 hover:bg-gray-700',
+                    : isStressTest
+                      ? 'bg-amber-950/40 hover:bg-amber-900/60'
+                      : 'bg-gray-800 hover:bg-gray-700',
                 ].join(' ')}
               >
                 <div className="flex items-start justify-between mb-1">

@@ -1,9 +1,9 @@
 import { PRESETS } from '../presets';
 
 describe('PRESETS', () => {
-  it('contains exactly 10 presets', () => {
-    expect(PRESETS).toHaveLength(10);
-    expect(PRESETS.map((p) => p.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  it('contains exactly 11 presets', () => {
+    expect(PRESETS).toHaveLength(11);
+    expect(PRESETS.map((p) => p.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   });
 
   it('every hold in every preset has either role_id or color', () => {
@@ -66,6 +66,25 @@ describe('PRESETS', () => {
       expect(reds).toBeGreaterThan(0);
       expect(magentas).toBeGreaterThan(0);
       expect(reds + magentas).toBe(heart.holds.length);
+    });
+  });
+
+  describe('stress test (B014-iter-2)', () => {
+    it('#11 All LEDs Diagnostic lights every position in POSITION_COORDS', () => {
+      const stress = PRESETS.find((p) => p.id === 11)!;
+      expect(stress.name).toBe('All LEDs Diagnostic');
+      // Every hold has a colour (no role_id fallback)
+      for (const h of stress.holds) {
+        expect(typeof h.color).toBe('string');
+      }
+      // Positions are unique
+      const positions = stress.holds.map((h) => h.position);
+      expect(new Set(positions).size).toBe(positions.length);
+      // At least 400 LEDs — the real board has ~476 mapped positions
+      expect(stress.holds.length).toBeGreaterThan(400);
+      // Uses multiple colours from the rainbow palette
+      const distinctColors = new Set(stress.holds.map((h) => h.color));
+      expect(distinctColors.size).toBeGreaterThanOrEqual(4);
     });
   });
 });
