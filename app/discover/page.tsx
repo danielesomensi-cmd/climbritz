@@ -6,6 +6,7 @@ import { searchClimbs, API_BASE, type ClimbSearchResult, type SortField } from '
 import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
+import { saveFilteredList } from './filtered-list-storage';
 
 const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const DEFAULT_ANGLE = 40;
@@ -106,6 +107,20 @@ function DiscoverPageInner() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [runSearch]);
+
+  // A014: persist the current result list so /discover/detail can offer
+  // Next/Prev navigation without re-fetching the filter. Overwritten every
+  // time a fresh result set arrives — a filter change naturally invalidates
+  // the previous list (uuids drop out → detail page hides Next/Prev).
+  useEffect(() => {
+    if (loading) return;
+    if (results.length === 0) return;
+    saveFilteredList({
+      climbIds: results.map((c) => c.uuid),
+      angle,
+      timestamp: Date.now(),
+    });
+  }, [results, angle, loading]);
 
   const emptyState = useMemo(() => {
     if (loading) return null;
