@@ -172,7 +172,8 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **B014:** `/ble-test` UX polish — auto-apply preset on tap with 200ms debounce (BLE writes serialized via hook-level promise chain), enlarged Connetti/Disconnetti buttons, creative presets #6-#10 replacing legacy test patterns (DANI in red, climber, heart, lightning bolt, smiley face) authored on the 17×18 main-hold grid
 - [x] **B014-iter:** Preset visual fixes after gym validation — climber redrawn with asymmetric reaching pose, heart uniform red+magenta (no white shine), lightning extended to near-full-board-height zigzag, smile enlarged to 11×11 rounded face with unambiguous eyes + U-shape smile
 - [x] **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) + added preset #11 All LEDs Diagnostic stress test (476 LEDs cycling through 8-colour rainbow y-bands)
-- [ ] BLE scan → light up a problem from search results (layout string → LED mapping via `leds` table)
+- [x] **A015:** Universal BottomNav on `/classify` and `/ble-test` + BLE illumination on `/discover/detail` — `ClimbBleControls` component (reuses `use-kilter-ble` hook), `climb-to-leds.ts` helper, static `app/data/leds_12x12.json` (476-entry placement_id → LED position map). Connetti → Illumina board → role colors sent via existing `kilter-protocol.ts` encoder.
+- [x] **BLE scan → light up a problem from search results** — shipped as part of A015: user flow is tap climb in `/discover` → Connetti → Illumina board. Remaining work: auto-connect on page load (future), in-session memory of last-connected device (future).
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems
 - [ ] Connection management (reconnect, error states, disconnect on background)
