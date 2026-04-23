@@ -222,20 +222,20 @@ function ClimbDetailPageInner() {
             {hasNav && (
               <div
                 data-testid="list-nav"
-                className="flex items-center gap-3 pt-1"
+                className="flex items-center gap-3 pt-3"
               >
                 <button
                   type="button"
                   data-testid="list-nav-prev"
                   onClick={() => navigateToNeighbour(-1)}
                   disabled={!canPrev}
-                  className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-zinc-800 disabled:hover:text-zinc-300"
+                  className="flex-1 min-h-16 px-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-xl font-bold hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   ← Prev
                 </button>
                 <span
                   data-testid="list-nav-position"
-                  className="text-xs text-zinc-500 shrink-0 tabular-nums"
+                  className="text-sm font-semibold text-zinc-400 shrink-0 tabular-nums"
                 >
                   {position.index + 1} of {position.list.climbIds.length}
                 </span>
@@ -244,7 +244,7 @@ function ClimbDetailPageInner() {
                   data-testid="list-nav-next"
                   onClick={() => navigateToNeighbour(1)}
                   disabled={!canNext}
-                  className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-zinc-800 disabled:hover:text-zinc-300"
+                  className="flex-1 min-h-16 px-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-xl font-bold hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                 >
                   Next →
                 </button>
