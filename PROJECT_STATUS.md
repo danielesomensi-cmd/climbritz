@@ -27,7 +27,8 @@
 | B011 BLE Permissions | ✅ Done | Bounded location permissions to maxSdkVersion=30, no spurious prompt on Android 12+ |
 | B012 BLE LED Transmission | ✅ Done | Pure encoder (kilter-protocol.ts, API level 3), sendLEDPreset/sendAllOff, "Illumina board" button, error banner, 22 encoder tests. Pending gym validation. |
 | A016 iOS Capacitor Setup | ✅ Done | `@capacitor/ios ^8.3.1`, `ios/` Xcode project (SPM-based), `NSBluetoothAlwaysUsageDescription` in Info.plist, build scripts split (build:mobile + sync:ios/sync:android/open:ios/open:android), first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account. |
-| B014 BLE LED Test UX | ✅ Done | Auto-apply preset on tap with 200ms debounce, BLE writes serialized via hook-level promise chain, Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 (DANI rosso, climber T-pose, heart multicolor, lightning giallo, smile) authored on the 17×18 main-hold grid. Pending gym validation. |
+| B014 BLE LED Test UX | ✅ Done | Auto-apply preset on tap with 200ms debounce, BLE writes serialized via hook-level promise chain, Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 authored on the 17×18 main-hold grid. |
+| B014-iter Preset Fixes | ✅ Done | After gym validation: climber redrawn with asymmetric reaching pose (not T-pose), heart uniform red+magenta (no white shine), lightning extended to near-full-board-height zigzag, smile enlarged to 11×11 rounded face. Pending final gym re-validation. |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
 | B001 Cleanup | ✅ Done | Removed v1/v2 duplication, dead code, broken imports |

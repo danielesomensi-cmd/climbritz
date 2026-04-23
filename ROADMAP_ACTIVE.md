@@ -169,7 +169,8 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **B009:** Visual board preview — board image + colored circles at correct hold positions (coords from product_size_id=10)
 - [x] **B011:** Fix Android manifest BLE permissions — bounded location permissions to maxSdkVersion=30
 - [x] **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts` API level 3), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner, 22 encoder unit tests
-- [x] **B014:** `/ble-test` UX polish — auto-apply preset on tap with 200ms debounce (BLE writes serialized via hook-level promise chain), enlarged Connetti/Disconnetti buttons, creative presets #6-#10 replacing legacy test patterns (DANI in red, T-pose climber, heart, lightning bolt, smiley face) authored on the 17×18 main-hold grid
+- [x] **B014:** `/ble-test` UX polish — auto-apply preset on tap with 200ms debounce (BLE writes serialized via hook-level promise chain), enlarged Connetti/Disconnetti buttons, creative presets #6-#10 replacing legacy test patterns (DANI in red, climber, heart, lightning bolt, smiley face) authored on the 17×18 main-hold grid
+- [x] **B014-iter:** Preset visual fixes after gym validation — climber redrawn with asymmetric reaching pose, heart uniform red+magenta (no white shine), lightning extended to near-full-board-height zigzag, smile enlarged to 11×11 rounded face with unambiguous eyes + U-shape smile
 - [ ] BLE scan → light up a problem from search results (layout string → LED mapping via `leds` table)
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems

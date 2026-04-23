@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B014 Complete — 23 April 2026)
+## 📦 Current State (B014-iter Complete — 23 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -61,7 +61,8 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B011:** Fix Android manifest BLE permissions — bounded ACCESS_FINE/COARSE_LOCATION to maxSdkVersion=30, no spurious location prompt on Android 12+
 ✅ **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts`), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner in `/ble-test`, API level 3 only
 ✅ **A016:** iOS Capacitor setup — `@capacitor/ios ^8.3.1`, `ios/` Xcode project initialized (SPM-based, no CocoaPods), `NSBluetoothAlwaysUsageDescription` in Info.plist, `build:mobile` split into platform-agnostic build + `sync:ios`/`sync:android`/`open:ios`/`open:android`, first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account
-✅ **B014:** BLE LED test UX polish — auto-apply on preset tap with 200ms debounce, BLE writes serialized via hook-level promise chain (no chunk interleave), Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 (DANI rosso, climber T-pose, heart multicolor, lightning giallo, smile) authored on the 17×18 main-hold grid via new `grid(col,row)` helper
+✅ **B014:** BLE LED test UX polish — auto-apply on preset tap with 200ms debounce, BLE writes serialized via hook-level promise chain (no chunk interleave), Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 authored on the 17×18 main-hold grid via new `grid(col,row)` helper
+✅ **B014-iter:** Preset visual fixes after gym validation — climber redrawn with asymmetric reaching pose (replacing T-pose "crucifix"), heart stripped of white shine (uniform red outline + magenta fill), lightning extended to near-full-board-height zigzag (rows 2-17), smile enlarged to 11×11 rounded circle with unambiguous eyes + U-shape smile
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -84,7 +85,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** B014 gym validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
+**Next:** B014-iter final gym re-validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -326,5 +327,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.18 (B014 BLE LED test UX polish + creative presets 2026-04-23)
+**Version:** 2.19 (B014-iter preset visual fixes after gym validation 2026-04-23)
 **Owner:** Daniele Somensi + Claude Code
