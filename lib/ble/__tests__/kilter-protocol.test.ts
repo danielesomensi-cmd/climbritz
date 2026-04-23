@@ -42,10 +42,10 @@ describe('encodeColor', () => {
     expect(encodeColor(PLACEMENT_ROLES[12])).toBe(28);
   });
 
-  test('Foot role color FFB600 → 0b11110110 = 246', () => {
-    // R=255→7, G=182→5, B=0→0 → (7<<5)|(5<<2)|0 = 224+20 = 244
-    // Wait: G=0xB6=182, 182/32=5.6875, floor=5 → (7<<5)|(5<<2)|0 = 224+20 = 244
-    expect(encodeColor('FFB600')).toBe((7 << 5) | (5 << 2) | 0); // 244
+  test('Foot role color FFB600 → 0b11110100 = 244', () => {
+    // R=255→7, G=0xB6=182→floor(182/32)=5, B=0→0
+    // (7<<5)|(5<<2)|0 = 224+20 = 244
+    expect(encodeColor('FFB600')).toBe(244);
   });
 });
 

@@ -25,7 +25,7 @@
 | Tests | ✅ Done | Backend + frontend passing, CI on GitHub Actions |
 | B010 Homepage + APK | ✅ Done | 4-tile hub, privacy policy, signed AAB/APK, Capacitor fixes |
 | B011 BLE Permissions | ✅ Done | Bounded location permissions to maxSdkVersion=30, no spurious prompt on Android 12+ |
-| B012 BLE LED Transmission | ✅ Done | Pure encoder (kilter-protocol.ts, API level 3), sendLEDPreset/sendAllOff, "Illumina board" button, error banner, 22 encoder tests. Pending gym validation. |
+| B012 BLE LED Transmission | ✅ Done | Pure encoder (kilter-protocol.ts, API level 3), sendLEDPreset/sendAllOff, "Illumina board" button, error banner, 22 encoder tests. Gym-validated. |
 | A016 iOS Capacitor Setup | ✅ Done | `@capacitor/ios ^8.3.1`, `ios/` Xcode project (SPM-based), `NSBluetoothAlwaysUsageDescription` in Info.plist, build scripts split (build:mobile + sync:ios/sync:android/open:ios/open:android), first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account. |
 | B014 BLE LED Test UX | ✅ Done | Auto-apply preset on tap with 200ms debounce, BLE writes serialized via hook-level promise chain, Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 authored on the 17×18 main-hold grid. |
 | B014-iter Preset Fixes | ✅ Done | After gym validation: climber redrawn with asymmetric reaching pose (not T-pose), heart uniform red+magenta (no white shine), lightning extended to near-full-board-height zigzag, smile enlarged to 11×11 rounded face. Pending final gym re-validation. |
