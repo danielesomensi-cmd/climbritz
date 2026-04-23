@@ -350,17 +350,27 @@ export const PRESETS: Preset[] = [
   {
     id: 10,
     name: 'Smile',
-    description: 'Faccina sorridente',
+    description: 'Faccione sorridente',
     holds: [
       ...[
-        [6,16],[7,16],[8,16],[9,16],[10,16],           // top arc
-        [5,15],[11,15],                                // sides
-        [5,14],[7,14],[9,14],[11,14],                  // sides + eyes
-        [5,13],[11,13],                                // sides
-        [5,12],[7,12],[9,12],[11,12],                  // sides + smile corners
-        [5,11],[8,11],[11,11],                         // sides + smile dip
-        [5,10],[11,10],                                // sides
-        [6, 9],[7, 9],[8, 9],[9, 9],[10, 9],           // bottom arc
+        // Face outline — 11×11 circle (cols 3-13, rows 4-14)
+        [6,14],[7,14],[8,14],[9,14],[10,14],           // top arc
+        [5,13],[11,13],
+        [4,12],[12,12],
+        [3,11],[13,11],
+        [3,10],[13,10],
+        [3, 9],[13, 9],
+        [3, 8],[13, 8],
+        [3, 7],[13, 7],
+        [4, 6],[12, 6],
+        [5, 5],[11, 5],
+        [6, 4],[7, 4],[8, 4],[9, 4],[10, 4],           // bottom arc
+        // Eyes (upper quadrant, symmetric)
+        [6,11],[10,11],
+        // Smile — U-shape curving up at corners, dipping in the middle
+        [5, 8],[11, 8],                                // smile corners (up)
+        [6, 7],[10, 7],
+        [7, 6],[8, 6],[9, 6],                          // bottom of smile
       ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
     ],
   },
