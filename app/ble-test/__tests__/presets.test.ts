@@ -1,0 +1,71 @@
+import { PRESETS } from '../presets';
+
+describe('PRESETS', () => {
+  it('contains exactly 10 presets', () => {
+    expect(PRESETS).toHaveLength(10);
+    expect(PRESETS.map((p) => p.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('every hold in every preset has either role_id or color', () => {
+    for (const preset of PRESETS) {
+      for (const h of preset.holds) {
+        const hasRole = typeof h.role_id === 'number';
+        const hasColor = typeof h.color === 'string' && h.color.length > 0;
+        expect(hasRole || hasColor).toBe(true);
+      }
+    }
+  });
+
+  describe('creative presets (B014)', () => {
+    const cases = [
+      { id: 6,  name: 'DANI',      minHolds: 30, color: 'FF0000' },
+      { id: 7,  name: 'Climber',   minHolds: 15, color: undefined },
+      { id: 8,  name: 'Heart',     minHolds: 20, color: undefined },
+      { id: 9,  name: 'Lightning', minHolds: 15, color: undefined },
+      { id: 10, name: 'Smile',     minHolds: 20, color: 'FFFF00' },
+    ];
+
+    it.each(cases)('#$id $name has the expected shape', ({ id, name, minHolds, color }) => {
+      const preset = PRESETS.find((p) => p.id === id);
+      expect(preset).toBeDefined();
+      expect(preset!.name).toBe(name);
+      expect(preset!.holds.length).toBeGreaterThanOrEqual(minHolds);
+      expect(preset!.description).toMatch(/\S/); // non-empty description
+      if (color) {
+        // Uniform-color presets: every hold uses that exact color.
+        for (const h of preset!.holds) expect(h.color).toBe(color);
+      }
+    });
+
+    it('every creative preset hold has a valid preview coordinate', () => {
+      for (const id of [6, 7, 8, 9, 10]) {
+        const preset = PRESETS.find((p) => p.id === id)!;
+        for (const h of preset.holds) {
+          expect(h.x).not.toBeNull();
+          expect(h.y).not.toBeNull();
+          expect(h.x!).toBeGreaterThanOrEqual(0);
+          expect(h.x!).toBeLessThanOrEqual(144);
+          expect(h.y!).toBeGreaterThanOrEqual(0);
+          expect(h.y!).toBeLessThanOrEqual(156);
+        }
+      }
+    });
+
+    it('DANI uses only red (FF0000)', () => {
+      const dani = PRESETS.find((p) => p.id === 6)!;
+      for (const h of dani.holds) expect(h.color).toBe('FF0000');
+    });
+
+    it('Heart uses red + magenta + exactly one white shine', () => {
+      const heart = PRESETS.find((p) => p.id === 8)!;
+      const colors = heart.holds.map((h) => h.color);
+      const whites = colors.filter((c) => c === 'FFFFFF').length;
+      const reds = colors.filter((c) => c === 'FF0000').length;
+      const magentas = colors.filter((c) => c === 'FF00FF').length;
+      expect(whites).toBe(1);
+      expect(reds).toBeGreaterThan(0);
+      expect(magentas).toBeGreaterThan(0);
+      expect(reds + magentas + whites).toBe(heart.holds.length);
+    });
+  });
+});
