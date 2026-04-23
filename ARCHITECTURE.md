@@ -107,7 +107,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Climb detail | `discover/detail/page.tsx` | Board visualization with role colors (query-param route) |
 | Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
-| BLE test | `ble-test/page.tsx` | BLE LED presets + board preview, auto-apply on tap with 200ms debounce (A006/B009/B012/B014) |
+| BLE test | `ble-test/page.tsx` | 10 pixel-art LED presets + #11 all-LEDs stress test, auto-apply on tap with 200ms debounce (A006/B009/B012/B014/B014-iter-2) |
 | Video detail | `videos/detail/page.tsx` | Analysis results display (query-param route) |
 | Privacy | `privacy/page.tsx` | Privacy policy (Play Store requirement) |
 | Debug | `debug/page.tsx` | Network diagnostics (dev tool) |
@@ -285,4 +285,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 23 April 2026 (B014)*
+*Architecture doc created: March 2026 (B002) — Last updated: 23 April 2026 (B014-iter-2)*

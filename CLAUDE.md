@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (B014-iter Complete — 23 April 2026)
+## 📦 Current State (B014-iter-2 Complete — 23 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -63,6 +63,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **A016:** iOS Capacitor setup — `@capacitor/ios ^8.3.1`, `ios/` Xcode project initialized (SPM-based, no CocoaPods), `NSBluetoothAlwaysUsageDescription` in Info.plist, `build:mobile` split into platform-agnostic build + `sync:ios`/`sync:android`/`open:ios`/`open:android`, first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account
 ✅ **B014:** BLE LED test UX polish — auto-apply on preset tap with 200ms debounce, BLE writes serialized via hook-level promise chain (no chunk interleave), Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 authored on the 17×18 main-hold grid via new `grid(col,row)` helper
 ✅ **B014-iter:** Preset visual fixes after gym validation — climber redrawn with asymmetric reaching pose (replacing T-pose "crucifix"), heart stripped of white shine (uniform red outline + magenta fill), lightning extended to near-full-board-height zigzag (rows 2-17), smile enlarged to 11×11 rounded circle with unambiguous eyes + U-shape smile
+✅ **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) and added preset #11 All LEDs Diagnostic (stress test lighting all 476 positions in y-banded rainbow stripes, col-span-2 in the grid with amber accent)
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -85,7 +86,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** B014-iter final gym re-validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
+**Next:** B014-iter-2 gym validation (art presets + #11 stress test on real board), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -196,7 +197,7 @@ kilter-training-app/
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
 │   ├── discover/__tests__/         ✅ Discovery tests
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009/B014 auto-apply)
-│   ├── ble-test/presets.ts         ✅ LED preset data — 5 role-based + 5 creative pixel-art (B014)
+│   ├── ble-test/presets.ts         ✅ LED preset data — 10 pixel-art presets + #11 all-LEDs stress test (B014-iter-2)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
 │   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/send/disconnect + write serialization (B012/B014)
 │   ├── ble-test/__tests__/         ✅ Preset structure + auto-apply debounce tests (B014)
@@ -327,5 +328,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.19 (B014-iter preset visual fixes after gym validation 2026-04-23)
+**Version:** 2.20 (B014-iter-2 art presets overhaul + #11 stress test 2026-04-23)
 **Owner:** Daniele Somensi + Claude Code
