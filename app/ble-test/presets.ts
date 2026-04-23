@@ -269,13 +269,34 @@ export const PRESETS: Preset[] = [
   },
   {
     id: 5,
-    name: 'Rainbow',
-    description: '4 holds at corners, one per role color',
+    name: 'Sun',
+    description: 'Sole arancione con raggi gialli',
     holds: [
-      hold(33,  { role_id: START }),  // bottom-left  (green)
-      hold(0,   { role_id: MIDDLE }), // bottom-right (cyan)
-      hold(476, { role_id: FINISH }), // top-right    (magenta)
-      hold(68,  { role_id: FOOT }),   // top-left     (orange)
+      // Orange centre circle (11 LEDs)
+      ...[
+        [7,11],[8,11],[9,11],                          // top of circle (3)
+        [6,10],[7,10],[8,10],[9,10],[10,10],           // middle (5)
+        [7, 9],[8, 9],[9, 9],                          // bottom (3)
+      ].map(([c, r]) => hold(grid(c, r), { color: ORANGE })),
+      // Yellow rays — 4 cardinal (3 LED each) + 4 diagonal (2 LED each) = 20 LEDs
+      ...[
+        // N
+        [8,12],[8,13],[8,14],
+        // S
+        [8, 8],[8, 7],[8, 6],
+        // E
+        [11,10],[12,10],[13,10],
+        // W
+        [5,10],[4,10],[3,10],
+        // NE
+        [10,12],[11,13],
+        // SE
+        [10, 8],[11, 7],
+        // NW
+        [6,12],[5,13],
+        // SW
+        [6, 8],[5, 7],
+      ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
     ],
   },
   // ─── Creative presets (B014) ──────────────────────────────────────────
