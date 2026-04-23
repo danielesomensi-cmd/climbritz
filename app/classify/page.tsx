@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import Link from 'next/link';
 import BoardMap, { type Placement, getHoldImageUrl } from '@/components/BoardMap';
+import BottomNav from '@/components/BottomNav';
 import {
   ALL_HOLDS,
   CATEGORIES,
@@ -83,12 +83,8 @@ export default function ClassifyPage() {
   const handleExport = () => shareOrDownload(buildExportData(state));
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4 pb-24">
       <div className="max-w-6xl mx-auto space-y-4">
-
-        <Link href="/" className="inline-flex items-center text-sm text-zinc-400 hover:text-zinc-200">
-          &larr; Home
-        </Link>
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -307,6 +303,7 @@ export default function ClassifyPage() {
           </div>
         )}
       </div>
+      <BottomNav />
     </main>
   );
 }
