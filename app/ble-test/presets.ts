@@ -322,23 +322,29 @@ export const PRESETS: Preset[] = [
   {
     id: 9,
     name: 'Lightning',
-    description: 'Fulmine giallo',
+    description: 'Fulmine giallo a tutta altezza',
     holds: [
-      // Yellow bolt
       ...[
-        [8,15],[9,15],                                 // top bump
-        [7,14],[8,14],
-        [6,13],[7,13],
-        [6,12],[7,12],[8,12],[9,12],                   // horizontal bar
-        [8,11],[9,11],[10,11],
-        [9,10],[10,10],
-        [8, 9],[9, 9],
-        [7, 8],[8, 8],
-        [7, 7],                                        // bottom tip
+        // Top segment — top-right corner diagonal going down-left (rows 17→13)
+        [12,17],[13,17],
+        [11,16],[12,16],
+        [10,15],[11,15],
+        [ 9,14],[10,14],
+        [ 8,13],[ 9,13],
+        // Horizontal bar at the elbow (rows 12, 11)
+        [3,12],[4,12],[5,12],[6,12],[7,12],[8,12],
+        [3,11],[4,11],[5,11],[6,11],[7,11],[8,11],
+        // Bottom segment — diagonal from bar going down-left to bottom (rows 10→2)
+        [6,10],[7,10],
+        [5, 9],[6, 9],
+        [4, 8],[5, 8],
+        [3, 7],[4, 7],
+        [2, 6],[3, 6],
+        [1, 5],[2, 5],
+        [1, 4],
+        [0, 3],[1, 3],
+        [0, 2],                                        // bottom-left tip
       ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
-      // White sparkles at the tips
-      hold(grid(10, 15), { color: WHITE }),
-      hold(grid( 6,  7), { color: WHITE }),
     ],
   },
   {
