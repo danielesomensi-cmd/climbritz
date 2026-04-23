@@ -118,7 +118,7 @@ export default function BleTestPage() {
         </p>
 
         {/* Connection status bar */}
-        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-800 rounded-lg">
+        <div className="flex items-center gap-3 mb-3 p-3 bg-gray-800 rounded-lg">
           <div className={`w-3 h-3 rounded-full flex-shrink-0 ${STATUS_COLORS[status]}`} />
           <div className="flex-1 min-w-0">
             <div className="font-medium">{STATUS_LABELS[status]}</div>
@@ -131,32 +131,36 @@ export default function BleTestPage() {
               </div>
             )}
           </div>
-          <div className="flex gap-2">
-            {!isCapacitorNative ? null : isConnected ? (
+        </div>
+
+        {/* Connect / Disconnect — card-sized action button */}
+        {isCapacitorNative && (
+          <div className="mb-4">
+            {isConnected ? (
               <button
                 onClick={disconnect}
                 disabled={isSending}
-                className="px-4 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full p-3 rounded-lg font-semibold text-base bg-gray-700 hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Disconnetti
               </button>
             ) : busy ? (
               <button
                 disabled
-                className="px-4 py-1.5 bg-gray-600 rounded text-sm font-medium cursor-not-allowed"
+                className="w-full p-3 rounded-lg font-semibold text-base bg-gray-700 cursor-not-allowed opacity-75"
               >
                 {STATUS_LABELS[status]}
               </button>
             ) : (
               <button
                 onClick={connect}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-sm font-medium"
+                className="w-full p-3 rounded-lg font-semibold text-base bg-blue-600 hover:bg-blue-500 transition-all"
               >
                 Connetti
               </button>
             )}
           </div>
-        </div>
+        )}
 
         {!isCapacitorNative && (
           <div className="mb-4 p-3 bg-amber-900/40 border border-amber-600 rounded text-sm text-amber-200">
