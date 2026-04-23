@@ -274,22 +274,25 @@ export const PRESETS: Preset[] = [
   {
     id: 7,
     name: 'Climber',
-    description: 'Omino che arrampica',
+    description: 'Omino che arrampica — posa dinamica',
     holds: [
-      // Body (white T-pose stick figure)
+      // Body (asymmetric reaching pose, white)
       ...[
-        [8,16],                                        // head
-        [8,15],                                        // neck
-        [5,14],[6,14],[7,14],[8,14],[9,14],[10,14],[11,14], // arms
-        [8,13],[8,12],[8,11],                          // torso
-        [7,10],[9,10],                                 // knees
-        [6, 9],[10, 9],                                // lower legs
-        [5, 8],[11, 8],                                // feet
+        [7,15],                                        // head
+        [7,14],                                        // neck
+        [7,13],[7,12],[7,11],                          // torso
+        [7,10],                                        // hips
+        [8,14],[9,15],[10,16],[11,17],                 // left arm reaching up-right (hand at top)
+        [6,13],[5,12],                                 // right arm bent across chest
+        [8,11],[9,12],[10,11],[11,10],                 // right leg bent — knee high at (9,12)
+        [6, 9],[5, 8],[4, 7],                          // left leg extended down-left
       ].map(([c, r]) => hold(grid(c, r), { color: WHITE })),
-      // Holds around the figure (green)
+      // Holds the climber is touching (green)
       ...[
-        [3,13],[13,13],                                // near hands
-        [3, 7],[13, 7],                                // near feet
+        [12,17],                                       // jug near reaching hand
+        [4,12],                                        // hold near bent right hand
+        [12,10],                                       // foothold near bent-leg foot
+        [3, 7],                                        // foothold near extended left foot
       ].map(([c, r]) => hold(grid(c, r), { color: GREEN })),
     ],
   },
