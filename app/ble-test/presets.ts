@@ -253,11 +253,19 @@ export const PRESETS: Preset[] = [
   },
   {
     id: 4,
-    name: 'Diagonal',
-    description: '8 holds from bottom-left to top-right',
-    holds: [33, 96, 152, 206, 284, 332, 378, 476].map(
-      (pos) => hold(pos, { role_id: MIDDLE })
-    ),
+    name: 'Star',
+    description: 'Stella gialla a 5 punte',
+    holds: [
+      // Filled 5-pointed star — top point, horizontal arms at row 12, V-legs.
+      ...[
+        [8,14],                            // top point (1)
+        [7,13],[8,13],[9,13],              // crown (3)
+        [5,12],[6,12],[7,12],[8,12],[9,12],[10,12],[11,12], // horizontal arms (7)
+        [6,11],[7,11],[8,11],[9,11],[10,11],// body (5)
+        [6,10],[8,10],[10,10],              // V-split (3)
+        [5, 9],[11, 9],                     // lower point tips (2)
+      ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
+    ],
   },
   {
     id: 5,
