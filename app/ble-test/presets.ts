@@ -161,6 +161,34 @@ function hold(
   };
 }
 
+// Reverse lookup (x,y) → position — built once from POSITION_COORDS.
+// Used by grid() to pick LEDs for pixel-art presets.
+const POS_BY_XY: Record<string, number> = (() => {
+  const m: Record<string, number> = {};
+  for (const [pos, [x, y]] of Object.entries(POSITION_COORDS)) {
+    m[`${x},${y}`] = Number(pos);
+  }
+  return m;
+})();
+
+// Main climbing-hold grid: col ∈ [0..16] → x = 8 + col*8, row ∈ [0..17] → y = 16 + row*8.
+// Row 0 is the bottom of the main grid; row 17 is the top (y=152).
+function grid(col: number, row: number): number {
+  const x = 8 + col * 8;
+  const y = 16 + row * 8;
+  const p = POS_BY_XY[`${x},${y}`];
+  if (p === undefined) throw new Error(`No LED at grid (${col},${row}) → (${x},${y})`);
+  return p;
+}
+
+// 24-bit palette — hex values that bin cleanly via the kilter-protocol encoder.
+// Encoder: R,G in 3 bits (/32), B in 2 bits (/64). See lib/ble/kilter-protocol.ts.
+const RED = 'FF0000';       // 7/0/0
+const MAGENTA = 'FF00FF';   // 7/0/3
+const YELLOW = 'FFFF00';    // 7/7/0
+const WHITE = 'FFFFFF';     // 7/7/3
+const GREEN = '00FF00';     // 0/7/0
+
 export const PRESETS: Preset[] = [
   {
     id: 1,
@@ -212,57 +240,121 @@ export const PRESETS: Preset[] = [
       hold(68,  { role_id: FOOT }),   // top-left     (orange)
     ],
   },
+  // ─── Creative presets (B014) ──────────────────────────────────────────
+  // Hand-authored pixel art on the 17×18 main climbing-hold grid.
+  // See grid() above for the (col, row) → LED position mapping.
+
   {
     id: 6,
-    name: 'Start + Finish',
-    description: '1 start hold (bottom-left) + 1 finish hold (top-right)',
+    name: 'DANI',
+    description: 'Scritta "DANI" in LED rossi',
     holds: [
-      hold(33,  { role_id: START }),
-      hold(476, { role_id: FINISH }),
-    ],
+      // D (cols 0-3, rows 6-10): XXX. / X..X / X..X / X..X / XXX.
+      grid(0,10), grid(1,10), grid(2,10),
+      grid(0, 9), grid(3, 9),
+      grid(0, 8), grid(3, 8),
+      grid(0, 7), grid(3, 7),
+      grid(0, 6), grid(1, 6), grid(2, 6),
+      // A (cols 5-8): .XX. / X..X / XXXX / X..X / X..X
+      grid(6,10), grid(7,10),
+      grid(5, 9), grid(8, 9),
+      grid(5, 8), grid(6, 8), grid(7, 8), grid(8, 8),
+      grid(5, 7), grid(8, 7),
+      grid(5, 6), grid(8, 6),
+      // N (cols 10-13): X..X / XX.X / X.XX / X..X / X..X
+      grid(10,10), grid(13,10),
+      grid(10, 9), grid(11, 9), grid(13, 9),
+      grid(10, 8), grid(12, 8), grid(13, 8),
+      grid(10, 7), grid(13, 7),
+      grid(10, 6), grid(13, 6),
+      // I (col 15, rows 6-10)
+      grid(15,10), grid(15, 9), grid(15, 8), grid(15, 7), grid(15, 6),
+    ].map((pos) => hold(pos, { color: RED })),
   },
   {
     id: 7,
-    name: 'Full Border',
-    description: '~44 holds around the board perimeter',
+    name: 'Climber',
+    description: 'Omino che arrampica',
     holds: [
-      // Bottom row (y=4)
-      33, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0,
-      // Left column going up (x=4 or 8)
-      37, 41, 45, 49, 53, 57, 61, 65, 68,
-      // Top row (y=152, left to right, skipping already-added 68)
-      69, 119, 170, 221, 272, 323, 374, 425, 476,
-      // Right column going down (x=136 or 140)
-      475, 471, 467, 463, 459, 455, 452,
-    ].map((pos) => hold(pos, { role_id: MIDDLE })),
+      // Body (white T-pose stick figure)
+      ...[
+        [8,16],                                        // head
+        [8,15],                                        // neck
+        [5,14],[6,14],[7,14],[8,14],[9,14],[10,14],[11,14], // arms
+        [8,13],[8,12],[8,11],                          // torso
+        [7,10],[9,10],                                 // knees
+        [6, 9],[10, 9],                                // lower legs
+        [5, 8],[11, 8],                                // feet
+      ].map(([c, r]) => hold(grid(c, r), { color: WHITE })),
+      // Holds around the figure (green)
+      ...[
+        [3,13],[13,13],                                // near hands
+        [3, 7],[13, 7],                                // near feet
+      ].map(([c, r]) => hold(grid(c, r), { color: GREEN })),
+    ],
   },
   {
     id: 8,
-    name: 'Random 8',
-    description: '8 holds spread across the board',
+    name: 'Heart',
+    description: 'Cuore multicolor',
     holds: [
-      hold(416, { role_id: START }),   // [120, 96]  right-center
-      hold(367, { role_id: MIDDLE }),  // [108, 108] right-upper
-      hold(43,  { role_id: FINISH }),  // [12,  44]  left-low
-      hold(13,  { role_id: FOOT }),    // [88,  8]   bottom-center
-      hold(79,  { role_id: START }),   // [16,  96]  left-center
-      hold(3,   { role_id: MIDDLE }),  // [128, 8]   bottom-right
-      hold(54,  { role_id: FINISH }),  // [8,   88]  left-center
-      hold(260, { role_id: FOOT }),    // [72,  80]  board center
+      // Red outline
+      ...[
+        [6,11],[7,11],[9,11],[10,11],                  // top bumps
+        [5,10],[11,10],                                // row 10 sides
+        [5, 9],[11, 9],                                // row 9 sides
+        [6, 8],[10, 8],                                // narrowing
+        [7, 7],[ 9, 7],                                // narrower
+        [8, 6],                                        // bottom tip
+      ].map(([c, r]) => hold(grid(c, r), { color: RED })),
+      // Magenta fill (one inner cell reserved for white shine)
+      ...[
+        [6,10],[8,10],[9,10],[10,10],                  // row 10 inside (7 is white)
+        [6, 9],[7, 9],[8, 9],[9, 9],[10, 9],           // row 9 inside
+        [7, 8],[8, 8],[9, 8],                          // row 8 inside
+        [8, 7],                                        // row 7 inside
+      ].map(([c, r]) => hold(grid(c, r), { color: MAGENTA })),
+      // White shine highlight
+      hold(grid(7, 10), { color: WHITE }),
     ],
   },
   {
     id: 9,
-    name: 'Custom Red',
-    description: '5 holds in pure red (custom color test)',
-    holds: [67, 72, 116, 378, 272].map(
-      (pos) => hold(pos, { color: 'FF0000' })
-    ),
+    name: 'Lightning',
+    description: 'Fulmine giallo',
+    holds: [
+      // Yellow bolt
+      ...[
+        [8,15],[9,15],                                 // top bump
+        [7,14],[8,14],
+        [6,13],[7,13],
+        [6,12],[7,12],[8,12],[9,12],                   // horizontal bar
+        [8,11],[9,11],[10,11],
+        [9,10],[10,10],
+        [8, 9],[9, 9],
+        [7, 8],[8, 8],
+        [7, 7],                                        // bottom tip
+      ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
+      // White sparkles at the tips
+      hold(grid(10, 15), { color: WHITE }),
+      hold(grid( 6,  7), { color: WHITE }),
+    ],
   },
   {
     id: 10,
-    name: 'Strobe Test',
-    description: 'Single hold at board center — visual confirmation',
-    holds: [hold(260, { role_id: START })],
+    name: 'Smile',
+    description: 'Faccina sorridente',
+    holds: [
+      ...[
+        [6,16],[7,16],[8,16],[9,16],[10,16],           // top arc
+        [5,15],[11,15],                                // sides
+        [5,14],[7,14],[9,14],[11,14],                  // sides + eyes
+        [5,13],[11,13],                                // sides
+        [5,12],[7,12],[9,12],[11,12],                  // sides + smile corners
+        [5,11],[8,11],[11,11],                         // sides + smile dip
+        [5,10],[11,10],                                // sides
+        [6, 9],[7, 9],[8, 9],[9, 9],[10, 9],           // bottom arc
+      ].map(([c, r]) => hold(grid(c, r), { color: YELLOW })),
+    ],
   },
 ];
