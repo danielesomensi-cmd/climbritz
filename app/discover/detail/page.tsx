@@ -1,13 +1,15 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getClimbDetail, type ClimbDetail } from '@/app/lib/api';
 import ClimbBoardView, { ROLE_COLORS } from '@/components/ClimbBoardView';
+import ClimbBleControls from '@/components/ClimbBleControls';
 import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
+import { climbToLedCommands } from './climb-to-leds';
 
 const ROLE_LABELS: Record<string, string> = {
   start: 'Start',
@@ -66,6 +68,10 @@ function ClimbDetailPageInner() {
         return acc;
       }, {})
     : {};
+  const ledCommands = useMemo(
+    () => (climb ? climbToLedCommands(climb.holds) : []),
+    [climb],
+  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24">
@@ -122,6 +128,9 @@ function ClimbDetailPageInner() {
               </p>
             )}
 
+            {/* BLE control bar — connect + illuminate this climb on the board */}
+            <ClimbBleControls ledCommands={ledCommands} />
+
             {/* Board visualization */}
             <ClimbBoardView holds={climb.holds} />
 
@@ -161,7 +170,7 @@ function ClimbDetailPageInner() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions — "Light up" moved into the ClimbBleControls bar above. */}
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
@@ -177,14 +186,6 @@ function ClimbDetailPageInner() {
               >
                 🎬 Analyze with Coach
               </Link>
-              <button
-                type="button"
-                disabled
-                title="Board lighting requires BLE (Phase 3e)"
-                className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 text-sm cursor-not-allowed"
-              >
-                💡 Light up
-              </button>
             </div>
           </>
         )}
