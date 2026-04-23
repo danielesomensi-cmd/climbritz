@@ -184,21 +184,34 @@ function grid(col: number, row: number): number {
 // 24-bit palette — hex values that bin cleanly via the kilter-protocol encoder.
 // Encoder: R,G in 3 bits (/32), B in 2 bits (/64). See lib/ble/kilter-protocol.ts.
 const RED = 'FF0000';       // 7/0/0
-const MAGENTA = 'FF00FF';   // 7/0/3
+const ORANGE = 'FF6000';    // 7/3/0
 const YELLOW = 'FFFF00';    // 7/7/0
-const WHITE = 'FFFFFF';     // 7/7/3
 const GREEN = '00FF00';     // 0/7/0
+const CYAN = '00FFFF';      // 0/7/3
+const BLUE = '0000FF';      // 0/0/3
+const MAGENTA = 'FF00FF';   // 7/0/3
+const WHITE = 'FFFFFF';     // 7/7/3
 
 export const PRESETS: Preset[] = [
   {
     id: 1,
-    name: 'All Corners',
-    description: '4 holds at the extreme board corners',
+    name: 'Space Invader',
+    description: 'Alieno pixel art — Taito 1978',
     holds: [
-      hold(33,  { role_id: START }),   // bottom-left  [4,   4]
-      hold(0,   { role_id: START }),   // bottom-right [140, 4]
-      hold(68,  { role_id: START }),   // top-left     [8,   152]
-      hold(476, { role_id: START }),   // top-right    [136, 152]
+      ...[
+        // Antennae (top)
+        [6,13],[10,13],
+        // Top body
+        [5,12],[6,12],[7,12],[8,12],[9,12],[10,12],[11,12],
+        // Eye band — gaps at cols 6 and 10 form the eyes
+        [5,11],[7,11],[8,11],[9,11],[11,11],
+        // Mid body
+        [5,10],[6,10],[7,10],[8,10],[9,10],[10,10],[11,10],
+        // Legs (4 dangling)
+        [5, 9],[7, 9],[9, 9],[11, 9],
+        // Outer foot tips
+        [5, 8],[11, 8],
+      ].map(([c, r]) => hold(grid(c, r), { color: GREEN })),
     ],
   },
   {

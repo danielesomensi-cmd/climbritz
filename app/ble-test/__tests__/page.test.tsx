@@ -41,16 +41,16 @@ describe('BleTestPage — auto-apply with debounce', () => {
   it('tapping a preset updates the preview header immediately', () => {
     jest.useFakeTimers();
     render(<BleTestPage />);
-    // Preset #1 is "All Corners"
-    fireEvent.click(screen.getByRole('button', { name: /All Corners/i }));
-    expect(screen.getByText(/Preset #1: All Corners/i)).toBeInTheDocument();
+    // Preset #1 is "Space Invader"
+    fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
+    expect(screen.getByText(/Preset #1: Space Invader/i)).toBeInTheDocument();
     jest.useRealTimers();
   });
 
   it('when connected, schedules sendLEDs 200ms after a tap (not sooner)', () => {
     jest.useFakeTimers();
     render(<BleTestPage />);
-    fireEvent.click(screen.getByRole('button', { name: /All Corners/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
 
     // Nothing sent yet — debounce in flight.
     expect(sendLEDsMock).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('BleTestPage — auto-apply with debounce', () => {
   it('a rapid second tap cancels the first pending send and only fires once', () => {
     jest.useFakeTimers();
     render(<BleTestPage />);
-    fireEvent.click(screen.getByRole('button', { name: /All Corners/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
     act(() => { jest.advanceTimersByTime(100); });
     fireEvent.click(screen.getByRole('button', { name: /Center Cross/i }));
     act(() => { jest.advanceTimersByTime(199); });
@@ -86,7 +86,7 @@ describe('BleTestPage — auto-apply with debounce', () => {
     jest.useFakeTimers();
     mockStatus = 'idle';
     render(<BleTestPage />);
-    fireEvent.click(screen.getByRole('button', { name: /All Corners/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
     act(() => { jest.advanceTimersByTime(500); });
     expect(sendLEDsMock).not.toHaveBeenCalled();
     jest.useRealTimers();
@@ -95,7 +95,7 @@ describe('BleTestPage — auto-apply with debounce', () => {
   it('tapping Reset cancels any pending send and, when connected, sends all-off', () => {
     jest.useFakeTimers();
     render(<BleTestPage />);
-    fireEvent.click(screen.getByRole('button', { name: /All Corners/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
     // Reset before the debounce fires
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /Reset anteprima/i }));
