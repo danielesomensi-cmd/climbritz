@@ -238,11 +238,18 @@ export const PRESETS: Preset[] = [
   },
   {
     id: 3,
-    name: 'Bottom Row',
-    description: 'All 18 holds on the bottom row (y=4)',
-    holds: [33, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0].map(
-      (pos) => hold(pos, { role_id: FOOT })
-    ),
+    name: 'Zelda Heart',
+    description: 'Heart container 8-bit in rosso puro',
+    holds: [
+      // Mono-red 8-bit heart — two humps at top tapering to a single point.
+      ...[
+        [6,14],[10,14],              // top sides of the two humps (2)
+        [6,13],[7,13],[9,13],[10,13],// hump tops with valley between (4)
+        [6,12],[7,12],[8,12],[9,12],[10,12], // widest row (5)
+        [7,11],[8,11],[9,11],        // narrowing (3)
+        [8,10],                      // bottom point (1)
+      ].map(([c, r]) => hold(grid(c, r), { color: RED })),
+    ],
   },
   {
     id: 4,
