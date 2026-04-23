@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useKilterBle } from './use-kilter-ble';
 import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
 import type { BleStatus } from './use-kilter-ble';
 import type { LedHold } from './presets';
+
+// Debounce window for auto-applying a preset to the board after a tap.
+// Preview updates instantly; only the BLE send is debounced.
+const AUTO_APPLY_DEBOUNCE_MS = 200;
 
 const STATUS_COLORS: Record<BleStatus, string> = {
   idle: 'bg-gray-500',
@@ -47,22 +51,50 @@ export default function BleTestPage() {
   } = useKilterBle();
   const [activePreset, setActivePreset] = useState<number | null>(null);
   const [activeHolds, setActiveHolds] = useState<LedHold[]>([]);
+  const autoApplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // A send is still "allowed" during the brief 'sending' transition — the hook's
+  // promise chain serializes writes, so a queued send will run after the in-flight one.
+  const canAutoApply = status === 'connected' || status === 'sending';
 
   const handlePreset = (id: number) => {
     const preset = PRESETS.find((p) => p.id === id);
     if (!preset) return;
     setActivePreset(id);
     setActiveHolds(preset.holds);
+
+    if (autoApplyTimerRef.current !== null) {
+      clearTimeout(autoApplyTimerRef.current);
+      autoApplyTimerRef.current = null;
+    }
+    if (canAutoApply && preset.holds.length > 0) {
+      autoApplyTimerRef.current = setTimeout(() => {
+        autoApplyTimerRef.current = null;
+        sendLEDs(preset.holds);
+      }, AUTO_APPLY_DEBOUNCE_MS);
+    }
   };
 
   const handleResetPreview = async () => {
+    if (autoApplyTimerRef.current !== null) {
+      clearTimeout(autoApplyTimerRef.current);
+      autoApplyTimerRef.current = null;
+    }
     setActivePreset(null);
     setActiveHolds([]);
-    // When connected, also clear the physical board
-    if (status === 'connected') {
+    if (canAutoApply) {
       await sendAllOffLEDs();
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (autoApplyTimerRef.current !== null) {
+        clearTimeout(autoApplyTimerRef.current);
+        autoApplyTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleIllumina = async () => {
     if (activeHolds.length === 0) return;

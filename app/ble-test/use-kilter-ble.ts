@@ -40,6 +40,9 @@ export function useKilterBle(): UseKilterBle {
   const [lastError, setLastError] = useState<string | null>(null);
   const [connectedDevice, setConnectedDevice] = useState<ConnectedKilterBoard | null>(null);
   const deviceIdRef = useRef<string | null>(null);
+  // Serialize BLE writes — each new send chains after the previous one settles.
+  // Prevents chunk interleaving when auto-apply taps arrive during an in-flight send.
+  const sendChainRef = useRef<Promise<void>>(Promise.resolve());
   const isCapacitorNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
   const clearError = useCallback(() => {
@@ -98,33 +101,41 @@ export function useKilterBle(): UseKilterBle {
   }, []);
 
   const sendLEDs = useCallback(async (holds: EncoderHold[]) => {
-    const id = deviceIdRef.current;
-    if (!id) return;
-    setStatus('sending');
-    setLastError(null);
-    try {
-      await sendLEDPreset(id, holds);
-      setStatus('connected');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setLastError(msg);
-      setStatus('connected');
-    }
+    const next = sendChainRef.current.catch(() => {}).then(async () => {
+      const id = deviceIdRef.current;
+      if (!id) return;
+      setStatus('sending');
+      setLastError(null);
+      try {
+        await sendLEDPreset(id, holds);
+        setStatus('connected');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setLastError(msg);
+        setStatus('connected');
+      }
+    });
+    sendChainRef.current = next;
+    return next;
   }, []);
 
   const sendAllOffLEDs = useCallback(async () => {
-    const id = deviceIdRef.current;
-    if (!id) return;
-    setStatus('sending');
-    setLastError(null);
-    try {
-      await sendAllOff(id);
-      setStatus('connected');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setLastError(msg);
-      setStatus('connected');
-    }
+    const next = sendChainRef.current.catch(() => {}).then(async () => {
+      const id = deviceIdRef.current;
+      if (!id) return;
+      setStatus('sending');
+      setLastError(null);
+      try {
+        await sendAllOff(id);
+        setStatus('connected');
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setLastError(msg);
+        setStatus('connected');
+      }
+    });
+    sendChainRef.current = next;
+    return next;
   }, []);
 
   useEffect(() => {
