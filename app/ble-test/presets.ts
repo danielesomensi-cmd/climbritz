@@ -216,14 +216,24 @@ export const PRESETS: Preset[] = [
   },
   {
     id: 2,
-    name: 'Center Cross',
-    description: '5 holds in a + pattern at the center',
+    name: 'Ghost Blinky',
+    description: 'Fantasma rosso Pac-Man con occhi',
     holds: [
-      hold(260, { role_id: MIDDLE }), // center [72, 80]
-      hold(184, { role_id: MIDDLE }), // left   [48, 80]
-      hold(337, { role_id: MIDDLE }), // right  [96, 80]
-      hold(264, { role_id: MIDDLE }), // up     [72, 104]
-      hold(255, { role_id: MIDDLE }), // down   [72, 56]
+      // Red body — dome, face, body, 3-hump wavy bottom
+      ...[
+        [6,15],[7,15],[8,15],[9,15],[10,15],            // dome top (5)
+        [5,14],[6,14],[7,14],[8,14],[9,14],[10,14],[11,14],  // dome wider (7)
+        [5,13],[7,13],[8,13],[9,13],[11,13],            // face row, eye slots at cols 6,10 (5)
+        [5,12],[7,12],[8,12],[9,12],[11,12],            // face row below, pupil slots at cols 6,10 (5)
+        [5,11],[6,11],[7,11],[8,11],[9,11],[10,11],[11,11], // body (7)
+        [5,10],[6,10],[8,10],[10,10],[11,10],           // 3-hump wave: XX.X.XX (5)
+      ].map(([c, r]) => hold(grid(c, r), { color: RED })),
+      // Eye whites
+      hold(grid(6,13), { color: WHITE }),
+      hold(grid(10,13), { color: WHITE }),
+      // Cyan pupils
+      hold(grid(6,12), { color: CYAN }),
+      hold(grid(10,12), { color: CYAN }),
     ],
   },
   {

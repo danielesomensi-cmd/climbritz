@@ -71,7 +71,7 @@ describe('BleTestPage — auto-apply with debounce', () => {
     render(<BleTestPage />);
     fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
     act(() => { jest.advanceTimersByTime(100); });
-    fireEvent.click(screen.getByRole('button', { name: /Center Cross/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Ghost Blinky/i }));
     act(() => { jest.advanceTimersByTime(199); });
     expect(sendLEDsMock).not.toHaveBeenCalled();
     act(() => { jest.advanceTimersByTime(1); });
