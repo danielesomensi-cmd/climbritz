@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Last updated: 17 April 2026
+> Last updated: 23 April 2026
 
 ---
 
@@ -107,7 +107,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Climb detail | `discover/detail/page.tsx` | Board visualization with role colors (query-param route) |
 | Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
-| BLE test | `ble-test/page.tsx` | BLE LED presets + board preview (A006/B009) |
+| BLE test | `ble-test/page.tsx` | BLE LED presets + board preview, auto-apply on tap with 200ms debounce (A006/B009/B012/B014) |
 | Video detail | `videos/detail/page.tsx` | Analysis results display (query-param route) |
 | Privacy | `privacy/page.tsx` | Privacy policy (Play Store requirement) |
 | Debug | `debug/page.tsx` | Network diagnostics (dev tool) |
@@ -158,8 +158,8 @@ Video storage: local filesystem (S3 planned)
 **Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via a custom protocol stack:
 
 ```
-app/ble-test/page.tsx          UI — "Illumina board" button, preset grid, error banner
-  └─ use-kilter-ble.ts         React hook — state machine (8 states incl. 'sending')
+app/ble-test/page.tsx          UI — preset grid, auto-apply on tap (200ms debounce), "Illumina board" button, error banner
+  └─ use-kilter-ble.ts         React hook — state machine (8 states) + promise-chain write serialization
        └─ kilter-board-service  Kilter-specific orchestration — connect, sendLEDPreset, sendAllOff
             ├─ kilter-protocol  Pure encoder (API level 3) — holds → BLE-ready Uint8Array chunks
             │                   Color compression: 24-bit RGB → 8-bit 0bRRRGGGBB
@@ -285,4 +285,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 17 April 2026 (B012)*
+*Architecture doc created: March 2026 (B002) — Last updated: 23 April 2026 (B014)*

@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 17 April 2026
+> Updated: 23 April 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---

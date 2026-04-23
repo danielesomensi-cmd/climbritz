@@ -246,5 +246,5 @@ cd backend && pytest -v
 
 ---
 
-*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 17 Aprile 2026*
+*Creato da Claude Code — 22 Febbraio 2026 | Aggiornato: 23 Aprile 2026*
 *Aggiorna questo file ogni volta che prendi una decisione importante!*
