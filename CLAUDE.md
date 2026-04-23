@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (A016 Complete — 17 April 2026)
+## 📦 Current State (B014 Complete — 23 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -61,6 +61,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B011:** Fix Android manifest BLE permissions — bounded ACCESS_FINE/COARSE_LOCATION to maxSdkVersion=30, no spurious location prompt on Android 12+
 ✅ **B012:** BLE LED packet transmission — pure encoder (`kilter-protocol.ts`), `sendLEDPreset`/`sendAllOff` in service, "Illumina board" button + error banner in `/ble-test`, API level 3 only
 ✅ **A016:** iOS Capacitor setup — `@capacitor/ios ^8.3.1`, `ios/` Xcode project initialized (SPM-based, no CocoaPods), `NSBluetoothAlwaysUsageDescription` in Info.plist, `build:mobile` split into platform-agnostic build + `sync:ios`/`sync:android`/`open:ios`/`open:android`, first device build running on iPhone 15 (iOS 26.2) via personal Apple Developer account
+✅ **B014:** BLE LED test UX polish — auto-apply on preset tap with 200ms debounce, BLE writes serialized via hook-level promise chain (no chunk interleave), Connetti/Disconnetti enlarged to card-sized buttons, creative presets #6-#10 (DANI rosso, climber T-pose, heart multicolor, lightning giallo, smile) authored on the 17×18 main-hold grid via new `grid(col,row)` helper
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -83,7 +84,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** B012 + A016 gym validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
+**Next:** B014 gym validation on iPhone, then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e BLE climb lighting (illuminate by climb_id)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -193,10 +194,11 @@ kilter-training-app/
 │   ├── discover/detail/page.tsx    ✅ Climb detail ?id=&angle= (query-param route for Capacitor)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
 │   ├── discover/__tests__/         ✅ Discovery tests
-│   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009)
-│   ├── ble-test/presets.ts         ✅ LED preset data + x/y coords from leds+holes tables (B009)
+│   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009/B014 auto-apply)
+│   ├── ble-test/presets.ts         ✅ LED preset data — 5 role-based + 5 creative pixel-art (B014)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
-│   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/send/disconnect + sending state (B012)
+│   ├── ble-test/use-kilter-ble.ts  ✅ KilterBoard hook — connect/send/disconnect + write serialization (B012/B014)
+│   ├── ble-test/__tests__/         ✅ Preset structure + auto-apply debounce tests (B014)
 │   ├── privacy/page.tsx            ✅ Privacy policy (Play Store requirement, B010)
 │   ├── debug/page.tsx              ✅ Network diagnostics (dev tool, B010)
 │   ├── data/                       ✅ Frontend data files
@@ -324,5 +326,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.17 (A016 iOS Capacitor setup + first device build 2026-04-17)
+**Version:** 2.18 (B014 BLE LED test UX polish + creative presets 2026-04-23)
 **Owner:** Daniele Somensi + Claude Code
