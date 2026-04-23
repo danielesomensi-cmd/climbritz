@@ -1,8 +1,12 @@
-"""Regenerate the 12x12-with-kickboard board assets (B016).
+"""Regenerate the 12x12-with-kickboard board assets (B016 + A015).
 
 Dumps:
   app/data/placements_12x12.json       — 513 placements (bolt-ons + screw-ons,
                                           y∈[0,156], with kickboard)
+  app/data/leds_12x12.json             — 476 placement_id → LED position
+                                          mappings for product_size_id=10.
+                                          Used by A015 to drive BLE packets
+                                          from climb detail data.
   public/holds/board_original_12x12.png — composite of bolt-on + screw-on
                                           product-size-10 PNGs
 
@@ -31,7 +35,11 @@ BOLT_PNG = IMG_DIR / "45-1.png"   # product_size 10, set 1 (Bolt Ons)
 SCREW_PNG = IMG_DIR / "46-1.png"  # product_size 10, set 20 (Screw Ons)
 
 JSON_OUT = REPO_ROOT / "app" / "data" / "placements_12x12.json"
+LEDS_JSON_OUT = REPO_ROOT / "app" / "data" / "leds_12x12.json"
 PNG_OUT = REPO_ROOT / "public" / "holds" / "board_original_12x12.png"
+
+# product_size_id for the 12x12-with-kickboard board the LED packets target
+PRODUCT_SIZE_ID = 10
 
 
 def dump_placements() -> None:
@@ -86,6 +94,36 @@ def dump_placements() -> None:
     print(f"[json]   by set_id: {by_set}")
 
 
+def dump_leds() -> None:
+    """Dump placement_id → LED position mapping for BLE packet generation.
+
+    Joins placements → holes → leds to resolve the LED position for every
+    placement on layout_id=1 / product_size_id=10. Placements without a
+    corresponding LED (rare — some footholds on the kickboard border) are
+    skipped so the frontend can treat the mapping as authoritative.
+    """
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+
+    sql = """
+        SELECT p.id AS placement_id, l.position AS led_position
+        FROM placements p
+        JOIN leds l ON l.hole_id = p.hole_id
+        WHERE p.layout_id = ?
+          AND p.set_id IN (1, 20)
+          AND l.product_size_id = ?
+        ORDER BY p.id
+    """
+    rows = conn.execute(sql, (LAYOUT_ID, PRODUCT_SIZE_ID)).fetchall()
+    conn.close()
+
+    mapping = {str(r["placement_id"]): r["led_position"] for r in rows}
+
+    LEDS_JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
+    LEDS_JSON_OUT.write_text(json.dumps(mapping, indent=2, sort_keys=True))
+    print(f"[json] wrote {len(mapping)} placement→LED mappings to {LEDS_JSON_OUT}")
+
+
 def composite_board_image() -> None:
     if not BOLT_PNG.exists() or not SCREW_PNG.exists():
         raise SystemExit(
@@ -110,4 +148,5 @@ def composite_board_image() -> None:
 
 if __name__ == "__main__":
     dump_placements()
+    dump_leds()
     composite_board_image()
