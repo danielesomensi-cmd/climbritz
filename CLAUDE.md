@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (A015 Complete — 23 April 2026)
+## 📦 Current State (A014 Complete — 23 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -65,6 +65,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B014-iter:** Preset visual fixes after gym validation — climber redrawn with asymmetric reaching pose (replacing T-pose "crucifix"), heart stripped of white shine (uniform red outline + magenta fill), lightning extended to near-full-board-height zigzag (rows 2-17), smile enlarged to 11×11 rounded circle with unambiguous eyes + U-shape smile
 ✅ **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) and added preset #11 All LEDs Diagnostic (stress test lighting all 476 positions in y-banded rainbow stripes, col-span-2 in the grid with amber accent)
 ✅ **A015:** Universal BottomNav (added to `/classify` and `/ble-test`, `← Home` text links dropped) + BLE illumination on `/discover/detail` — `ClimbBleControls` component reuses the `/ble-test` hook, `climb-to-leds.ts` maps climb holds to `EncoderHold[]` via static `app/data/leds_12x12.json` (476-entry placement_id → LED position map, generated from BoardLib DB by `regenerate_board_assets.py`). Single source of truth for role → color stays in `kilter-protocol.PLACEMENT_ROLES`.
+✅ **A014:** Next/Prev navigation on `/discover/detail` — `filtered-list-storage.ts` persists the active filter result set in sessionStorage (24h TTL, uuid-based validity check), detail page renders a "← Prev / N of M / Next →" row (hidden on deep links / stale lists). `ClimbBleControls` gained `climbKey`+`autoSendOnKeyChange` props: when the user taps Next/Prev and the board is connected, the new climb is auto-sent with a 300ms debounce (rapid taps coalesce into a single BLE packet on the last climb).
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -87,7 +88,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** A015 gym validation (illuminate a real climb on the board from `/discover/detail`), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
+**Next:** A014/A015 gym validation (filter → pick climb → Connetti → Illumina → Next/Prev to scroll through the list while the board auto-updates), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -194,11 +195,12 @@ kilter-training-app/
 │   ├── classify/__tests__/         ✅ Classification tests
 │   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
 │   ├── discover/page.tsx           ✅ Discovery: search + filters (A011)
-│   ├── discover/detail/page.tsx    ✅ Climb detail ?id=&angle= (query-param route for Capacitor, A015: BLE control bar above board)
+│   ├── discover/detail/page.tsx    ✅ Climb detail ?id=&angle= (query-param route for Capacitor, A015: BLE control bar above board, A014: Next/Prev row at bottom)
 │   ├── discover/detail/climb-to-leds.ts ✅ A015 — climb holds → BLE EncoderHold[] via static leds_12x12.json
 │   ├── discover/detail/__tests__/  ✅ climb-to-leds helper tests
+│   ├── discover/filtered-list-storage.ts ✅ A014 — sessionStorage-backed persistence of the filtered climb list (24h TTL)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
-│   ├── discover/__tests__/         ✅ Discovery tests
+│   ├── discover/__tests__/         ✅ Discovery tests (search, detail, filtered-list-storage)
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009/B014 auto-apply)
 │   ├── ble-test/presets.ts         ✅ LED preset data — 10 pixel-art presets + #11 all-LEDs stress test (B014-iter-2)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
@@ -221,7 +223,7 @@ kilter-training-app/
 │   ├── GradeDisplay.tsx            ✅ Font/V grade display (A011)
 │   ├── StarRating.tsx              ✅ 5-star widget (A011)
 │   ├── BottomNav.tsx               ✅ App bottom navigation (A011, A015: now on /classify + /ble-test)
-│   ├── ClimbBleControls.tsx        ✅ A015 — BLE connect/illuminate bar for climb detail (reuses /ble-test hook)
+│   ├── ClimbBleControls.tsx        ✅ A015/A014 — BLE connect/illuminate bar for climb detail + auto-send on Next/Prev climb change (300ms debounce)
 │   ├── AuthGuard.tsx               ✅
 │   └── __tests__/                  ✅ Component tests
 ├── capacitor.config.ts             ✅ Capacitor config (appId=com.kilterup.app, webDir=out)
@@ -332,5 +334,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.21 (A015 universal BottomNav + BLE illumination on Discover detail 2026-04-23)
+**Version:** 2.22 (A014 Next/Prev navigation + auto-illuminate on Discover detail 2026-04-23)
 **Owner:** Daniele Somensi + Claude Code
