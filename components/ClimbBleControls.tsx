@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useKilterBle, type BleStatus } from '@/app/ble-test/use-kilter-ble';
 import type { EncoderHold } from '@/lib/ble/kilter-protocol';
+
+// A014 — delay between a climbKey change and the auto-send, so rapid
+// Next/Prev taps coalesce into a single BLE packet on the last climb.
+const AUTO_SEND_DEBOUNCE_MS = 300;
 
 const STATUS_COLORS: Record<BleStatus, string> = {
   idle: 'bg-gray-500',
@@ -31,13 +35,24 @@ const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'dis
 
 interface ClimbBleControlsProps {
   ledCommands: EncoderHold[];
+  /** Stable identifier for the current ledCommands (climb uuid). Used only
+   *  to detect when the displayed climb has changed. */
+  climbKey?: string;
+  /** When true, the component auto-sends ledCommands (debounced) whenever
+   *  climbKey changes AND the board is connected. Parent flips this to true
+   *  after a Next/Prev tap. Does NOT auto-send on the initial render. */
+  autoSendOnKeyChange?: boolean;
 }
 
 /**
  * BLE control bar for the Discover climb detail page. Reuses the same
  * BLE hook as /ble-test so connect/send/disconnect behaviour is identical.
  */
-export default function ClimbBleControls({ ledCommands }: ClimbBleControlsProps) {
+export default function ClimbBleControls({
+  ledCommands,
+  climbKey,
+  autoSendOnKeyChange = false,
+}: ClimbBleControlsProps) {
   const {
     status,
     errorMessage,
@@ -55,6 +70,34 @@ export default function ClimbBleControls({ ledCommands }: ClimbBleControlsProps)
   // hydrate-mount the UI in a client-only way to avoid SSR mismatches.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // A014 — auto-send on climbKey change when parent enabled it (Next/Prev
+  // nav). Seeds lastSentKey with the first climbKey we ever see so the
+  // initial render never auto-sends.
+  const lastSentKeyRef = useRef<string | undefined>(undefined);
+  const hasSeenKeyRef = useRef(false);
+  useEffect(() => {
+    if (!hasSeenKeyRef.current && climbKey !== undefined) {
+      // First climbKey we see — treat as "already sent" so we don't fire
+      // on the initial page load even if autoSendOnKeyChange is true.
+      lastSentKeyRef.current = climbKey;
+      hasSeenKeyRef.current = true;
+      return;
+    }
+    if (!autoSendOnKeyChange) return;
+    if (!climbKey) return;
+    if (climbKey === lastSentKeyRef.current) return;
+    if (ledCommands.length === 0) return;
+    // Only send when actually connected. 'sending' is treated as connected
+    // because the hook's write-chain serializes overlapping sends cleanly.
+    if (status !== 'connected' && status !== 'sending') return;
+
+    const timer = setTimeout(() => {
+      lastSentKeyRef.current = climbKey;
+      sendLEDs(ledCommands);
+    }, AUTO_SEND_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [autoSendOnKeyChange, climbKey, ledCommands, status, sendLEDs]);
 
   if (!mounted) return null;
 

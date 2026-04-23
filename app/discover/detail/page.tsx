@@ -51,11 +51,18 @@ function ClimbDetailPageInner() {
   const canPrev = hasNav && position.index > 0;
   const canNext = hasNav && position.index < position.list.climbIds.length - 1;
 
+  // Flipped once the user taps Next/Prev. Stays true for the rest of the
+  // session so subsequent neighbour climbs also auto-illuminate when
+  // connected. ClimbBleControls debounces the actual BLE write (300ms) and
+  // uses climb.uuid as the dedup key.
+  const [autoSendOnNav, setAutoSendOnNav] = useState(false);
+
   const navigateToNeighbour = (delta: -1 | 1) => {
     if (!position) return;
     const targetIndex = position.index + delta;
     if (targetIndex < 0 || targetIndex >= position.list.climbIds.length) return;
     const nextUuid = position.list.climbIds[targetIndex];
+    setAutoSendOnNav(true);
     router.push(`/discover/detail?id=${nextUuid}&angle=${position.list.angle}`);
   };
 
@@ -147,7 +154,11 @@ function ClimbDetailPageInner() {
             )}
 
             {/* BLE control bar — connect + illuminate this climb on the board */}
-            <ClimbBleControls ledCommands={ledCommands} />
+            <ClimbBleControls
+              ledCommands={ledCommands}
+              climbKey={climb.uuid}
+              autoSendOnKeyChange={autoSendOnNav}
+            />
 
             {/* Board visualization */}
             <ClimbBoardView holds={climb.holds} />
