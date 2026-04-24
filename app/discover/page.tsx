@@ -7,6 +7,7 @@ import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
 import { saveFilteredList } from './filtered-list-storage';
+import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-storage';
 
 const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const DEFAULT_ANGLE = 40;
@@ -33,6 +34,32 @@ function parseInitialFilters(params: URLSearchParams): Filters {
   };
 }
 
+const URL_FILTER_KEYS = ['q', 'angle', 'grade_min', 'grade_max', 'min_ascents', 'min_quality', 'sort'];
+
+// Initial state resolution: URL params take priority (deep-link intent),
+// then sessionStorage (returning from detail), then hardcoded defaults.
+function resolveInitialState(
+  params: URLSearchParams,
+): { query: string; angle: number; filters: Filters } {
+  const hasUrlParam = URL_FILTER_KEYS.some((k) => params.has(k));
+  if (hasUrlParam) {
+    return {
+      query: parseInitialQuery(params),
+      angle: parseInitialAngle(params),
+      filters: parseInitialFilters(params),
+    };
+  }
+  const stored = loadDiscoverFilters();
+  if (stored) {
+    return { query: stored.query, angle: stored.angle, filters: stored.filters };
+  }
+  return {
+    query: '',
+    angle: DEFAULT_ANGLE,
+    filters: { sort: 'popularity' },
+  };
+}
+
 export default function DiscoverPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
@@ -45,15 +72,12 @@ function DiscoverPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [query, setQuery] = useState(() =>
-    parseInitialQuery(new URLSearchParams(searchParams?.toString() ?? '')),
+  const [initialState] = useState(() =>
+    resolveInitialState(new URLSearchParams(searchParams?.toString() ?? '')),
   );
-  const [angle, setAngle] = useState(() =>
-    parseInitialAngle(new URLSearchParams(searchParams?.toString() ?? '')),
-  );
-  const [filters, setFilters] = useState<Filters>(() =>
-    parseInitialFilters(new URLSearchParams(searchParams?.toString() ?? '')),
-  );
+  const [query, setQuery] = useState(initialState.query);
+  const [angle, setAngle] = useState(initialState.angle);
+  const [filters, setFilters] = useState<Filters>(initialState.filters);
 
   const [results, setResults] = useState<ClimbSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +95,13 @@ function DiscoverPageInner() {
     if (filters.sort !== 'popularity') qs.set('sort', filters.sort);
     router.replace(`/discover?${qs.toString()}`, { scroll: false });
   }, [query, angle, filters, router]);
+
+  // B017.3: persist filter UI state across navigation to /discover/detail
+  // and back. Fires synchronously on every change (no debounce — setItem
+  // is cheap). Mirrors filtered-list-storage's 24h TTL semantics.
+  useEffect(() => {
+    saveDiscoverFilters({ query, angle, filters });
+  }, [query, angle, filters]);
 
   // Debounced search. B012: query is now optional — when it's empty we
   // still fetch using the active filters (browse-by-filter mode).
