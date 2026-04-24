@@ -47,6 +47,7 @@ const SAMPLE_RESULTS = [
 beforeEach(() => {
   jest.clearAllMocks();
   searchParamsString = '';
+  window.sessionStorage.clear();
   searchClimbsMock.mockResolvedValue(SAMPLE_RESULTS);
 });
 
@@ -160,6 +161,90 @@ describe('DiscoverPage', () => {
           sort: 'quality',
         }),
       );
+    });
+  });
+
+  describe('filter persistence (B017.3)', () => {
+    it('uses defaults when no URL params and empty sessionStorage', async () => {
+      render(<DiscoverPage />);
+      expect(screen.getByTestId('angle-40').className).toMatch(/bg-orange-500/);
+      expect((screen.getByTestId('search-input') as HTMLInputElement).value).toBe('');
+    });
+
+    it('restores angle from sessionStorage when URL has no params', async () => {
+      // Seed storage as if the user had set angle=45 on a prior mount
+      window.sessionStorage.setItem(
+        'kilter-up:discover:filters',
+        JSON.stringify({
+          query: '',
+          angle: 45,
+          filters: { sort: 'popularity' },
+          timestamp: Date.now(),
+        }),
+      );
+
+      render(<DiscoverPage />);
+      expect(screen.getByTestId('angle-45').className).toMatch(/bg-orange-500/);
+    });
+
+    it('URL params override sessionStorage on mount', async () => {
+      window.sessionStorage.setItem(
+        'kilter-up:discover:filters',
+        JSON.stringify({
+          query: '',
+          angle: 45,
+          filters: { sort: 'popularity' },
+          timestamp: Date.now(),
+        }),
+      );
+      searchParamsString = 'angle=60';
+
+      render(<DiscoverPage />);
+      expect(screen.getByTestId('angle-60').className).toMatch(/bg-orange-500/);
+    });
+
+    it('writes to sessionStorage when the user changes the angle', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('angle-55'));
+
+      await waitFor(() => {
+        const raw = window.sessionStorage.getItem('kilter-up:discover:filters');
+        expect(raw).not.toBeNull();
+        const parsed = JSON.parse(raw!);
+        expect(parsed.angle).toBe(55);
+      });
+    });
+
+    it('change → unmount → remount restores the changed angle', async () => {
+      const { unmount } = render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('angle-65'));
+
+      // Give the save useEffect a chance to run
+      await waitFor(() => {
+        const raw = window.sessionStorage.getItem('kilter-up:discover:filters');
+        expect(raw).not.toBeNull();
+        expect(JSON.parse(raw!).angle).toBe(65);
+      });
+
+      unmount();
+      render(<DiscoverPage />);
+      expect(screen.getByTestId('angle-65').className).toMatch(/bg-orange-500/);
+    });
+
+    it('falls back to defaults after sessionStorage is cleared', async () => {
+      window.sessionStorage.setItem(
+        'kilter-up:discover:filters',
+        JSON.stringify({
+          query: '',
+          angle: 45,
+          filters: { sort: 'popularity' },
+          timestamp: Date.now(),
+        }),
+      );
+      window.sessionStorage.removeItem('kilter-up:discover:filters');
+
+      render(<DiscoverPage />);
+      expect(screen.getByTestId('angle-40').className).toMatch(/bg-orange-500/);
     });
   });
 });
