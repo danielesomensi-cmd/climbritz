@@ -39,7 +39,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 ---
 
-## 📦 Current State (A014 Complete — 23 April 2026)
+## 📦 Current State (B017 Complete — 24 April 2026)
 
 ✅ **Phase 1:** FastAPI backend, JWT auth, User model, Alembic migrations
 ✅ **Phase 2:** Video upload + Gemini File API analysis (consolidated pipeline)
@@ -66,6 +66,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ✅ **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) and added preset #11 All LEDs Diagnostic (stress test lighting all 476 positions in y-banded rainbow stripes, col-span-2 in the grid with amber accent)
 ✅ **A015:** Universal BottomNav (added to `/classify` and `/ble-test`, `← Home` text links dropped) + BLE illumination on `/discover/detail` — `ClimbBleControls` component reuses the `/ble-test` hook, `climb-to-leds.ts` maps climb holds to `EncoderHold[]` via static `app/data/leds_12x12.json` (476-entry placement_id → LED position map, generated from BoardLib DB by `regenerate_board_assets.py`). Single source of truth for role → color stays in `kilter-protocol.PLACEMENT_ROLES`.
 ✅ **A014:** Next/Prev navigation on `/discover/detail` — `filtered-list-storage.ts` persists the active filter result set in sessionStorage (24h TTL, uuid-based validity check), detail page renders a "← Prev / N of M / Next →" row (hidden on deep links / stale lists). `ClimbBleControls` gained `climbKey`+`autoSendOnKeyChange` props: when the user taps Next/Prev and the board is connected, the new climb is auto-sent with a 300ms debounce (rapid taps coalesce into a single BLE packet on the last climb).
+✅ **B017:** Discovery UX fixes after gym validation — (1) Prev/Next buttons on `/discover/detail` enlarged to card-sized tap targets (`min-h-16`, `text-xl font-bold`) so flipping climbs with a tired thumb during rest intervals is fast; (2) app-wide safe-area sweep — new `.pt-safe`/`.pb-safe` CSS utilities in `app/safe-area.css` (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint), `viewport-fit=cover` added via `viewport` export in `app/layout.tsx`, applied to all 12 pages plus `pb-safe` on BottomNav; (3) Discovery filter state (`query` + `angle` + `filters`) now persists in sessionStorage (`kilter-up:discover:filters`, 24h TTL) so the filter UI restores on return from `/discover/detail` — URL params still win on mount for shareable deep links.
 
 **Video API surface:**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
@@ -88,7 +89,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
-**Next:** A014/A015 gym validation (filter → pick climb → Connetti → Illumina → Next/Prev to scroll through the list while the board auto-updates), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
+**Next:** B017 gym re-validation (Prev/Next tap-target on iPhone/Android, page titles clear of the notch/clock, filters restore on return from detail), B018 repo-hygiene pre/post-task checks (queued — triggered by a stale git-status snapshot at the start of B017), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
 
 **Gemini:** google.genai SDK, model gemini-2.5-flash, Kilter Board-specific prompt (B007+B008), JSON repair + Pydantic validation
 
@@ -199,6 +200,7 @@ kilter-training-app/
 │   ├── discover/detail/climb-to-leds.ts ✅ A015 — climb holds → BLE EncoderHold[] via static leds_12x12.json
 │   ├── discover/detail/__tests__/  ✅ climb-to-leds helper tests
 │   ├── discover/filtered-list-storage.ts ✅ A014 — sessionStorage-backed persistence of the filtered climb list (24h TTL)
+│   ├── discover/discover-filters-storage.ts ✅ B017 — sessionStorage-backed persistence of the filter UI state (query + angle + filters, 24h TTL)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
 │   ├── discover/__tests__/         ✅ Discovery tests (search, detail, filtered-list-storage)
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009/B014 auto-apply)
@@ -214,7 +216,10 @@ kilter-training-app/
 │   ├── lib/ble/kilter-protocol.ts  ✅ Pure packet encoder — API level 3 (B012)
 │   ├── lib/ble/kilter-board-service.ts ✅ Kilter-specific BLE orchestration (B012)
 │   ├── lib/ble/transport.ts        ✅ Generic Capacitor BLE wrapper (B012: +writeWithoutResponse)
-│   └── lib/ble/__tests__/kilter-protocol.test.ts ✅ Encoder unit tests (B012)
+│   ├── lib/ble/__tests__/kilter-protocol.test.ts ✅ Encoder unit tests (B012)
+│   ├── layout.tsx                  ✅ Root layout — metadata + viewport (B017: viewportFit=cover)
+│   ├── globals.css                 ✅ Tailwind v4 entrypoint
+│   └── safe-area.css               ✅ B017 — .pt-safe / .pb-safe utilities (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint)
 ├── components/
 │   ├── BoardMap.tsx                ✅ 12x12 board canvas (HC-2)
 │   ├── ClimbBoardView.tsx          ✅ Climb detail board wrapper (A011)
@@ -334,5 +339,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.22 (A014 Next/Prev navigation + auto-illuminate on Discover detail 2026-04-23)
+**Version:** 2.23 (B017 Discovery UX fixes: enlarged Prev/Next + app-wide safe-area + filter persistence 2026-04-24)
 **Owner:** Daniele Somensi + Claude Code

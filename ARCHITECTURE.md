@@ -264,6 +264,8 @@ POST /api/videos/upload + climb_id + angle
 | BLE | Custom encoder (`kilter-protocol.ts`) over `@capacitor-community/bluetooth-le` | Pure encoder reimplemented from grip-connect reference. API level 3 only. grip-connect stays as reference, not imported. Web Bluetooth insufficient for iOS Safari |
 | Hold classification | Manual classification via `/classify` UI | HC-4 (AI batch) removed — manual-first by Daniele + Christie in gym. Proprietary asset, prerequisite for Discovery |
 | Routing (Capacitor) | Query-param routes (`/discover/detail?id=`) | Dynamic `[param]` segments don't work in Capacitor static export |
+| Safe-area CSS (B017) | Plain utilities in `app/safe-area.css`, imported separately from `globals.css` | Tailwind v4's postcss pipeline strips plain class rules from the Tailwind entrypoint (even inside `@utility`/`@layer`). Separate CSS import survives. `.pt-safe`/`.pb-safe` use `max(env(safe-area-inset-*), fallback)`; `viewport-fit=cover` set via Next `viewport` export in `app/layout.tsx` |
+| Discovery filter persistence (B017) | sessionStorage (`kilter-up:discover:filters`, 24h TTL) | Mirrors `filtered-list-storage.ts`. Initial-state priority: URL params > sessionStorage > defaults — preserves shareable-link intent while fixing back-nav reset |
 
 ---
 
