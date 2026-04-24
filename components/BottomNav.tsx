@@ -30,7 +30,7 @@ export default function BottomNav() {
   return (
     <nav
       data-testid="bottom-nav"
-      className="fixed bottom-0 left-0 right-0 z-30 bg-zinc-950/95 backdrop-blur border-t border-zinc-800"
+      className="fixed bottom-0 left-0 right-0 z-30 pb-safe bg-zinc-950/95 backdrop-blur border-t border-zinc-800"
     >
       <div className="max-w-2xl mx-auto grid grid-cols-4">
         {ITEMS.map((item) => {

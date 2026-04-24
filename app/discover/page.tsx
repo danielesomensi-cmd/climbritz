@@ -137,7 +137,7 @@ function DiscoverPageInner() {
 
       {/* Header */}
       <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 pt-4 pb-3 space-y-3">
+        <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 space-y-3">
           <h1 className="text-2xl font-bold">Discover</h1>
 
           {/* Angle selector */}

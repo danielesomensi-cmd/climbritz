@@ -53,7 +53,10 @@ export default function Home() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '48px 16px 32px',
+        paddingTop: 'max(env(safe-area-inset-top), 48px)',
+        paddingLeft: '16px',
+        paddingRight: '16px',
+        paddingBottom: '32px',
       }}
     >
       {/* Header */}

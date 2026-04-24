@@ -48,7 +48,7 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Header */}
-      <header className="border-b border-zinc-800 px-4 py-4">
+      <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <Link href="/" className="text-xl font-black text-[#FF6B35]">KILTER UP</Link>
           <button
