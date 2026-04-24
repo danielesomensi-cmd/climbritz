@@ -4,7 +4,10 @@ export default function PrivacyPolicy() {
       style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #000 100%)',
-        padding: '48px 24px',
+        paddingTop: 'max(env(safe-area-inset-top), 48px)',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        paddingBottom: '48px',
         color: '#cbd5e1',
         fontFamily: 'system-ui, sans-serif',
       }}

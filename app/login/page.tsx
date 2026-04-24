@@ -41,7 +41,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center pt-safe px-4 pb-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link href="/" className="block text-center mb-8">

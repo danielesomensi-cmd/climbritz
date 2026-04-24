@@ -122,7 +122,7 @@ export default function DebugPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4 font-mono text-xs">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-safe px-4 pb-4 font-mono text-xs">
       <div className="max-w-lg mx-auto space-y-4">
         <Link href="/" className="text-zinc-400 hover:text-zinc-200 text-sm">
           &larr; Home

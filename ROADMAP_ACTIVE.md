@@ -174,6 +174,7 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) + added preset #11 All LEDs Diagnostic stress test (476 LEDs cycling through 8-colour rainbow y-bands)
 - [x] **A015:** Universal BottomNav on `/classify` and `/ble-test` + BLE illumination on `/discover/detail` — `ClimbBleControls` component (reuses `use-kilter-ble` hook), `climb-to-leds.ts` helper, static `app/data/leds_12x12.json` (476-entry placement_id → LED position map). Connetti → Illumina board → role colors sent via existing `kilter-protocol.ts` encoder.
 - [x] **A014:** Next/Prev navigation on `/discover/detail` with auto-illuminate when connected — `filtered-list-storage.ts` (sessionStorage, 24h TTL), `← Prev / N of M / Next →` row, `ClimbBleControls.climbKey`+`autoSendOnKeyChange` props with 300ms debounce so rapid taps coalesce. Deep links hide the row.
+- [x] **B017:** Discovery UX fixes after gym validation — (1) Prev/Next buttons on `/discover/detail` enlarged to card-sized tap targets (`min-h-16`, `text-xl font-bold`); (2) app-wide safe-area sweep — `.pt-safe`/`.pb-safe` utilities in `app/safe-area.css` (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint), `viewport-fit=cover` in `app/layout.tsx`, applied to all 12 pages + BottomNav; (3) Discovery filter state persists in sessionStorage (`kilter-up:discover:filters`, 24h TTL) so filters restore on return from detail. URL params still win on mount for shareable deep links.
 - [x] **BLE scan → light up a problem from search results** — shipped as part of A015: user flow is tap climb in `/discover` → Connetti → Illumina board. Remaining work: auto-connect on page load (future), in-session memory of last-connected device (future).
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems
@@ -348,6 +349,7 @@ See `RESEARCH.md` → "Visual Problem Recognition — PoC Results" and "Coordina
 - [ ] **Evaluate gemini-2.5-pro** — when availability improves
 - [ ] **Update Railway source repo** — from OpenClawDani → danielesomensi-cmd
 - [ ] **Set up Vercel–GitHub auto-deploy**
+- [ ] **B018:** Pre-task/post-task repo-hygiene checks — queued after B017. Session-start gitStatus snapshot was stale (claimed dirty tree + wrong branch), triggered a defensive Phase 0 that turned out moot. Agent should re-verify `git status` + current branch at the start of every non-trivial task.
 
 ---
 
