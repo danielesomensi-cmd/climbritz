@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useRouter, useSearchParams } from 'next/navigation';
 import { searchClimbs, API_BASE, type ClimbSearchResult, type SortField } from '@/app/lib/api';
 import ClimbCard from '@/components/ClimbCard';
-import FilterPanel, { type Filters } from '@/components/FilterPanel';
+import FilterPanel, { countActiveFilters, type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
 import { saveFilteredList } from './filtered-list-storage';
 import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-storage';
@@ -82,6 +82,9 @@ function DiscoverPageInner() {
   const [results, setResults] = useState<ClimbSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  const activeFilterCount = countActiveFilters(filters);
 
   // Sync URL params (shareable filter state).
   useEffect(() => {
@@ -199,11 +202,71 @@ function DiscoverPageInner() {
             placeholder="Search climbs by name…"
             className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
+
+          {/* Prominent Filters button (B017 follow-up) */}
+          <button
+            type="button"
+            data-testid="filter-toggle"
+            aria-expanded={isFilterPanelOpen}
+            aria-controls="discover-filter-panel"
+            onClick={() => setIsFilterPanelOpen((x) => !x)}
+            className={`w-full min-h-[56px] px-4 py-4 rounded-xl flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+              activeFilterCount > 0
+                ? 'bg-orange-500 text-white'
+                : 'bg-zinc-800 text-white'
+            } ${isFilterPanelOpen ? '' : 'shadow-lg'}`}
+          >
+            <span className="flex items-center gap-3 text-base font-semibold">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <line x1="4" y1="6" x2="14" y2="6" />
+                <line x1="18" y1="6" x2="20" y2="6" />
+                <line x1="4" y1="12" x2="8" y2="12" />
+                <line x1="12" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="18" x2="16" y2="18" />
+                <line x1="20" y1="18" x2="20" y2="18" />
+                <circle cx="16" cy="6" r="2" />
+                <circle cx="10" cy="12" r="2" />
+                <circle cx="18" cy="18" r="2" />
+              </svg>
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span
+                  data-testid="filter-count-badge"
+                  className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-white/25 text-sm font-bold"
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`w-5 h-5 transition-transform ${isFilterPanelOpen ? 'rotate-180' : ''}`}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        <FilterPanel value={filters} onChange={setFilters} />
+        <div id="discover-filter-panel">
+          <FilterPanel value={filters} onChange={setFilters} expanded={isFilterPanelOpen} />
+        </div>
 
         {/* Results */}
         <div data-testid="results-list" className="space-y-2">

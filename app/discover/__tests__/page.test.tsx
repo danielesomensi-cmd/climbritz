@@ -247,4 +247,75 @@ describe('DiscoverPage', () => {
       expect(screen.getByTestId('angle-40').className).toMatch(/bg-orange-500/);
     });
   });
+
+  describe('prominent Filters button (B017 follow-up)', () => {
+    it('renders with Filters label, no badge, and neutral bg when no filters active', () => {
+      render(<DiscoverPage />);
+      const btn = screen.getByTestId('filter-toggle');
+      expect(btn).toHaveTextContent('Filters');
+      expect(screen.queryByTestId('filter-count-badge')).not.toBeInTheDocument();
+      expect(btn.className).toMatch(/bg-zinc-800/);
+      expect(btn.className).not.toMatch(/bg-orange-500/);
+    });
+
+    it('has a minimum tap height of 56px', () => {
+      render(<DiscoverPage />);
+      const btn = screen.getByTestId('filter-toggle');
+      expect(btn.className).toMatch(/min-h-\[56px\]/);
+    });
+
+    it('starts with aria-expanded=false and the panel collapsed', () => {
+      render(<DiscoverPage />);
+      const btn = screen.getByTestId('filter-toggle');
+      expect(btn).toHaveAttribute('aria-expanded', 'false');
+      expect(btn).toHaveAttribute('aria-controls', 'discover-filter-panel');
+      expect(screen.queryByTestId('filter-panel')).not.toBeInTheDocument();
+    });
+
+    it('clicking the button toggles aria-expanded and renders panel content', () => {
+      render(<DiscoverPage />);
+      const btn = screen.getByTestId('filter-toggle');
+
+      fireEvent.click(btn);
+      expect(btn).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+
+      fireEvent.click(btn);
+      expect(btn).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByTestId('filter-panel')).not.toBeInTheDocument();
+    });
+
+    it('switches to orange bg and shows count=1 when one filter is active', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.change(screen.getByTestId('filter-grade-min'), { target: { value: '18' } });
+
+      await waitFor(() => {
+        const btn = screen.getByTestId('filter-toggle');
+        expect(btn.className).toMatch(/bg-orange-500/);
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+    });
+
+    it('shows count=2 when two filters are active', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.change(screen.getByTestId('filter-grade-min'), { target: { value: '18' } });
+      fireEvent.click(screen.getByTestId('filter-ascents-50+'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('2');
+      });
+    });
+
+    it('counts a non-default sort as an active filter', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-sort-quality'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+    });
+  });
 });
