@@ -321,6 +321,24 @@ See `RESEARCH.md` → "Visual Problem Recognition — PoC Results" and "Coordina
 
 ## Phase 8+ — Backlog / Visionary
 
+### Circuits & Animated Sequences
+
+> Discovered during D015 circuit audit (April 2026). ~517 climbs in BoardLib (0.15% of layout_id=1) are animated multi-frame sequences, not static boulders. They have `frames_count > 1` and `frames_pace > 0` (typical pace 1–60 seconds between frames). Notable examples: Pump 540°, Driftwood, Hultqvist's no 3, Please don't sandback me! These are popular endurance/training circuits with hundreds of ascents — high-value content currently untreated.
+
+**Why this is a separate phase:** circuits need different UX, different BLE handling, and different metadata than boulders. Stuffing them into the boulder filter UX would confuse both categories.
+
+- [ ] **DB integration:** treat `frames_count > 1` rows as a distinct category. Add a `climb_type` derived field (boulder / circuit) at the API layer. Today they are silently mixed in Discovery results.
+- [ ] **Discovery UI — Circuits tab:** separate listing in Discovery with circuit-specific filters (total duration = `frames_count × frames_pace`, frame count, pace, ascents). Default Discovery shows boulders only; circuits accessed via tab or chip.
+- [ ] **Circuit detail page:** parse the comma-separated `frames` field into N frames, render each as a board visualization, show pace and total duration. "Play preview" button steps through frames in the browser at the original pace.
+- [ ] **BLE protocol extension:** today `kilter-protocol.ts` encodes a single LED state and ships it in one packet sequence. For circuits we need to (a) encode N frames, (b) ship them sequentially with `frames_pace` ms between writes, (c) handle the loop-back at the end of the sequence, (d) cancel on disconnect/back-button. This requires a new `sendLEDSequence(frames, paceMs)` method in `kilter-board-service.ts` plus state machine extension in `use-kilter-ble.ts`.
+- [ ] **Frames format research:** before any code, document the exact format of multi-frame `frames` strings (D015 noted commas as separators but this needs full verification — are quoted segments significant? are roles per-frame or global?). Audit-only first.
+- [ ] **Move count filter compatibility:** circuits are excluded from the boulder move count filter (handled in Brief A via `frames_count = 1`). For circuits, "moves" semantics is different — it's the number of frames, not hold transitions.
+- [ ] **Validation:** test with at least 5 popular circuits (Pump 540°, Driftwood, Hultqvist's no 3, Please don't sandback me!, BFF (20moves)) to confirm the BLE animation matches the official Kilter Board app behavior.
+
+**Out of scope (now):** circuit *generation* (AI-built endurance loops), circuit *editing*, sharing user circuits to Kilter community.
+
+**Prerequisite:** D016 audit (frames format verification + corrected boulder distribution) must complete before any implementation work starts here.
+
 ### Outdoor Video → Kilter Movement Matching
 - [ ] Film outdoor climb → AI describes movement types
 - [ ] Match against annotated Kilter problems
