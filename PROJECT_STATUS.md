@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 24 Aprile 2026
+## 🗓️ Ultimo Aggiornamento: 30 Aprile 2026
 
 ---
 
@@ -32,6 +32,8 @@
 | B014-iter-2 Art Overhaul | ✅ Done | Replaced diagnostic presets #1-#5 with pixel art: Space Invader (green), Ghost Blinky (red + white/cyan eyes), Zelda Heart (mono-red 8-bit), Star (yellow), Sun (orange + yellow rays). Added preset #11 All LEDs Diagnostic — stress test lighting all 476 positions in y-banded rainbow stripes. |
 | A015 Universal Nav + BLE on Discover | ✅ Done | BottomNav added to `/classify` and `/ble-test` (replaces cramped `← Home` links). BLE control bar on `/discover/detail` — `ClimbBleControls` component + `climb-to-leds.ts` helper + static `app/data/leds_12x12.json` (placement_id → LED position, 476 entries generated from BoardLib DB). Single SSoT for role→color in `kilter-protocol.PLACEMENT_ROLES`. |
 | A014 Next/Prev on Discover detail | ✅ Done | `filtered-list-storage.ts` persists filter results in sessionStorage (24h TTL). `/discover/detail` renders `← Prev / N of M / Next →` when current uuid is in saved list. `ClimbBleControls` auto-sends new climb (300ms debounce) on key change when board is connected — rapid taps coalesce. Deep links hide the row. Keeps list's original angle across navigation. |
+| D015 Circuits Audit | ✅ Done | Read-only audit of `kilter.db` — `frames_count > 1` identifies the 517 multi-frame animated sequences (e.g. Pump 540°, Driftwood); `circuits` / `circuits_climbs` tables are empty in BoardLib; `is_listed = 1` filters out ~92k unvalidated climbs. Output: `backend/docs/D015_CIRCUITS_AUDIT.md`. Feeds Brief A (move-count filter) and B019. |
+| B019 Circuits Backlog Logged | ✅ Done | Logged "Circuits & Animated Sequences" as a Phase 8+ subsection in `ROADMAP_ACTIVE.md` — DB integration, dedicated Discovery tab, BLE multi-frame protocol extension, validation plan. Prerequisite: D016 (frames format verification). Docs-only commit. |
 | B017 Discovery UX fixes | ✅ Done | (1) Prev/Next buttons enlarged to card-sized tap targets (`min-h-16`, `text-xl font-bold`) for quick flipping during rest intervals; (2) app-wide safe-area sweep — `.pt-safe`/`.pb-safe` utilities in `app/safe-area.css` (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint), `viewport-fit=cover` in layout, applied to all 12 pages + BottomNav; (3) Discovery filter state persists in sessionStorage (`kilter-up:discover:filters`, 24h TTL) so filters restore on return from detail — URL params still win on mount for shareable deep links; (4) prominent Filters button — full-width 56px-tall toggle inside the sticky `/discover` header, brand-orange + count badge when any filter is active (grade range, min ascents, min stars, or non-default sort). Panel `expanded` state lifted from `FilterPanel` to `DiscoverPage`; `countActiveFilters()` exported for reuse. Pending gym re-validation on iPhone + Android. |
 | Frontend upload UI | ✅ Done | Drag-drop, progress bar, mobile-first |
 | Discovery frontend | ✅ Done | A011 — `/discover` (search + filters) + `/discover/[uuid]` (board viz). B016 — hollow rings for active holds, screw-on footholds smaller, kickboard row visible. Grip-type filter wired but disabled. |
