@@ -80,7 +80,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 |-----------|------|----------------|
 | **Auth API** | `api/auth.py` | Register, login, /me (JWT) |
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
-| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries) |
+| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. |
 | **Holds API** | `api/holds.py` | Board composite image + individual hold images |
 | **Admin API** | `api/admin.py` | BoardLib DB sync + upload (Railway maintenance) |
 | **Circuits API** | `api/circuits.py` | Stub (legacy) |

@@ -131,9 +131,9 @@ Three levels of coaching intelligence (Coach tier):
   - [ ] Difficulty accuracy (deferred)
   - [ ] Board size/layout (12x12 only at launch)
   - [ ] Setter name (deferred)
+- [x] **Number of moves** — A019. Chip preset (Any / ≤5 / 6–7 / 8–10 / >10), computed at query time as `(cyan_holds + 2)` via `(LENGTH(c.frames) - LENGTH(REPLACE(c.frames, 'r13', ''))) / 3 + 2`. Animated multi-frame sequences (`frames_count > 1`) excluded globally — they're circuits, not boulders. Doesn't depend on hold classification, so promoted out of the "requires hold classification" subsection.
 - [ ] Additional filters (requires hold classification — Pre-Phase 3):
   - **Grip type** (jug/good crimp/crimp/sloper/undercling/pinch) — from hold classification
-  - **Number of moves** (derived from layout string `p` count)
   - **Session type filter** (Power: 1-4 moves / Power Endurance: 5-8 / Endurance: 9+)
 - [x] `GET /api/climbs/{id}` — full detail with hold classifications + beta video links
 - [ ] `GET /api/climbs/{id}/similar` — similar problems (Jaccard on hold sets, same grade/angle different holds)
