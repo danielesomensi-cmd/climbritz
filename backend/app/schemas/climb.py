@@ -1,6 +1,12 @@
 """Pydantic schemas for climb search and detail endpoints."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+# Move-count bucket for the Discovery filter (A019).
+# Mapped in climb_service to a SQL WHERE clause on the cyan-hold count.
+MovesFilter = Literal["any", "le5", "6-7", "8-10", "gt10"]
 
 
 class HoldPosition(BaseModel):

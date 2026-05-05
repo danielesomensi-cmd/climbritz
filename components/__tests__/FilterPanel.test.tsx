@@ -83,13 +83,68 @@ describe('FilterPanel', () => {
       gradeMax: undefined,
       minAscents: undefined,
       minQuality: undefined,
+      moves: 'any',
     });
+  });
+
+  // ── A019: moves filter ──────────────────────────────────────────────────
+
+  it('renders 5 Moves chips with the documented labels', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-moves-any')).toHaveTextContent('Any');
+    expect(screen.getByTestId('filter-moves-le5')).toHaveTextContent('≤5');
+    expect(screen.getByTestId('filter-moves-6-7')).toHaveTextContent('6–7');
+    expect(screen.getByTestId('filter-moves-8-10')).toHaveTextContent('8–10');
+    expect(screen.getByTestId('filter-moves-gt10')).toHaveTextContent('>10');
+  });
+
+  it('Any is selected by default (no moves on the value object)', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-moves-any').className).toMatch(/bg-orange-500/);
+    expect(screen.getByTestId('filter-moves-le5').className).not.toMatch(/bg-orange-500/);
+  });
+
+  it('clicking a moves chip emits the bucket on onChange', () => {
+    const onChange = jest.fn();
+    render(<FilterPanel value={DEFAULT} onChange={onChange} expanded={true} />);
+    fireEvent.click(screen.getByTestId('filter-moves-6-7'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ moves: '6-7' }));
+  });
+
+  it('clicking Any emits "any" so the search omits the param', () => {
+    const onChange = jest.fn();
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, moves: 'gt10' }}
+        onChange={onChange}
+        expanded={true}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('filter-moves-any'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ moves: 'any' }));
+  });
+
+  it('highlights only the active moves chip', () => {
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, moves: '8-10' }}
+        onChange={() => {}}
+        expanded={true}
+      />,
+    );
+    expect(screen.getByTestId('filter-moves-8-10').className).toMatch(/bg-orange-500/);
+    expect(screen.getByTestId('filter-moves-any').className).not.toMatch(/bg-orange-500/);
+    expect(screen.getByTestId('filter-moves-le5').className).not.toMatch(/bg-orange-500/);
   });
 });
 
 describe('countActiveFilters', () => {
   it('returns 0 for default filters', () => {
     expect(countActiveFilters({ sort: 'popularity' })).toBe(0);
+  });
+
+  it('returns 0 when moves is explicitly "any"', () => {
+    expect(countActiveFilters({ sort: 'popularity', moves: 'any' })).toBe(0);
   });
 
   it('counts each non-default field', () => {
@@ -111,6 +166,20 @@ describe('countActiveFilters', () => {
   it('counts non-default sort alongside other active filters', () => {
     expect(
       countActiveFilters({ sort: 'grade_asc', gradeMin: 18, minAscents: 50 }),
+    ).toBe(3);
+  });
+
+  it('counts a non-Any moves bucket as one active filter', () => {
+    expect(countActiveFilters({ sort: 'popularity', moves: '6-7' })).toBe(1);
+  });
+
+  it('counts moves alongside other filters', () => {
+    expect(
+      countActiveFilters({
+        sort: 'quality',
+        gradeMin: 18,
+        moves: 'gt10',
+      }),
     ).toBe(3);
   });
 });

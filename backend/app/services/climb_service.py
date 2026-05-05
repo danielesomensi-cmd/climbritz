@@ -41,13 +41,15 @@ def search_climbs(
     grade_max: int | None = None,
     min_ascents: int | None = None,
     min_quality: float | None = None,
+    moves: str | None = None,
     sort: str = "popularity",
     limit: int = 10,
 ) -> list[dict]:
     """Search/browse climbs. Autocomplete-friendly when `query` is provided,
     pure browse-by-filter when it's None or empty.
 
-    Filters: layout_id=1 (Kilter Original), is_listed=1, ascensionist_count > 0.
+    Filters: layout_id=1 (Kilter Original), is_listed=1, frames_count=1,
+    ascensionist_count > 0.
 
     Args:
         query: Optional search string (matched with LIKE %query%). If None
@@ -58,6 +60,8 @@ def search_climbs(
         grade_max: Maximum numeric difficulty (inclusive).
         min_ascents: Minimum ascensionist count.
         min_quality: Minimum quality average (0–5 scale).
+        moves: Optional move-count bucket (A019). One of "le5", "6-7",
+               "8-10", "gt10". "any" or None means no move filter.
         sort: One of "popularity", "quality", "grade_asc", "grade_desc".
               Defaults to "popularity". Unknown values fall back to popularity.
         limit: Max results to return (default 10).
@@ -66,6 +70,10 @@ def search_climbs(
         List of dicts with: uuid, name, setter, grade, angle,
         ascensionist_count, quality_average.
     """
+    # Always exclude animated multi-frame sequences (Pump 540°, Driftwood,
+    # etc. — frames_count > 1). They're circuits, not boulders, and the
+    # moves formula and per-hold colour mapping don't apply. Phase 8+ will
+    # surface them in a dedicated UX. (D016 / A019)
     sql = """
         SELECT c.uuid, c.name, c.setter_username,
                cs.angle, cs.display_difficulty, cs.ascensionist_count,
@@ -77,6 +85,7 @@ def search_climbs(
             ON CAST(ROUND(cs.display_difficulty) AS INT) = dg.difficulty
         WHERE c.layout_id = 1
           AND c.is_listed = 1
+          AND c.frames_count = 1
           AND cs.ascensionist_count > 0
     """
     params: list = []
@@ -104,6 +113,24 @@ def search_climbs(
     if min_quality is not None:
         sql += " AND cs.quality_average >= ?"
         params.append(min_quality)
+
+    # A019 — moves filter. Counts cyan/middle holds (role 13) by counting
+    # 'r13' substrings in the frames blob: each occurrence is 3 chars, so
+    # (LENGTH(frames) - LENGTH(REPLACE(frames, 'r13', ''))) / 3 is the
+    # middle-hold count. Add 2 (one start, one finish) for total moves.
+    # The substring trick is safe because layout_id=1 restricts roles to
+    # {12,13,14,15} (2-digit), so 'r13' can never collide with a longer
+    # role like 'r130'. If layout filter is ever relaxed, revisit.
+    if moves and moves != "any":
+        move_expr = "((LENGTH(c.frames) - LENGTH(REPLACE(c.frames, 'r13', ''))) / 3 + 2)"
+        if moves == "le5":
+            sql += f" AND {move_expr} <= 5"
+        elif moves == "6-7":
+            sql += f" AND {move_expr} BETWEEN 6 AND 7"
+        elif moves == "8-10":
+            sql += f" AND {move_expr} BETWEEN 8 AND 10"
+        elif moves == "gt10":
+            sql += f" AND {move_expr} > 10"
 
     # Whitelist sort to prevent SQL injection. Unknown → popularity.
     order_clause = SORT_OPTIONS.get(sort, SORT_OPTIONS["popularity"])

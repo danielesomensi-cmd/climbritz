@@ -43,15 +43,18 @@ class TestSearchEndpoint:
 
     def test_search_without_query_returns_all(self):
         # B012: q is now optional. With no q, return everything matching
-        # the rest of the filters (here: nothing else, so all 4 fixture rows).
+        # the rest of the filters. Fixture (post-A019): 3 listed singles
+        # (Alpha@40/Alpha@45/Beta@40/Crimp@40 spread across 4 stat rows
+        # for 3 climbs) + 3 A019 listed singles. Animated A019 row is
+        # excluded by the global frames_count=1 filter.
         resp = client.get("/api/climbs/search")
         assert resp.status_code == 200
-        assert len(resp.json()) == 4
+        assert len(resp.json()) == 7
 
     def test_search_empty_query_string_returns_all(self):
         resp = client.get("/api/climbs/search?q=")
         assert resp.status_code == 200
-        assert len(resp.json()) == 4
+        assert len(resp.json()) == 7
 
     def test_search_no_query_with_filters(self):
         # Browse-by-filter: angle=40 + grade_min=18 → Beta(20) + Crimp(22)
@@ -109,7 +112,9 @@ class TestSearchEndpoint:
         assert data[0]["quality_average"] == max(r["quality_average"] for r in data)
 
     def test_search_sort_grade_asc(self):
-        resp = client.get("/api/climbs/search?q=e&sort=grade_asc")
+        # q="Benchmark" rather than "e" so the A019 fixture rows
+        # (diff=14) don't sort ahead of Alpha@40 (diff=16).
+        resp = client.get("/api/climbs/search?q=Benchmark&sort=grade_asc")
         assert resp.status_code == 200
         data = resp.json()
         assert data[0]["name"] == "Benchmark Alpha"
@@ -140,6 +145,53 @@ class TestSearchEndpoint:
         data = resp.json()
         assert len(data) == 1
         assert data[0]["name"] == "Benchmark Beta"
+
+    # ── A019: moves filter ──────────────────────────────────────────────────
+
+    def test_search_excludes_animated_sequences(self):
+        """Animated multi-frame sequences (frames_count > 1) are excluded
+        from search globally — they're circuits, not boulders."""
+        resp = client.get("/api/climbs/search")
+        assert resp.status_code == 200
+        names = [r["name"] for r in resp.json()]
+        assert "A019 Fixture - Animated Sequence" not in names
+
+    def test_search_moves_le5_returns_only_short_boulders(self):
+        resp = client.get("/api/climbs/search?moves=le5")
+        assert resp.status_code == 200
+        names = {r["name"] for r in resp.json()}
+        # Pre-A019 fixtures all sit in ≤5: Alpha (4 moves), Beta (3), Crimp (3).
+        assert names == {"Benchmark Alpha", "Benchmark Beta", "The Crimp Test"}
+
+    def test_search_moves_6_7(self):
+        resp = client.get("/api/climbs/search?moves=6-7")
+        assert resp.status_code == 200
+        names = [r["name"] for r in resp.json()]
+        assert names == ["A019 Fixture - Bucket 6-7"]
+
+    def test_search_moves_8_10(self):
+        resp = client.get("/api/climbs/search?moves=8-10")
+        assert resp.status_code == 200
+        names = [r["name"] for r in resp.json()]
+        assert names == ["A019 Fixture - Bucket 8-10"]
+
+    def test_search_moves_gt10(self):
+        resp = client.get("/api/climbs/search?moves=gt10")
+        assert resp.status_code == 200
+        names = [r["name"] for r in resp.json()]
+        assert names == ["A019 Fixture - Bucket >10"]
+
+    def test_search_moves_any_does_not_filter(self):
+        """`moves=any` is equivalent to omitting the parameter."""
+        resp_any = client.get("/api/climbs/search?moves=any")
+        resp_no = client.get("/api/climbs/search")
+        assert {r["uuid"] for r in resp_any.json()} == {
+            r["uuid"] for r in resp_no.json()
+        }
+
+    def test_search_moves_invalid_value_returns_422(self):
+        resp = client.get("/api/climbs/search?moves=bogus")
+        assert resp.status_code == 422
 
 
 class TestDetailEndpoint:
@@ -203,7 +255,10 @@ class TestStatsEndpoint:
         resp = client.get("/api/climbs/stats")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total_climbs"] == 5
-        assert data["listed_climbs"] == 4
+        # Pre-A019 fixture had 5 climbs (4 listed, 1 unlisted draft).
+        # A019 added 4 more climbs, all is_listed=1: 9 total, 8 listed.
+        # (Stats do not filter by frames_count.)
+        assert data["total_climbs"] == 9
+        assert data["listed_climbs"] == 8
         assert 40 in data["available_angles"]
         assert "grade_range" in data

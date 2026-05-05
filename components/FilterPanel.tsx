@@ -1,6 +1,6 @@
 'use client';
 
-import type { SortField } from '@/app/lib/api';
+import type { MovesFilter, SortField } from '@/app/lib/api';
 import { GRADES } from '@/app/lib/grades';
 
 export interface Filters {
@@ -8,6 +8,7 @@ export interface Filters {
   gradeMax?: number;
   minAscents?: number;
   minQuality?: number;
+  moves?: MovesFilter;
   sort: SortField;
 }
 
@@ -32,6 +33,16 @@ const SORT_OPTIONS: Array<{ label: string; value: SortField }> = [
   { label: 'Grade ↓', value: 'grade_desc' },
 ];
 
+// A019 — move-count buckets. "any" is the default; the others are
+// (cyan_holds + 2): le5 = ≤5, 6-7 = 6 or 7, 8-10 = 8 to 10, gt10 = >10.
+const MOVES_OPTIONS: Array<{ label: string; value: MovesFilter }> = [
+  { label: 'Any', value: 'any' },
+  { label: '≤5', value: 'le5' },
+  { label: '6–7', value: '6-7' },
+  { label: '8–10', value: '8-10' },
+  { label: '>10', value: 'gt10' },
+];
+
 const GRIP_TYPES = ['Jug', 'Good Crimp', 'Crimp', 'Sloper', 'Undercling', 'Pinch'];
 
 export function countActiveFilters(value: Filters): number {
@@ -40,6 +51,7 @@ export function countActiveFilters(value: Filters): number {
     (value.gradeMax !== undefined ? 1 : 0) +
     (value.minAscents !== undefined ? 1 : 0) +
     (value.minQuality !== undefined ? 1 : 0) +
+    (value.moves !== undefined && value.moves !== 'any' ? 1 : 0) +
     (value.sort !== 'popularity' ? 1 : 0)
   );
 }
@@ -54,6 +66,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       gradeMax: undefined,
       minAscents: undefined,
       minQuality: undefined,
+      moves: 'any',
     });
 
   if (!expanded) return null;
@@ -158,6 +171,39 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 }`}
               >
                 {n}★+
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Moves (A019) */}
+      <div>
+        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+          Moves
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {MOVES_OPTIONS.map((opt) => {
+            const current = value.moves ?? 'any';
+            const active = current === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                data-testid={`filter-moves-${opt.value}`}
+                onClick={() =>
+                  onChange({
+                    ...value,
+                    moves: opt.value === 'any' ? 'any' : opt.value,
+                  })
+                }
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                  active
+                    ? 'bg-orange-500 border-orange-500 text-white'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
+                }`}
+              >
+                {opt.label}
               </button>
             );
           })}

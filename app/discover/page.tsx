@@ -2,7 +2,13 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { searchClimbs, API_BASE, type ClimbSearchResult, type SortField } from '@/app/lib/api';
+import {
+  searchClimbs,
+  API_BASE,
+  type ClimbSearchResult,
+  type MovesFilter,
+  type SortField,
+} from '@/app/lib/api';
 import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { countActiveFilters, type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
@@ -12,6 +18,7 @@ import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-sto
 const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const DEFAULT_ANGLE = 40;
 const SORT_VALUES: SortField[] = ['popularity', 'quality', 'grade_asc', 'grade_desc'];
+const MOVES_VALUES: MovesFilter[] = ['any', 'le5', '6-7', '8-10', 'gt10'];
 
 function parseInitialQuery(params: URLSearchParams): string {
   return params.get('q') ?? '';
@@ -25,16 +32,27 @@ function parseInitialAngle(params: URLSearchParams): number {
 
 function parseInitialFilters(params: URLSearchParams): Filters {
   const sort = params.get('sort');
+  const moves = params.get('moves');
   return {
     gradeMin: params.get('grade_min') ? Number(params.get('grade_min')) : undefined,
     gradeMax: params.get('grade_max') ? Number(params.get('grade_max')) : undefined,
     minAscents: params.get('min_ascents') ? Number(params.get('min_ascents')) : undefined,
     minQuality: params.get('min_quality') ? Number(params.get('min_quality')) : undefined,
+    moves: (MOVES_VALUES.includes(moves as MovesFilter) ? moves : 'any') as MovesFilter,
     sort: (SORT_VALUES.includes(sort as SortField) ? sort : 'popularity') as SortField,
   };
 }
 
-const URL_FILTER_KEYS = ['q', 'angle', 'grade_min', 'grade_max', 'min_ascents', 'min_quality', 'sort'];
+const URL_FILTER_KEYS = [
+  'q',
+  'angle',
+  'grade_min',
+  'grade_max',
+  'min_ascents',
+  'min_quality',
+  'moves',
+  'sort',
+];
 
 // Initial state resolution: URL params take priority (deep-link intent),
 // then sessionStorage (returning from detail), then hardcoded defaults.
@@ -56,7 +74,7 @@ function resolveInitialState(
   return {
     query: '',
     angle: DEFAULT_ANGLE,
-    filters: { sort: 'popularity' },
+    filters: { sort: 'popularity', moves: 'any' },
   };
 }
 
@@ -95,6 +113,7 @@ function DiscoverPageInner() {
     if (filters.gradeMax !== undefined) qs.set('grade_max', String(filters.gradeMax));
     if (filters.minAscents !== undefined) qs.set('min_ascents', String(filters.minAscents));
     if (filters.minQuality !== undefined) qs.set('min_quality', String(filters.minQuality));
+    if (filters.moves && filters.moves !== 'any') qs.set('moves', filters.moves);
     if (filters.sort !== 'popularity') qs.set('sort', filters.sort);
     router.replace(`/discover?${qs.toString()}`, { scroll: false });
   }, [query, angle, filters, router]);
@@ -121,6 +140,7 @@ function DiscoverPageInner() {
         grade_max: filters.gradeMax,
         min_ascents: filters.minAscents,
         min_quality: filters.minQuality,
+        moves: filters.moves,
         sort: filters.sort,
         limit: 30,
       });

@@ -48,16 +48,19 @@ class TestSearchClimbs:
     def test_search_without_query_returns_all(self):
         # B012: query is now optional. With no query, the LIKE clause is
         # skipped and we get every listed Kilter row.
+        # Post-A019: 4 pre-existing rows (Alpha@40, Alpha@45, Beta@40,
+        # Crimp@40) + 3 A019 listed singles. The animated A019 row is
+        # excluded by the global frames_count=1 filter.
         from app.services.climb_service import search_climbs
 
         results = search_climbs()
-        assert len(results) == 4  # Alpha@40, Alpha@45, Beta@40, Crimp@40
+        assert len(results) == 7
 
     def test_search_empty_string_query_returns_all(self):
         from app.services.climb_service import search_climbs
 
         results = search_climbs("")
-        assert len(results) == 4
+        assert len(results) == 7
 
     def test_search_no_query_with_filters(self):
         from app.services.climb_service import search_climbs
@@ -111,7 +114,9 @@ class TestSearchClimbs:
     def test_search_grade_max(self):
         from app.services.climb_service import search_climbs
 
-        results = search_climbs("e", grade_max=18)
+        # q="Benchmark" excludes the A019 fixture rows (diff=14, which
+        # would otherwise leak into a grade_max=18 query).
+        results = search_climbs("Benchmark", grade_max=18)
         assert len(results) == 2  # Alpha@40, Alpha@45
         names = {r["name"] for r in results}
         assert names == {"Benchmark Alpha"}
@@ -157,7 +162,8 @@ class TestSearchClimbs:
     def test_search_sort_grade_asc(self):
         from app.services.climb_service import search_climbs
 
-        results = search_climbs("e", sort="grade_asc")
+        # q="Benchmark" so the diff=14 A019 fixtures don't sort ahead.
+        results = search_climbs("Benchmark", sort="grade_asc")
         # Easiest first: Alpha@40 (diff 16)
         assert results[0]["name"] == "Benchmark Alpha"
         assert results[0]["angle"] == 40
@@ -201,6 +207,60 @@ class TestSearchClimbs:
         assert "angle" in r
         assert "ascensionist_count" in r
         assert "quality_average" in r
+
+    # ── A019: moves filter ──────────────────────────────────────────────────
+
+    def test_search_excludes_animated_sequences(self):
+        """frames_count > 1 climbs are filtered out globally."""
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs()
+        names = [r["name"] for r in results]
+        assert "A019 Fixture - Animated Sequence" not in names
+
+    def test_moves_le5_keeps_only_short_boulders(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(moves="le5")
+        names = {r["name"] for r in results}
+        # Only the pre-A019 fixtures (Alpha 4 moves, Beta/Crimp 3 moves).
+        assert names == {"Benchmark Alpha", "Benchmark Beta", "The Crimp Test"}
+
+    def test_moves_6_7_keeps_only_67_bucket(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(moves="6-7")
+        names = [r["name"] for r in results]
+        assert names == ["A019 Fixture - Bucket 6-7"]
+
+    def test_moves_8_10_keeps_only_810_bucket(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(moves="8-10")
+        names = [r["name"] for r in results]
+        assert names == ["A019 Fixture - Bucket 8-10"]
+
+    def test_moves_gt10_keeps_only_long_boulders(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(moves="gt10")
+        names = [r["name"] for r in results]
+        assert names == ["A019 Fixture - Bucket >10"]
+
+    def test_moves_any_is_equivalent_to_no_filter(self):
+        from app.services.climb_service import search_climbs
+
+        any_uuids = {r["uuid"] for r in search_climbs(moves="any")}
+        no_uuids = {r["uuid"] for r in search_climbs()}
+        assert any_uuids == no_uuids
+
+    def test_moves_none_does_not_filter(self):
+        """Passing moves=None is equivalent to omitting the parameter."""
+        from app.services.climb_service import search_climbs
+
+        none_uuids = {r["uuid"] for r in search_climbs(moves=None)}
+        no_uuids = {r["uuid"] for r in search_climbs()}
+        assert none_uuids == no_uuids
 
 
 class TestGetClimb:
@@ -268,8 +328,11 @@ class TestGetDbStats:
         from app.services.climb_service import get_db_stats
 
         stats = get_db_stats()
-        assert stats["total_climbs"] == 5
-        assert stats["listed_climbs"] == 4  # 3 listed Kilter + 1 other layout
+        # Pre-A019: 5 total / 4 listed (3 Kilter + 1 other layout, +
+        # 1 unlisted draft). A019 added 4 more, all is_listed=1.
+        # (Stats do not filter by frames_count.)
+        assert stats["total_climbs"] == 9
+        assert stats["listed_climbs"] == 8
         assert 40 in stats["available_angles"]
         assert 45 in stats["available_angles"]
         assert stats["grade_range"]["min_difficulty"] is not None

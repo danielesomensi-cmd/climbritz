@@ -318,4 +318,63 @@ describe('DiscoverPage', () => {
       });
     });
   });
+
+  describe('moves filter (A019)', () => {
+    it('clicking a moves chip passes the bucket to the API', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      searchClimbsMock.mockClear();
+
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-moves-8-10'));
+
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ moves: '8-10' }),
+        );
+      });
+    });
+
+    it('selecting a non-Any bucket increments the active-filter badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-moves-le5'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+    });
+
+    it('clicking Any clears the moves bucket and removes the badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-moves-gt10'));
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+
+      fireEvent.click(screen.getByTestId('filter-moves-any'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('filter-count-badge')).not.toBeInTheDocument();
+      });
+    });
+
+    it('initial moves chip is Any when no URL param or storage', () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      expect(screen.getByTestId('filter-moves-any').className).toMatch(/bg-orange-500/);
+    });
+
+    it('initialises moves from a URL param', async () => {
+      searchParamsString = 'moves=6-7';
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      expect(screen.getByTestId('filter-moves-6-7').className).toMatch(/bg-orange-500/);
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ moves: '6-7' }),
+        );
+      });
+    });
+  });
 });

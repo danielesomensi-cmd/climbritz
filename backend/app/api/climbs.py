@@ -4,7 +4,12 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.schemas.climb import ClimbSearchResult, ClimbDetail, DbStatsResponse
+from app.schemas.climb import (
+    ClimbSearchResult,
+    ClimbDetail,
+    DbStatsResponse,
+    MovesFilter,
+)
 from app.services.climb_service import search_climbs, get_climb, get_db_stats
 
 router = APIRouter()
@@ -40,6 +45,10 @@ async def search(
         le=5,
         description="Minimum quality average (0–5)",
     ),
+    moves: MovesFilter | None = Query(
+        default=None,
+        description="Move-count bucket: any | le5 | 6-7 | 8-10 | gt10",
+    ),
     sort: SortField = Query(
         default="popularity",
         description="Sort field: popularity | quality | grade_asc | grade_desc",
@@ -54,6 +63,7 @@ async def search(
         grade_max=grade_max,
         min_ascents=min_ascents,
         min_quality=min_quality,
+        moves=moves,
         sort=sort,
         limit=limit,
     )

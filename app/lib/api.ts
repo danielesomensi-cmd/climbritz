@@ -196,6 +196,10 @@ export async function deleteVideo(videoId: string): Promise<void> {
 
 export type SortField = 'popularity' | 'quality' | 'grade_asc' | 'grade_desc';
 
+// A019 — move-count bucket. "any" is the no-filter sentinel and is
+// not transmitted to the backend (omitted from the query string).
+export type MovesFilter = 'any' | 'le5' | '6-7' | '8-10' | 'gt10';
+
 export interface ClimbSearchResult {
   uuid: string;
   name: string;
@@ -239,6 +243,8 @@ export interface ClimbSearchParams {
   grade_max?: number;
   min_ascents?: number;
   min_quality?: number;
+  /** A019. "any" is the default — pass undefined or omit to skip. */
+  moves?: MovesFilter;
   sort?: SortField;
   limit?: number;
 }
@@ -259,6 +265,7 @@ export async function searchClimbs(
   if (params.grade_max !== undefined) qs.set('grade_max', String(params.grade_max));
   if (params.min_ascents !== undefined) qs.set('min_ascents', String(params.min_ascents));
   if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
+  if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
   if (params.sort) qs.set('sort', params.sort);
   if (params.limit !== undefined) qs.set('limit', String(params.limit));
 

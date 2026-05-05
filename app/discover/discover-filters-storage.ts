@@ -74,6 +74,7 @@ export function loadDiscoverFilters(): DiscoverFilters | null {
 }
 
 const SORT_VALUES = ['popularity', 'quality', 'grade_asc', 'grade_desc'];
+const MOVES_VALUES = ['any', 'le5', '6-7', '8-10', 'gt10'];
 
 function isDiscoverFilters(x: unknown): x is DiscoverFilters {
   if (!x || typeof x !== 'object') return false;
@@ -85,6 +86,8 @@ function isDiscoverFilters(x: unknown): x is DiscoverFilters {
 
   const f = o.filters as Record<string, unknown>;
   if (!SORT_VALUES.includes(f.sort as string)) return false;
+  // moves is optional for backwards compatibility with pre-A019 entries.
+  if (f.moves !== undefined && !MOVES_VALUES.includes(f.moves as string)) return false;
   for (const k of ['gradeMin', 'gradeMax', 'minAscents', 'minQuality']) {
     if (f[k] !== undefined && typeof f[k] !== 'number') return false;
   }
