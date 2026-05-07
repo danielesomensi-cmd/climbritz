@@ -49,5 +49,17 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Kilter Up uses Bluetooth to connect to your Kilter Board and control the LED lighting.</string>
+	<!--
+	  A019: WKAppBoundDomains restricts which non-bundle origins are allowed
+	  to load script + interact with the WebView's session. iOS WKWebView
+	  in production builds otherwise redirects Clerk handshake URLs out to
+	  Safari, breaking the auth context. List the Clerk Frontend API host
+	  here so the widget loads in-WebView. Update this list (max 10 entries,
+	  no wildcards allowed) when promoting to a production Clerk instance.
+	-->
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>sound-cub-94.clerk.accounts.dev</string>
+	</array>
 </dict>
 </plist>
