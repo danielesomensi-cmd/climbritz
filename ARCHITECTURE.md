@@ -114,6 +114,8 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the query-param routes above for Capacitor compatibility.
 
+**Auth gating (A019.16):** ALL frontend pages above require login except `Sign in`, `Sign up`, `Privacy`, and `Debug`. The `<AuthGuard>` component (using Clerk's `useAuth()`) wraps every protected page and redirects to `/sign-in` when the user isn't authenticated. Discovery is still the free tier (no payment), but the app has no anonymous mode — per-user logging features (send/project, A021) need a guaranteed `user_id` and a guest mode would dead-end the UX.
+
 ### Database (SQLite / PostgreSQL)
 
 | Table | Key Columns | Notes |
@@ -228,6 +230,8 @@ Backend (each protected request):
 Production guard: core/config.py raises RuntimeError if ENVIRONMENT=production and CLERK_JWKS_URL is empty — the X-User-ID dev fallback is also gated behind environment != "production" so a misconfigured prod container can't be impersonated by header.
 
 Route protection: client-side via components/AuthGuard.tsx using useAuth() from @clerk/clerk-react. NO middleware.ts — clerkMiddleware is incompatible with output: 'export' (Clerk issue #4647 closed "not planned"). Backend JWT verification is the actual security boundary; AuthGuard is UX glue.
+
+Protected page coverage (A019.16): ALL frontend pages require login except /sign-in, /sign-up, /privacy, /debug. Discovery is still the free tier but no longer anonymous — per-user logging in A021 (send/project) needs a guaranteed user_id, and a guest mode would dead-end the UX.
 
 ---
 
