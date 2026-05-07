@@ -6,7 +6,7 @@ FastAPI backend for the Kilter-Up video analysis platform.
 
 ```bash
 source venv/bin/activate
-cp .env.example .env  # edit with GEMINI_API_KEY, JWT_SECRET, etc.
+cp .env.example .env  # edit with GEMINI_API_KEY + CLERK_JWKS_URL/CLERK_SECRET_KEY/CLERK_PUBLISHABLE_KEY
 alembic upgrade head
 uvicorn app.main:app --reload --port 8001
 ```
@@ -19,9 +19,8 @@ Server: `http://localhost:8001`
 - `GET /health` — Server status
 
 ### Auth
-- `POST /api/auth/register` — Register user
-- `POST /api/auth/login` — Login user
-- `GET /api/auth/me` — Current user (JWT required)
+
+Auth is handled by Clerk (hosted /sign-in and /sign-up pages). Backend verifies Clerk-issued JWTs via `core/clerk.py` — there are no `/api/auth/*` endpoints. Protected routes accept `Authorization: Bearer <Clerk JWT>`, or (in non-production environments only) `X-User-ID: <uuid>` as a dev/test fallback.
 
 ### Videos
 - `POST /api/videos/upload` — Upload video for analysis (202 Accepted, async)
@@ -43,11 +42,11 @@ Server: `http://localhost:8001`
 
 ```
 app/
-├── core/          # config (pydantic Settings), database, security, deps
-├── api/           # routes: auth, videos, climbs, circuits
-├── models/        # SQLAlchemy models: User, VideoUpload
-├── schemas/       # Pydantic schemas (video, climb, user, auth)
-├── services/      # gemini_service, climb_service, video_service, storage_service, auth_service
+├── core/          # config (pydantic Settings), database, clerk (JWT verification), deps
+├── api/           # routes: videos, climbs, holds, admin, circuits
+├── models/        # SQLAlchemy models: User (Clerk shadow row), VideoUpload
+├── schemas/       # Pydantic schemas (video, climb, user)
+├── services/      # gemini_service, climb_service, video_service, storage_service
 └── main.py        # FastAPI app factory
 ```
 
@@ -76,6 +75,6 @@ pytest --cov       # with coverage report
 - `fastapi` + `uvicorn` — web framework
 - `sqlalchemy` + `alembic` — ORM + migrations
 - `google-genai` — Gemini 2.5 Flash File API for video analysis
-- `python-jose` + `passlib[bcrypt]` — JWT auth
+- `PyJWT[crypto]` — Clerk JWT verification
 - `boardlib` — Kilter Board database download/sync
 - `pytest` — test suite

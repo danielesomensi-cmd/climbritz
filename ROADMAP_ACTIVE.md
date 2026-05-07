@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 30 April 2026
+> Updated: 7 May 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -79,6 +79,7 @@ Three levels of coaching intelligence (Coach tier):
 > These run alongside Claude Code development work.
 
 - [x] **Register Apple Developer Account** — approved + active; first iOS device build running via A016 (17 April 2026)
+- [x] **Clerk dashboard configured** — Development environment, Frontend API host = sound-cub-94.clerk.accounts.dev, email + password (verification code only, no magic links). Phone/Username/Passkeys disabled.
 - [ ] **Write pro climber list** — names + Instagram/YouTube handles of known strong Kilter Board climbers (Daniele's knowledge)
 - [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check if 6 categories make sense
 - [ ] **Validate hold classifications** in gym — use mobile validation tool, physically check ambiguous holds (~2-3 hours)
@@ -246,6 +247,28 @@ Three levels of coaching intelligence (Coach tier):
 
 ---
 
+## A020 — Clerk Auth Integration (Identity Foundation)
+
+**Status:** ✅ Complete (pending device verification + deploy)
+
+> Replaces the legacy custom-JWT auth stack (auth.py, auth_service.py, security.py, schemas/auth.py + bcrypt) with Clerk-hosted sign-in/sign-up. Identity, password storage, MFA, OAuth, password-reset, and email-verification all move out of our codebase. 14 commits on `feat/a019-clerk-auth` (commit prefixes A019.1–A019.15).
+
+- **Backend:** `core/clerk.py` verifies Clerk JWTs via JWKS; `deps.get_current_user_id` accepts `Authorization: Bearer <Clerk JWT>` or (dev/test only) `X-User-ID: <uuid>`. Both `videos.py` and `admin.py` swapped to the new dependency.
+- **Backend startup guard:** `core/config.py` raises at construction if `ENVIRONMENT=production` and `CLERK_JWKS_URL` is empty. `extra="ignore"` so legacy `JWT_SECRET` in local `.env` doesn't crash Settings.
+- **Schema:** `users` reduced to `(id, clerk_id, created_at, updated_at)` — alembic 003 wipes `video_uploads` (zero real users), drops + recreates `users`, leaves the unnamed FK from `video_uploads.user_id` intact since `users.id` still exists. `downgrade()` raises `NotImplementedError` (bcrypt hashes unrecoverable).
+- **Frontend provider:** wrapped in `ClerkSpaProvider` (uses `@clerk/clerk-react`, not `@clerk/nextjs` — the Next variant pulls in server-actions.js incompatible with `output: 'export'`).
+- **Frontend pages:** `/sign-in` + `/sign-up` render Clerk widgets with `routing="hash"` to avoid the catch-all `[[...sign-in]]` (incompatible with static export). `/login` → 1-line redirect alias to `/sign-in`. Homepage tile points at `/sign-in`.
+- **Route protection:** client-side via `AuthGuard.tsx` using `useAuth()`. NO `middleware.ts` — `clerkMiddleware` is incompatible with `output: 'export'` (Clerk issue #4647 closed "not planned"). Backend JWT verification is the actual security boundary; AuthGuard is UX glue.
+- **API client:** `app/lib/api.ts` no longer reads `localStorage.kilter_token`. Each call calls `window.Clerk.session.getToken()` for a fresh JWT. 401-retry-once-then-redirect-to-/sign-in. Legacy `login`/`register`/`getMe` exports removed.
+- **Dashboard sign-out:** uses `<UserButton afterSignOutUrl="/sign-in" />` from `@clerk/clerk-react`.
+- **iOS B-medium:** `Info.plist` gains `WKAppBoundDomains = [sound-cub-94.clerk.accounts.dev]` so production WKWebView keeps Clerk handshake URLs in-app instead of punting to Safari. `capacitor.config.ts` `server.allowNavigation` includes `*.clerk.accounts.dev` and `*.clerk.com`.
+- **Tests:** 13 new backend tests in `test_clerk_auth.py` (verification, shadow-row upsert with TTL, dep gating). 3 new frontend tests in `AuthGuard.test.tsx`. Final counts: backend 151 / frontend 201, both green; `npm run build` and `NEXT_PUBLIC_MOBILE=true npm run build` clean; iOS sync clean.
+- **Deps:** added `PyJWT[crypto]>=2.10.0`, `@clerk/clerk-react@^5.61.6`, `@clerk/nextjs@^6.39.3`. Removed `python-jose[cryptography]`, `passlib[bcrypt]`, `bcrypt`. Bumped `next` to `^14.2.25` for Clerk peer-dep floor.
+- **Env vars:** add `CLERK_JWKS_URL` / `CLERK_SECRET_KEY` / `CLERK_PUBLISHABLE_KEY` (backend), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (frontend). Removed `JWT_SECRET` from `.env.example` (still tolerated in local `.env`).
+- **Pending:** Phase 4 device verification (sign-in flow on iPhone + Android Capacitor builds), Railway env vars (`CLERK_*`) + Vercel env vars (`NEXT_PUBLIC_CLERK_*`), then merge `feat/a019-clerk-auth` to `main`.
+
+---
+
 ## Phase 4 — Visual Problem Recognition (Enhancement)
 
 **Goal:** Photo of Kilter Board with LEDs lit → system identifies the climb.
@@ -360,6 +383,7 @@ See `RESEARCH.md` → "Visual Problem Recognition — PoC Results" and "Coordina
 
 - [x] **Migrate `google.generativeai` → `google.genai`** — B003
 - [x] **`gemini_service.py` API key → pydantic Settings** — B003
+- [x] **A020:** Replace custom-JWT auth with Clerk (hosted sign-in/sign-up, JWKS verification, shadow-row users table)
 - [ ] **Recreate API_SPECIFICATION.md** — after Phase 3 stabilizes
 - [ ] **Recreate DATABASE_SCHEMA.sql** — after Phase 3 stabilizes
 - [ ] **Retry with backoff on Gemini 503/429** — fails immediately on transient errors
@@ -378,8 +402,8 @@ See `RESEARCH.md` → "Visual Problem Recognition — PoC Results" and "Coordina
 - pytest required for every new endpoint
 - Secrets in .env only
 - Conventional commits, push after every feature
-- Don't break existing auth
+- Clerk owns identity (don't reintroduce password storage in our DB)
 - BoardLib DB gitignored (~189MB file)
 - Hold classification data is a proprietary asset — not open sourced
 - BLE via Capacitor (native app) — Web Bluetooth insufficient for iOS
-- STOP gates on: gemini_service.py, auth, Alembic migrations, video pipeline
+- STOP gates on: gemini_service.py, core/clerk.py, Alembic migrations, video pipeline
