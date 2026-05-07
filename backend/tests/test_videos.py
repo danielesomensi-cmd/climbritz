@@ -50,13 +50,10 @@ MOCK_NOT_KILTER_BOARD = {
 
 
 def _create_user(db) -> User:
-    """Create a test user and return it."""
+    """Create a test user shadow row and return it."""
     user = User(
         id=str(uuid.uuid4()),
-        email=f"test_{uuid.uuid4().hex[:8]}@example.com",
-        username=f"user_{uuid.uuid4().hex[:8]}",
-        hashed_password="hashed",
-        full_name="Test Climber",
+        clerk_id=f"user_test_{uuid.uuid4().hex[:8]}",
     )
     db.add(user)
     db.commit()

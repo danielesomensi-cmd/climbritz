@@ -21,10 +21,7 @@ def _create_user() -> User:
     db = TestingSessionLocal()
     user = User(
         id=str(uuid.uuid4()),
-        email=f"admin_{uuid.uuid4().hex[:8]}@example.com",
-        username=f"admin_{uuid.uuid4().hex[:8]}",
-        hashed_password="hashed",
-        full_name="Admin Tester",
+        clerk_id=f"user_test_{uuid.uuid4().hex[:8]}",
     )
     db.add(user)
     db.commit()
