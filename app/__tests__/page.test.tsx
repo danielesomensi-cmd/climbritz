@@ -31,8 +31,8 @@ describe('Home Page', () => {
 
   it('shows lock icon on Video Analysis tile', () => {
     render(<Home />);
-    // The Video Analysis tile links to /login
+    // A019: Video Analysis tile links to Clerk's /sign-in
     const videoLink = screen.getByText('Video Analysis').closest('a');
-    expect(videoLink).toHaveAttribute('href', '/login');
+    expect(videoLink).toHaveAttribute('href', '/sign-in');
   });
 });

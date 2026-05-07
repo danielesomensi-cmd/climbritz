@@ -30,7 +30,7 @@ const TILES: Tile[] = [
     icon: '🏷️',
   },
   {
-    href: '/login',
+    href: '/sign-in',
     label: 'Video Analysis',
     subtitle: 'AI technique coaching',
     icon: '🎬',
