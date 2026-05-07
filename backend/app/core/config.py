@@ -5,8 +5,6 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     database_url: str
-    jwt_secret: str
-    jwt_algorithm: str = "HS256"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     environment: str = "development"
@@ -23,6 +21,11 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        # Tolerate unrelated keys in .env / environment so removing a Settings
+        # field doesn't require every developer to manually edit their local
+        # .env. Notably, JWT_SECRET stays in backend/.env after A019.5 with no
+        # consumer — without this, Settings construction would crash on it.
+        extra = "ignore"
 
     @model_validator(mode="after")
     def _require_clerk_in_production(self) -> "Settings":
