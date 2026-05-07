@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import BoardMap, { type Placement, getHoldImageUrl } from '@/components/BoardMap';
 import BottomNav from '@/components/BottomNav';
+import AuthGuard from '@/components/AuthGuard';
 import {
   ALL_HOLDS,
   CATEGORIES,
@@ -18,7 +19,7 @@ import {
   type ClassifyState,
 } from './state';
 
-export default function ClassifyPage() {
+function ClassifyContent() {
   const [state, dispatch] = useReducer(reducer, null, () => initialState());
   const [selected, setSelected] = useState<Placement | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -305,5 +306,13 @@ export default function ClassifyPage() {
       </div>
       <BottomNav />
     </main>
+  );
+}
+
+export default function ClassifyPage() {
+  return (
+    <AuthGuard>
+      <ClassifyContent />
+    </AuthGuard>
   );
 }

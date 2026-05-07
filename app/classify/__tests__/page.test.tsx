@@ -1,5 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+// A019.16: ClassifyPage is AuthGuard-wrapped — mock signed-in.
+jest.mock('@clerk/clerk-react', () => ({
+  useAuth: () => ({ isLoaded: true, isSignedIn: true }),
+}));
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
+  usePathname: () => '/classify',
+}));
+
 import ClassifyPage from '../page';
 import {
   buildExportData,

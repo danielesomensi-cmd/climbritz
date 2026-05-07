@@ -1,5 +1,13 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+// A019.16: DiscoverPage is now AuthGuard-wrapped. Per-test override possible
+// via mockUseAuth.mockReturnValueOnce(...). Default = signed-in (beforeEach).
+const mockUseAuth = jest.fn();
+jest.mock('@clerk/clerk-react', () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
 import DiscoverPage from '../page';
 
 // Mock next/navigation hooks.
@@ -49,6 +57,7 @@ beforeEach(() => {
   searchParamsString = '';
   window.sessionStorage.clear();
   searchClimbsMock.mockResolvedValue(SAMPLE_RESULTS);
+  mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: true });
 });
 
 describe('DiscoverPage', () => {
@@ -375,6 +384,37 @@ describe('DiscoverPage', () => {
           expect.objectContaining({ moves: '6-7' }),
         );
       });
+    });
+  });
+
+  describe('auth gating (A019.16)', () => {
+    it('redirects to /sign-in when isSignedIn=false (no API call, no results)', async () => {
+      mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: false });
+
+      render(<DiscoverPage />);
+
+      await waitFor(() => {
+        expect(replaceMock).toHaveBeenCalledWith('/sign-in');
+      });
+      // Discovery contents should never render — search header and results
+      // both live behind the AuthGuard, so neither should appear and no
+      // backend search should fire.
+      expect(
+        screen.queryByRole('heading', { level: 1, name: 'Discover' }),
+      ).not.toBeInTheDocument();
+      expect(searchClimbsMock).not.toHaveBeenCalled();
+    });
+
+    it('shows the spinner while Clerk is still loading (no redirect, no API call)', () => {
+      mockUseAuth.mockReturnValue({ isLoaded: false, isSignedIn: false });
+
+      render(<DiscoverPage />);
+
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(searchClimbsMock).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('heading', { level: 1, name: 'Discover' }),
+      ).not.toBeInTheDocument();
     });
   });
 });

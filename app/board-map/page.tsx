@@ -9,11 +9,12 @@ import BoardMap, {
   BOARD_Y_MAX,
   getHoldImageUrl,
 } from '@/components/BoardMap';
+import AuthGuard from '@/components/AuthGuard';
 import placementsData from '@/app/data/placements_12x12.json';
 
 const placements = placementsData as Placement[];
 
-export default function BoardMapPage() {
+function BoardMapContent() {
   const [selectedHold, setSelectedHold] = useState<Placement | null>(null);
   const [showLabels, setShowLabels] = useState(false);
 
@@ -127,5 +128,13 @@ export default function BoardMapPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function BoardMapPage() {
+  return (
+    <AuthGuard>
+      <BoardMapContent />
+    </AuthGuard>
   );
 }

@@ -9,6 +9,7 @@ import ClimbBleControls from '@/components/ClimbBleControls';
 import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
+import AuthGuard from '@/components/AuthGuard';
 import { climbToLedCommands } from './climb-to-leds';
 import { resolvePosition } from '../filtered-list-storage';
 
@@ -26,9 +27,11 @@ function formatAscents(count: number): string {
 
 export default function ClimbDetailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
-      <ClimbDetailPageInner />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+        <ClimbDetailPageInner />
+      </Suspense>
+    </AuthGuard>
   );
 }
 

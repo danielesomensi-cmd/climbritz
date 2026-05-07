@@ -1,6 +1,15 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+// A019.16: BleTestPage is AuthGuard-wrapped — mock signed-in.
+jest.mock('@clerk/clerk-react', () => ({
+  useAuth: () => ({ isLoaded: true, isSignedIn: true }),
+}));
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
+  usePathname: () => '/ble-test',
+}));
+
 import type { BleStatus } from '../use-kilter-ble';
 
 // Controllable mock for the BLE hook so we can drive status + spy on sends.
