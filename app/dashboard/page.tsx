@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useClerk } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
-import { getVideos, clearToken, Video } from '@/app/lib/api';
+import { getVideos, Video } from '@/app/lib/api';
 
 const STATUS_BADGE: Record<Video['processing_status'], { bg: string; label: string }> = {
   pending:    { bg: 'bg-yellow-500', label: 'In attesa' },
@@ -29,7 +29,7 @@ function formatSize(bytes: number | null) {
 }
 
 function DashboardContent() {
-  const router = useRouter();
+  const { signOut } = useClerk();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,9 +40,8 @@ function DashboardContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleLogout = () => {
-    clearToken();
-    router.push('/login');
+  const handleLogout = async () => {
+    await signOut({ redirectUrl: '/sign-in' });
   };
 
   return (

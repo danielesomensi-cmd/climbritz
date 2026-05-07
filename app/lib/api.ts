@@ -1,27 +1,16 @@
+// A019: API client. Auth tokens come from Clerk's session, not localStorage.
+//
+// In a regular browser/Capacitor build, ClerkProvider exposes
+// window.Clerk after hydration. We fetch a fresh JWT for each API call —
+// Clerk caches and refreshes the underlying session, so this is cheap.
+// On a 401 we retry once after a short delay (covers the gap when Clerk
+// is mid-refresh), then bounce the user to /sign-in.
+
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NEXT_PUBLIC_MOBILE === 'true'
     ? 'https://web-production-cea9.up.railway.app'
     : 'http://localhost:8001');
-
-// --- Token management ---
-
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('kilter_token');
-}
-
-export function setToken(token: string) {
-  localStorage.setItem('kilter_token', token);
-}
-
-export function clearToken() {
-  localStorage.removeItem('kilter_token');
-}
-
-export function isAuthenticated(): boolean {
-  return !!getToken();
-}
 
 // --- Error class ---
 
@@ -31,42 +20,59 @@ export class ApiError extends Error {
   }
 }
 
+// --- Clerk JWT attachment ---
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const token = await window.Clerk?.session?.getToken();
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    // ClerkProvider not yet mounted, or session expired — proceed
+    // without an Authorization header. The backend will return 401
+    // and the redirect-to-sign-in path below will fire.
+  }
+  return {};
+}
+
 // --- Fetch wrapper ---
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+  isRetry = false,
+): Promise<T> {
+  const authHeaders = await getAuthHeaders();
   const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string> || {}),
+    ...authHeaders,
+    ...((options.headers as Record<string, string>) || {}),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  // Don't set Content-Type for FormData — browser sets it with boundary
+  // FormData lets the browser pick the multipart boundary itself.
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
-  if (response.status === 401) {
-    clearToken();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
+  if (response.status === 401 && !isRetry && typeof window !== 'undefined') {
+    // Clerk may be mid-refresh. Wait a beat, retry once before redirecting.
+    await new Promise((r) => setTimeout(r, 500));
+    return apiFetch<T>(path, options, true);
+  }
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    window.location.href = '/sign-in';
     throw new ApiError(401, 'Sessione scaduta. Effettua di nuovo il login.');
   }
 
   if (!response.ok) {
-    const data = await response.json().catch(() => ({ detail: 'Errore sconosciuto' }));
+    const data = await response
+      .json()
+      .catch(() => ({ detail: 'Errore sconosciuto' }));
     throw new ApiError(response.status, data.detail || 'Errore del server');
   }
 
-  // 204 No Content (e.g. DELETE)
   if (response.status === 204) {
     return undefined as T;
   }
@@ -74,34 +80,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   return response.json();
 }
 
-// --- Types ---
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  username: string;
-  full_name: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  full_name: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+// --- Types — Video / Climb / Hold (unchanged from pre-A019) ---
 
 export interface ImprovementItem {
   issue: string;
@@ -110,7 +89,6 @@ export interface ImprovementItem {
 }
 
 export interface FormAnalysis {
-  // New format (B007+)
   is_kilter_board?: boolean;
   error?: string;
   message?: string;
@@ -123,7 +101,6 @@ export interface FormAnalysis {
   strengths?: string[];
   improvements?: ImprovementItem[];
   overall_impression?: string;
-  // Old format fields (backward compat with pre-B007 records)
   overall_grade_estimate?: string;
   weaknesses?: string[];
   drills_recommended?: string[];
@@ -144,31 +121,13 @@ export interface Video {
   grade_attempted: string | null;
 }
 
-// --- Auth API ---
-
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  const res = await apiFetch<AuthResponse>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  setToken(res.access_token);
-  return res;
-}
-
-export async function register(data: RegisterRequest): Promise<User> {
-  return apiFetch<User>('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export async function getMe(): Promise<User> {
-  return apiFetch<User>('/api/auth/me');
-}
-
 // --- Video API ---
 
-export async function uploadVideo(file: File, title?: string, gradeAttempted?: string): Promise<Video> {
+export async function uploadVideo(
+  file: File,
+  title?: string,
+  gradeAttempted?: string,
+): Promise<Video> {
   const formData = new FormData();
   formData.append('file', file);
   if (title) formData.append('title', title);
@@ -192,19 +151,17 @@ export async function deleteVideo(videoId: string): Promise<void> {
   return apiFetch<void>(`/api/videos/${videoId}`, { method: 'DELETE' });
 }
 
-// --- Climb / Discovery API ---
+// --- Climb / Discovery API (unauthenticated — Discovery is the free tier) ---
 
 export type SortField = 'popularity' | 'quality' | 'grade_asc' | 'grade_desc';
 
-// A019 — move-count bucket. "any" is the no-filter sentinel and is
-// not transmitted to the backend (omitted from the query string).
 export type MovesFilter = 'any' | 'le5' | '6-7' | '8-10' | 'gt10';
 
 export interface ClimbSearchResult {
   uuid: string;
   name: string;
   setter: string;
-  grade: string;        // "6a/V3"
+  grade: string;
   angle: number;
   ascensionist_count: number;
   quality_average: number;
@@ -212,10 +169,10 @@ export interface ClimbSearchResult {
 
 export interface HoldPosition {
   placement_id: number;
-  role: string;         // 'start' | 'middle' | 'finish' | 'foot_only'
+  role: string;
   x: number | null;
   y: number | null;
-  set_id: number | null; // 1 = Bolt Ons (handholds), 20 = Screw Ons (footholds)
+  set_id: number | null;
 }
 
 export interface ClimbStats {
@@ -236,25 +193,17 @@ export interface ClimbDetail {
 }
 
 export interface ClimbSearchParams {
-  /** Optional name query. Omit for browse-by-filter mode (B012). */
   q?: string;
   angle?: number;
   grade_min?: number;
   grade_max?: number;
   min_ascents?: number;
   min_quality?: number;
-  /** A019. "any" is the default — pass undefined or omit to skip. */
   moves?: MovesFilter;
   sort?: SortField;
   limit?: number;
 }
 
-/**
- * Unauthenticated climb search. Discovery is the free tier, so no
- * Authorization header is required — we call the raw fetch path directly
- * so we don't accidentally trigger the 401 → /login redirect baked into
- * apiFetch when no token is present.
- */
 export async function searchClimbs(
   params: ClimbSearchParams,
 ): Promise<ClimbSearchResult[]> {
