@@ -40,3 +40,6 @@ uploads/
 android/keystore.properties
 *.keystore
 *.jks
+
+# Pre-built mobile artifacts (manual sideload to test devices)
+/dist/
