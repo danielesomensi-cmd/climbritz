@@ -1,5 +1,5 @@
 # Kilter-Up — Active Roadmap
-> Updated: 7 May 2026
+> Updated: 8 May 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -249,9 +249,9 @@ Three levels of coaching intelligence (Coach tier):
 
 ## A020 — Clerk Auth Integration (Identity Foundation)
 
-**Status:** ✅ Complete (pending device verification + deploy)
+**Status:** ✅ Merged to main (2026-05-08, PR #1, commit b918e35) — mobile device verification + Railway/Vercel env vars pending.
 
-> Replaces the legacy custom-JWT auth stack (auth.py, auth_service.py, security.py, schemas/auth.py + bcrypt) with Clerk-hosted sign-in/sign-up. Identity, password storage, MFA, OAuth, password-reset, and email-verification all move out of our codebase. 16 commits on `feat/a019-clerk-auth` (commit prefixes A019.1–A019.17).
+> Replaces the legacy custom-JWT auth stack (auth.py, auth_service.py, security.py, schemas/auth.py + bcrypt) with Clerk-hosted sign-in/sign-up. Identity, password storage, MFA, OAuth, password-reset, and email-verification all move out of our codebase. 18 commits via `feat/a019-clerk-auth` (commit prefixes A019.1–A019.18).
 
 - **Backend:** `core/clerk.py` verifies Clerk JWTs via JWKS; `deps.get_current_user_id` accepts `Authorization: Bearer <Clerk JWT>` or (dev/test only) `X-User-ID: <uuid>`. Both `videos.py` and `admin.py` swapped to the new dependency.
 - **Backend startup guard:** `core/config.py` raises at construction if `ENVIRONMENT=production` and `CLERK_JWKS_URL` is empty. `extra="ignore"` so legacy `JWT_SECRET` in local `.env` doesn't crash Settings.
@@ -266,7 +266,13 @@ Three levels of coaching intelligence (Coach tier):
 - **Tests:** 13 new backend tests in `test_clerk_auth.py` (verification, shadow-row upsert with TTL, dep gating). 5 new frontend tests across `AuthGuard.test.tsx` (loading / redirect / render-children) + `discover/__tests__/page.test.tsx` (auth-gating: redirect on signed-out, spinner while loading). 5 existing page tests gained Clerk mocks. Final counts: backend 151 / frontend 203, both green; `npm run build` and `NEXT_PUBLIC_MOBILE=true npm run build` clean; iOS sync clean.
 - **Deps:** added `PyJWT[crypto]>=2.10.0`, `@clerk/clerk-react@^5.61.6`, `@clerk/nextjs@^6.39.3`. Removed `python-jose[cryptography]`, `passlib[bcrypt]`, `bcrypt`. Bumped `next` to `^14.2.25` for Clerk peer-dep floor.
 - **Env vars:** add `CLERK_JWKS_URL` / `CLERK_SECRET_KEY` / `CLERK_PUBLISHABLE_KEY` (backend), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (frontend). Removed `JWT_SECRET` from `.env.example` (still tolerated in local `.env`).
-- **Pending:** Phase 4 device verification (sign-in flow on iPhone + Android Capacitor builds), Railway env vars (`CLERK_*`) + Vercel env vars (`NEXT_PUBLIC_CLERK_*`), then merge `feat/a019-clerk-auth` to `main`.
+- **CI fix (A019.18):** `.github/workflows/test.yml` `Next.js build` step gained `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_…` inline. ClerkSpaProvider throws on missing key by design (no silent unprotected build); CI doesn't load `.env.local` so the throw fired during prerender. Inline matches existing JWT_SECRET / GEMINI_API_KEY pattern.
+- **Web verification (Vercel preview):** sign-up + sign-in + sign-out flow validated end-to-end. Post-login redirect lands on `/dashboard` by default; for `/` landing, set `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/` and `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/` in Vercel env (Production + Preview + Development). Already in local `.env.local`.
+- **Pending (Phase 4 + deploy):**
+  - **Capacitor Android device test** — builds pre-staged on 2026-05-08 (`NEXT_PUBLIC_MOBILE=true npm run build && npx cap sync android` clean). Run `npx cap run android` (or `npx cap open android` → Run ▶ in Android Studio) to verify sign-in widget renders inside WebView, post-login lands on `/`, `/ble-test` + `/discover` still load. **If sign-in opens external Chrome instead of in-WebView,** open a B-Android-* brief.
+  - **Capacitor iOS iPhone 15 device test** — builds pre-staged on 2026-05-08 (`npx cap sync ios` clean). Run `npx cap open ios`, select iPhone 15, Run. **The MUST-PASS check:** sign-in widget renders inside the WebView, NOT redirected to Safari. This is the validation for the A019.15 `WKAppBoundDomains` fix. If Safari opens, the `WKAppBoundDomains` array (`ios/App/App/Info.plist:55`) is the first thing to revisit; open a B-iOS-* brief on top of main.
+  - **Railway env vars:** `CLERK_JWKS_URL=https://sound-cub-94.clerk.accounts.dev/.well-known/jwks.json`, `CLERK_SECRET_KEY=sk_test_…`, `CLERK_PUBLISHABLE_KEY=pk_test_…`. Drop unused `JWT_SECRET`. The production startup guard in `core/config.py` will refuse to boot without `CLERK_JWKS_URL`.
+  - **Vercel env vars:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`, `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/`, `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/` — all three environments (Production + Preview + Development).
 
 ---
 
