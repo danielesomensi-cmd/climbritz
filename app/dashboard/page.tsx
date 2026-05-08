@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { UserButton } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
-import { getVideos, clearToken, Video } from '@/app/lib/api';
+import { getVideos, Video } from '@/app/lib/api';
 
 const STATUS_BADGE: Record<Video['processing_status'], { bg: string; label: string }> = {
   pending:    { bg: 'bg-yellow-500', label: 'In attesa' },
@@ -29,7 +29,6 @@ function formatSize(bytes: number | null) {
 }
 
 function DashboardContent() {
-  const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,23 +39,14 @@ function DashboardContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleLogout = () => {
-    clearToken();
-    router.push('/login');
-  };
-
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* Header */}
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <Link href="/" className="text-xl font-black text-[#FF6B35]">KILTER UP</Link>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-zinc-400 hover:text-white transition-colors"
-          >
-            Esci
-          </button>
+          {/* A019: Clerk's hosted menu — account management + sign-out. */}
+          <UserButton afterSignOutUrl="/sign-in" />
         </div>
       </header>
 

@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import engine
-from app.api import auth, videos, circuits, climbs, holds, admin
+from app.api import videos, circuits, climbs, holds, admin
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # Routes
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+# A019: /api/auth router deleted — Clerk hosts sign-in/sign-up flows. The
+# frontend talks directly to Clerk; backend only verifies Clerk-issued JWTs
+# via deps.get_current_user_id.
 app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(climbs.router, prefix="/api/climbs", tags=["climbs"])

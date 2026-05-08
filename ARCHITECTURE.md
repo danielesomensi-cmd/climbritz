@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Last updated: 23 April 2026
+> Last updated: 7 May 2026
 
 ---
 
@@ -78,7 +78,6 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 | Component | Path | Responsibility |
 |-----------|------|----------------|
-| **Auth API** | `api/auth.py` | Register, login, /me (JWT) |
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
 | **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. |
 | **Holds API** | `api/holds.py` | Board composite image + individual hold images |
@@ -87,20 +86,21 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | **Gemini Service** | `services/gemini_service.py` | File API upload + Kilter Board-specific prompt (B007+B008) |
 | **Climb Service** | `services/climb_service.py` | Read-only sqlite3 queries against BoardLib DB |
 | **Storage Service** | `services/storage_service.py` | Local filesystem (dev), S3 planned (prod) |
-| **Auth Service** | `services/auth_service.py` | Password hashing, token generation |
 | **Video Service** | `services/video_service.py` | ffmpeg utilities |
 | **Kilter Parser** | `utils/kilter_parser.py` | Layout string parser for BoardLib data |
-| **Config** | `core/config.py` | Pydantic Settings (env vars, BOARDLIB_DB_PATH) |
+| **Config** | `core/config.py` | Pydantic Settings (env vars, BOARDLIB_DB_PATH). A020: production guard refuses to boot without `CLERK_JWKS_URL` |
 | **Database** | `core/database.py` | SQLAlchemy engine + SessionLocal |
-| **Security** | `core/security.py` | JWT encode/decode |
-| **Dependencies** | `core/deps.py` | FastAPI dependency injection (get_db, get_current_user) |
+| **Clerk Auth** | `core/clerk.py` | A020 — Clerk JWT verification via JWKS, shadow-row upsert, in-process clerk_id cache (5-min TTL) |
+| **Dependencies** | `core/deps.py` | FastAPI dependency injection (get_db, `get_current_user_id`) |
 
 ### Frontend (`app/`)
 
 | Page | Path | What it does |
 |------|------|-------------|
 | Homepage | `page.tsx` | 4-tile hub (Demo LED, Discover, Classify, Video Analysis) |
-| Login | `login/page.tsx` | Auth form |
+| Sign in | `app/sign-in/page.tsx` | Clerk widget (hash routing, SPA mode) |
+| Sign up | `app/sign-up/page.tsx` | Clerk widget (hash routing, SPA mode) |
+| Login | `login/page.tsx` | Redirect alias to `/sign-in` (backward compat) |
 | Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
 | Dashboard | `dashboard/page.tsx` | User overview |
 | Discover | `discover/page.tsx` | Climb search + filter panel (A011) |
@@ -114,11 +114,13 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the query-param routes above for Capacitor compatibility.
 
+**Auth gating (A019.16):** ALL frontend pages above require login except `Sign in`, `Sign up`, `Privacy`, and `Debug`. The `<AuthGuard>` component (using Clerk's `useAuth()`) wraps every protected page and redirects to `/sign-in` when the user isn't authenticated. Discovery is still the free tier (no payment), but the app has no anonymous mode — per-user logging features (send/project, A021) need a guaranteed `user_id` and a guest mode would dead-end the UX.
+
 ### Database (SQLite / PostgreSQL)
 
 | Table | Key Columns | Notes |
 |-------|-------------|-------|
-| `users` | id, username, email, password_hash, skill_level | UUID as String(36) |
+| `users` | id, clerk_id, created_at, updated_at | A020 — Clerk shadow row, no PII (email/name/etc. live in Clerk). UUID as String(36) |
 | `video_uploads` | id, user_id, filename, file_path, processing_status, form_analysis, gemini_file_id | form_analysis is JSON |
 
 Processing statuses: `pending` → `processing` → `completed` / `failed`
@@ -209,18 +211,27 @@ Structured response stored as JSON in video_uploads.form_analysis
 
 ---
 
-## Authentication Flow
+## Authentication Flow (A020)
 
-```
-Register: POST /api/auth/register
-  → bcrypt hash password → store user → return JWT
+Sign-in / sign-up: Clerk-hosted widget at /sign-in (and /sign-up).
+  → email + verification code (no magic links — they break iOS WebView).
+  → after sign-in, ClerkProvider establishes a session and redirects to /dashboard.
 
-Login: POST /api/auth/login
-  → verify bcrypt hash → return JWT
+Each frontend API call:
+  → app/lib/api.ts fetches a fresh JWT via window.Clerk.session.getToken().
+  → Authorization: Bearer <token> attached to the fetch.
+  → On 401: retry once after 500ms (covers Clerk mid-refresh), then redirect to /sign-in.
 
-Protected routes: Authorization: Bearer <token>
-  → deps.py: get_current_user decodes JWT → injects user
-```
+Backend (each protected request):
+  → deps.get_current_user_id() reads Authorization header.
+  → core/clerk.verify_clerk_token() validates against Clerk's JWKS endpoint.
+  → core/clerk.lookup_or_create_user() returns the local users.id (UUID v4) shadowing the Clerk subject. First-seen clerk_ids get a fresh row; subsequent requests hit a 5-min in-process cache.
+
+Production guard: core/config.py raises RuntimeError if ENVIRONMENT=production and CLERK_JWKS_URL is empty — the X-User-ID dev fallback is also gated behind environment != "production" so a misconfigured prod container can't be impersonated by header.
+
+Route protection: client-side via components/AuthGuard.tsx using useAuth() from @clerk/clerk-react. NO middleware.ts — clerkMiddleware is incompatible with output: 'export' (Clerk issue #4647 closed "not planned"). Backend JWT verification is the actual security boundary; AuthGuard is UX glue.
+
+Protected page coverage (A019.16): ALL frontend pages require login except /sign-in, /sign-up, /privacy, /debug. Discovery is still the free tier but no longer anonymous — per-user logging in A021 (send/project) needs a guaranteed user_id, and a guest mode would dead-end the UX.
 
 ---
 
@@ -266,6 +277,9 @@ POST /api/videos/upload + climb_id + angle
 | Routing (Capacitor) | Query-param routes (`/discover/detail?id=`) | Dynamic `[param]` segments don't work in Capacitor static export |
 | Safe-area CSS (B017) | Plain utilities in `app/safe-area.css`, imported separately from `globals.css` | Tailwind v4's postcss pipeline strips plain class rules from the Tailwind entrypoint (even inside `@utility`/`@layer`). Separate CSS import survives. `.pt-safe`/`.pb-safe` use `max(env(safe-area-inset-*), fallback)`; `viewport-fit=cover` set via Next `viewport` export in `app/layout.tsx` |
 | Discovery filter persistence (B017) | sessionStorage (`kilter-up:discover:filters`, 24h TTL) | Mirrors `filtered-list-storage.ts`. Initial-state priority: URL params > sessionStorage > defaults — preserves shareable-link intent while fixing back-nav reset |
+| Identity provider | Clerk (hosted) | Outsource password storage, MFA, OAuth, password reset, email verification — saves ~2 weeks vs in-house |
+| Clerk Provider variant | `@clerk/clerk-react` SPA-mode | `@clerk/nextjs`'s ClerkProvider transitively requires server-actions.js, incompatible with `output: 'export'` |
+| Route protection (Clerk) | Client-side `useAuth()` | `clerkMiddleware` silently dropped from static-export bundles per Clerk issue #4647 |
 
 ---
 
@@ -274,7 +288,9 @@ POST /api/videos/upload + climb_id + angle
 | Variable | Purpose | Default | Where |
 |----------|---------|---------|-------|
 | `DATABASE_URL` | SQLAlchemy connection string | — (required) | `.env` |
-| `JWT_SECRET` | Token signing key | — (required) | `.env` |
+| `CLERK_JWKS_URL` | Clerk JWKS endpoint for JWT verification (REQUIRED in production — startup guard) | `""` | `.env`, Railway |
+| `CLERK_SECRET_KEY` | Clerk server-side secret (optional — backend currently only needs JWKS) | `""` | `.env`, Railway |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (also as `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for frontend) | `""` | `.env`, Vercel |
 | `GEMINI_API_KEY` | Google AI Studio API key | `""` | `.env`, Railway |
 | `GEMINI_MODEL` | Gemini model to use | `gemini-2.5-flash` | `.env` |
 | `UPLOAD_DIR` | Video file storage path | `uploads` | `.env` |
@@ -291,4 +307,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 23 April 2026 (A014)*
+*Architecture doc created: March 2026 (B002) — Last updated: 7 May 2026 (A020)*

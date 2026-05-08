@@ -57,4 +57,12 @@ jobs:
         run: npx jest --ci
 
       - name: Next.js build
+        # NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required at build time because
+        # ClerkSpaProvider throws on a missing key during prerender. The key
+        # is non-secret by design (NEXT_PUBLIC_*, baked into every client
+        # bundle); using the dev-instance pk_test_* here is safe and mirrors
+        # the inline-dummy pattern used for JWT_SECRET / GEMINI_API_KEY in
+        # the backend job above.
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_c291bmQtY3ViLTk0LmNsZXJrLmFjY291bnRzLmRldiQ
         run: npx next build

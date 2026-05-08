@@ -1,24 +1,31 @@
-from sqlalchemy import Column, String, DateTime, Boolean
-from datetime import datetime
+from sqlalchemy import Column, DateTime, String, func
+
 from app.core.database import Base
-import uuid
 
 
 class User(Base):
+    """A019: shadow row for a Clerk subject.
+
+    Clerk owns the user's email, password, name, MFA, OAuth providers, etc.
+    This row exists only to give us a stable local user_id (UUID v4 string)
+    that foreign keys can reference. We never write any PII here — `clerk_id`
+    is the only link to Clerk and it's enough to fetch profile info on
+    demand if we ever need to.
+    """
+
     __tablename__ = "users"
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id = Column(String(36), primary_key=True)
+    clerk_id = Column(String(255), nullable=False, unique=True, index=True)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
-    def __init__(self, **kwargs):
-        kwargs.setdefault("is_active", True)
-        super().__init__(**kwargs)
-
-    def __repr__(self):
-        return f"<User {self.email}>"
+    def __repr__(self) -> str:
+        return f"<User id={self.id} clerk_id={self.clerk_id}>"

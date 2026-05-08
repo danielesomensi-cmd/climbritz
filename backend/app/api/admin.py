@@ -10,8 +10,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 
 from app.core.config import get_settings
-from app.core.deps import get_current_user
-from app.models.user import User
+from app.core.deps import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -19,19 +18,19 @@ router = APIRouter()
 
 
 @router.post("/sync-db")
-async def sync_boardlib_db(current_user: User = Depends(get_current_user)):
+async def sync_boardlib_db(current_user_id: str = Depends(get_current_user_id)):
     """Re-download / sync the BoardLib Kilter database.
 
     Runs `python -m boardlib database kilter <path>` as a subprocess. If the
     file already exists, boardlib will sync deltas instead of re-downloading
-    the full ~189MB snapshot. Requires a valid JWT.
+    the full ~189MB snapshot. Requires a valid Clerk session.
     """
     settings = get_settings()
     db_path = Path(settings.boardlib_db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger.info(
-        "Admin sync-db triggered by user=%s path=%s", current_user.id, db_path
+        "Admin sync-db triggered by user=%s path=%s", current_user_id, db_path
     )
 
     try:

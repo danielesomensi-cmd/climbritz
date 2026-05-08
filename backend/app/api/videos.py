@@ -6,8 +6,7 @@ import logging
 from datetime import datetime
 
 from app.core.database import get_db, SessionLocal
-from app.core.deps import get_current_user
-from app.models.user import User
+from app.core.deps import get_current_user_id
 from app.models.video import VideoUpload
 from app.schemas.video import VideoResponse
 from app.services.storage_service import save_uploaded_file
@@ -61,7 +60,7 @@ async def upload_video(
     title: Optional[str] = Form(None),
     grade_attempted: Optional[str] = Form(None),
     background_tasks: BackgroundTasks = BackgroundTasks(),
-    current_user: User = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """
@@ -82,7 +81,7 @@ async def upload_video(
 
     video_record = VideoUpload(
         id=video_id,
-        user_id=current_user.id,
+        user_id=current_user_id,
         filename=file.filename or "upload",
         file_path=file_path,
         file_size=file.size,
@@ -103,14 +102,14 @@ async def upload_video(
 async def list_videos(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """Get paginated list of current user's videos (latest first)."""
     offset = (page - 1) * per_page
     videos = db.execute(
         select(VideoUpload)
-        .where(VideoUpload.user_id == current_user.id)
+        .where(VideoUpload.user_id == current_user_id)
         .order_by(VideoUpload.created_at.desc())
         .offset(offset)
         .limit(per_page)
@@ -122,14 +121,14 @@ async def list_videos(
 @router.get("/{video_id}", response_model=VideoResponse)
 async def get_video(
     video_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """Get a single video with status and analysis results."""
     video_record = db.execute(
         select(VideoUpload).where(
             VideoUpload.id == video_id,
-            VideoUpload.user_id == current_user.id,
+            VideoUpload.user_id == current_user_id,
         )
     ).scalars().first()
 
@@ -142,14 +141,14 @@ async def get_video(
 @router.delete("/{video_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_video(
     video_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     """Delete a video record."""
     video_record = db.execute(
         select(VideoUpload).where(
             VideoUpload.id == video_id,
-            VideoUpload.user_id == current_user.id,
+            VideoUpload.user_id == current_user_id,
         )
     ).scalars().first()
 

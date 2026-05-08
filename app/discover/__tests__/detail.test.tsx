@@ -1,5 +1,11 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+// A019.16: ClimbDetailPage is AuthGuard-wrapped — mock signed-in.
+jest.mock('@clerk/clerk-react', () => ({
+  useAuth: () => ({ isLoaded: true, isSignedIn: true }),
+}));
+
 import ClimbDetailPage from '../detail/page';
 import { saveFilteredList, clearFilteredList } from '../filtered-list-storage';
 

@@ -9,7 +9,7 @@ AI climbing companion for Kilter Board — search 160k+ climbs by grip type, bui
 cd backend
 python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # then edit with your GEMINI_API_KEY
+cp .env.example .env  # then edit with GEMINI_API_KEY + CLERK_JWKS_URL/CLERK_SECRET_KEY/CLERK_PUBLISHABLE_KEY (from your Clerk dashboard)
 alembic upgrade head
 uvicorn app.main:app --reload --port 8001
 ```
@@ -17,6 +17,7 @@ uvicorn app.main:app --reload --port 8001
 ### Frontend
 ```bash
 npm install
+cp .env.example .env.local  # then set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY from your Clerk dashboard
 npm run dev  # http://localhost:3000
 ```
 
@@ -29,6 +30,7 @@ cd backend && pytest -v
 - **Frontend:** Next.js 14 + TypeScript + Tailwind CSS + shadcn/ui
 - **Backend:** Python 3.11 + FastAPI + SQLAlchemy + Alembic
 - **AI:** Gemini 2.5 Flash (File API, google.genai SDK)
+- **Auth:** Clerk (hosted sign-in / sign-up)
 - **DB:** SQLite (dev) / PostgreSQL (prod)
 
 ## Deployment
@@ -38,7 +40,7 @@ cd backend && pytest -v
 
 ## API Endpoints
 
-Core endpoints: auth (register/login/me), videos (upload/list/get/delete), climbs (search/detail/stats), holds (board-image/hold-image), admin (sync-db/upload-db).
+Core endpoints: videos (upload/list/get/delete), climbs (search/detail/stats), holds (board-image/hold-image), admin (sync-db/upload-db). Auth is owned by Clerk (hosted sign-in/sign-up); backend verifies Clerk JWTs via JWKS.
 
 See `CLAUDE.md` for the complete API surface with parameters and response codes.
 

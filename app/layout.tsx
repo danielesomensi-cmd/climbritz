@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import ClerkSpaProvider from "@/components/ClerkSpaProvider";
 import "./globals.css";
 import "./safe-area.css";
 
@@ -24,7 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ClerkSpaProvider>{children}</ClerkSpaProvider>
+      </body>
     </html>
   );
 }

@@ -18,7 +18,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.core.database import Base
-from app.core.security import create_access_token
 from app.models.user import User
 from app.models.video import VideoUpload
 from app.schemas.video import VideoResponse, FormFeedbackResponse
@@ -51,13 +50,10 @@ MOCK_NOT_KILTER_BOARD = {
 
 
 def _create_user(db) -> User:
-    """Create a test user and return it."""
+    """Create a test user shadow row and return it."""
     user = User(
         id=str(uuid.uuid4()),
-        email=f"test_{uuid.uuid4().hex[:8]}@example.com",
-        username=f"user_{uuid.uuid4().hex[:8]}",
-        hashed_password="hashed",
-        full_name="Test Climber",
+        clerk_id=f"user_test_{uuid.uuid4().hex[:8]}",
     )
     db.add(user)
     db.commit()
@@ -66,8 +62,9 @@ def _create_user(db) -> User:
 
 
 def _auth_header(user_id: str) -> dict:
-    token = create_access_token(data={"sub": str(user_id)})
-    return {"Authorization": f"Bearer {token}"}
+    """A019: dev-mode X-User-ID header. ENVIRONMENT defaults to 'development'
+    in tests, so deps.get_current_user_id accepts this fallback."""
+    return {"X-User-ID": str(user_id)}
 
 
 def _fake_video_bytes(size: int = 1024) -> io.BytesIO:

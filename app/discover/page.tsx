@@ -12,6 +12,7 @@ import {
 import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { countActiveFilters, type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
+import AuthGuard from '@/components/AuthGuard';
 import { saveFilteredList } from './filtered-list-storage';
 import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-storage';
 
@@ -80,9 +81,11 @@ function resolveInitialState(
 
 export default function DiscoverPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
-      <DiscoverPageInner />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+        <DiscoverPageInner />
+      </Suspense>
+    </AuthGuard>
   );
 }
 

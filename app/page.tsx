@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import AuthGuard from '@/components/AuthGuard';
 
 interface Tile {
   href: string;
@@ -30,7 +31,10 @@ const TILES: Tile[] = [
     icon: '🏷️',
   },
   {
-    href: '/login',
+    // A019.16: user is signed in by the time they see this tile (page is
+    // AuthGuard-wrapped). The 🔒 lock now signals "Coach paid tier" — when
+    // Stripe paywall lands, this href flips to /paywall.
+    href: '/upload',
     label: 'Video Analysis',
     subtitle: 'AI technique coaching',
     icon: '🎬',
@@ -44,7 +48,7 @@ const TILES: Tile[] = [
   },
 ];
 
-export default function Home() {
+function HomeContent() {
   return (
     <div
       style={{
@@ -152,5 +156,13 @@ export default function Home() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <AuthGuard>
+      <HomeContent />
+    </AuthGuard>
   );
 }

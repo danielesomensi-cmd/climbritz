@@ -5,6 +5,7 @@ import { useKilterBle } from './use-kilter-ble';
 import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
 import BottomNav from '@/components/BottomNav';
+import AuthGuard from '@/components/AuthGuard';
 import type { BleStatus } from './use-kilter-ble';
 import type { LedHold } from './presets';
 
@@ -36,7 +37,7 @@ const STATUS_LABELS: Record<BleStatus, string> = {
 
 const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
 
-export default function BleTestPage() {
+function BleTestContent() {
   const {
     status,
     errorMessage,
@@ -277,5 +278,13 @@ export default function BleTestPage() {
       </div>
       <BottomNav />
     </main>
+  );
+}
+
+export default function BleTestPage() {
+  return (
+    <AuthGuard>
+      <BleTestContent />
+    </AuthGuard>
   );
 }
