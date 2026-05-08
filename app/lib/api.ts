@@ -56,14 +56,30 @@ async function apiFetch<T>(
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (response.status === 401 && !isRetry && typeof window !== 'undefined') {
-    // Clerk may be mid-refresh. Wait a beat, retry once before redirecting.
+    // Clerk may be mid-refresh. Wait a beat, retry once before deciding.
     await new Promise((r) => setTimeout(r, 500));
     return apiFetch<T>(path, options, true);
   }
 
   if (response.status === 401 && typeof window !== 'undefined') {
-    window.location.href = '/sign-in';
-    throw new ApiError(401, 'Sessione scaduta. Effettua di nuovo il login.');
+    // Defensive: only redirect to /sign-in if Clerk has hydrated AND
+    // confirms the user is signed out. If Clerk says we ARE signed in
+    // and the backend still returned 401, this is a backend misconfig
+    // (e.g. Railway missing CLERK_JWKS_URL — backend silently ignores
+    // valid Bearer tokens). Redirecting would put the user in a
+    // /sign-in ↔ /dashboard loop because Clerk re-redirects an
+    // authenticated user out of /sign-in back to a protected page that
+    // 401s again. Surface the error instead.
+    const clerkUser = window.Clerk?.user;
+    const trulySignedOut = clerkUser === null;
+    if (trulySignedOut) {
+      window.location.href = '/sign-in';
+      throw new ApiError(401, 'Sessione scaduta. Effettua di nuovo il login.');
+    }
+    throw new ApiError(
+      401,
+      'Il server ha rifiutato una sessione attiva. Riprova fra qualche minuto; se persiste, le credenziali Clerk del backend potrebbero non essere configurate.',
+    );
   }
 
   if (!response.ok) {
