@@ -25,6 +25,16 @@ export default function ClerkSpaProvider({ children }: { children: React.ReactNo
     );
   }
 
+  // @clerk/clerk-react does NOT auto-read NEXT_PUBLIC_CLERK_*_FORCE_REDIRECT_URL
+  // env vars (that's a @clerk/nextjs feature). Pass them explicitly so the
+  // post-signin landing target is configurable from Vercel env without a
+  // rebuild from source. Force > Fallback in Clerk's redirect priority, so
+  // when these env vars are present they win over the props below.
+  const signInForceRedirectUrl =
+    process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL || undefined;
+  const signUpForceRedirectUrl =
+    process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL || undefined;
+
   return (
     <ClerkProvider
       publishableKey={publishableKey}
@@ -32,8 +42,10 @@ export default function ClerkSpaProvider({ children }: { children: React.ReactNo
       routerReplace={(url) => router.replace(url)}
       signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/sign-in'}
       signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || '/sign-up'}
-      signInFallbackRedirectUrl="/dashboard"
-      signUpFallbackRedirectUrl="/dashboard"
+      signInForceRedirectUrl={signInForceRedirectUrl}
+      signUpForceRedirectUrl={signUpForceRedirectUrl}
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
     >
       {children}
     </ClerkProvider>
