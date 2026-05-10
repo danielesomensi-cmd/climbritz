@@ -277,6 +277,35 @@ Three levels of coaching intelligence (Coach tier):
 
 ---
 
+## Pre-launch Production Prep
+
+> Items that don't block dev/testing but must land before App Store submission or before inviting >5 beta testers. Grouped here so launch prep is one checklist, not scattered across phase backlogs.
+
+### B-iOS-oauth-prod — Promote Clerk to Production environment + fix iOS OAuth UX
+
+**Status:** Deferred until launch prep
+**Trigger:** When ready to invite real beta users (>5 testers) or before App Store submission
+**Effort:** 4-8 hours (Phase 0 audit complete, see this commit)
+
+**What it solves:**
+- iOS Clerk session does not persist across cold app launches (WKWebView ITP purges localStorage on `capacitor://localhost` because it's not in `WKAppBoundDomains` and dev-mode Clerk has no first-party HttpOnly cookie to fall back on)
+- OAuth Google flow throws "Invalid URL scheme" mid-flow on iOS (Capacitor origin not registered in the Clerk dev instance's `allowed_origins`), requires manual workaround (close Safari, retap login → Clerk SDK picks up the partially-completed session ~5s)
+- Both issues vanish in Production Clerk environment because of first-party HttpOnly cookies on the customer's FAPI domain (no third-party ITP problem) and because production accepts the customer's own redirect URLs by design
+
+**Required steps:**
+1. Acquire/configure custom domain (e.g. `clerk.kilterup.app`) with CNAME records per Clerk dashboard instructions
+2. Create production OAuth credentials in Google Cloud Console (Clerk's shared dev creds aren't allowed in prod)
+3. Configure prod Clerk instance via dashboard, generate `pk_live_*` + `sk_live_*` keys
+4. Swap `pk_test_*` → `pk_live_*` across: Vercel env vars, Railway env vars, local `.env.local` (3 places — see A020 closeout for the exact var list)
+5. Update `WKAppBoundDomains` in `ios/App/App/Info.plist` + `capacitor.config.ts` `allowNavigation` to point to the new prod Clerk Frontend API host
+6. Re-test full OAuth flow on iOS + Android (regression check); confirm cold-start session persistence on iPhone
+
+**Out of scope until trigger:** any band-aid Fix A patches in dev mode (`allowed_origins` PATCH, custom URL scheme registration, `iosScheme: "https"` swap). Production env makes them unnecessary — doing them now would be wasted work.
+
+**Phase 0 audit reference:** see commit `docs: log A019 ship status + B-iOS-oauth-prod backlog entry`. Full source citations + 3-fix-path comparison are in the Claude Code session that produced this entry. Decision was Fix C (defer A, plan B for launch).
+
+---
+
 ## Phase 4 — Visual Problem Recognition (Enhancement)
 
 **Goal:** Photo of Kilter Board with LEDs lit → system identifies the climb.
