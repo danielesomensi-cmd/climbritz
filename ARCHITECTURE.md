@@ -298,7 +298,8 @@ POST /api/videos/upload + climb_id + angle
 | `ENVIRONMENT` | `development` / `production` | `development` | `.env`, Railway |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins | `http://localhost:3000` | Railway |
 | `ADMIN_SECRET` | Secret for admin upload-db endpoint | `""` | Railway |
-| `NEXT_PUBLIC_MOBILE` | Switch API base URL to Railway (frontend) | unset | Capacitor build |
+| `NEXT_PUBLIC_MOBILE` | Force API base URL to Railway prod, ignoring `NEXT_PUBLIC_API_URL` (frontend) | unset | Capacitor build |
+| `NEXT_PUBLIC_API_URL` | Backend URL for web/dev builds. Ignored when `NEXT_PUBLIC_MOBILE=true` | `http://localhost:8001` | `.env.local` |
 
 See `backend/app/core/config.py` for the full Pydantic Settings model.
 

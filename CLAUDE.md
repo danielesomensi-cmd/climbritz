@@ -288,7 +288,7 @@ The app ships as a Capacitor Android APK + iOS app via `next build` with `output
 
 1. **NO dynamic routes (`[param]`)** for pages that must work in Capacitor. Use query params instead: `/discover/detail?id=xxx` not `/discover/[id]`. Dynamic route segments produce a single `_.html` fallback that Capacitor's WebView cannot resolve for arbitrary paths.
 2. **Use plain `<img>` tags, NOT `next/image` `Image` component.** The Next.js image optimizer doesn't exist in static export — images silently fail to load.
-3. **API base URL must use `NEXT_PUBLIC_MOBILE` env var** to switch between `localhost` (dev) and Railway (prod). See `app/lib/api.ts`.
+3. **API base URL is hardcoded to Railway in mobile builds.** When `NEXT_PUBLIC_MOBILE=true`, `app/lib/api.ts` ignores `NEXT_PUBLIC_API_URL` from `.env.local` and uses the Railway prod URL — otherwise a developer-local `NEXT_PUBLIC_API_URL=http://localhost:8001` leaks into the APK and every API call hits the device's own port 8001 (silent failure). To point a mobile build at a non-prod backend, edit `app/lib/api.ts` directly.
 4. **CORS on backend must include `https://localhost`** — Capacitor Android WebView sends `Origin: https://localhost`. Also allow `capacitor://localhost` (iOS) and `http://localhost` (dev).
 5. **All navigation must work as SPA** — no server-side redirects, no middleware redirects. Use `router.push()` or `<Link>`.
 6. **No Next.js API routes (`app/api/`)** — all API calls go to the FastAPI backend.
