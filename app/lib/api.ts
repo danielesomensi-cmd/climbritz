@@ -6,11 +6,13 @@
 // On a 401 we retry once after a short delay (covers the gap when Clerk
 // is mid-refresh), then bounce the user to /sign-in.
 
+// Mobile builds always hit Railway — the device has no localhost:8001.
+// NEXT_PUBLIC_API_URL only affects web/dev builds; in mobile builds it's
+// ignored so a developer-local `.env.local` can't leak into the APK.
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NEXT_PUBLIC_MOBILE === 'true'
+  process.env.NEXT_PUBLIC_MOBILE === 'true'
     ? 'https://web-production-cea9.up.railway.app'
-    : 'http://localhost:8001');
+    : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 // --- Error class ---
 
