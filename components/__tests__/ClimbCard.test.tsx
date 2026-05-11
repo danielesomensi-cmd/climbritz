@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ClimbCard from '../ClimbCard';
 import type { ClimbSearchResult } from '@/app/lib/api';
@@ -88,6 +88,59 @@ describe('ClimbCard', () => {
       );
       expect(screen.getByTestId('state-icon-send')).toBeInTheDocument();
       expect(screen.getByTestId('state-icon-project')).toBeInTheDocument();
+    });
+
+    // B-A021-fix-2.4.2 — regression. The first ship of StateIcons absolute-
+    // positioned the strip in the top-right of the card, which on iPhone
+    // overlapped the Angle column's "ANGLE" label + 40° value. The fix
+    // moved the strip INSIDE the info column, as a row below the stars
+    // line. These assertions lock that in:
+    it('mounts state icons inside the info column, not next to angle', () => {
+      render(
+        <ClimbCard
+          climb={{
+            ...SAMPLE,
+            user_state: {
+              climb_uuid: 'abc-123',
+              angle: 40,
+              is_project: true,
+              best_result: 'flash',
+              last_logged_at: null,
+            },
+          }}
+        />,
+      );
+      const infoColumn = screen.getByTestId('card-info-column');
+      // StateIcons strip is a descendant of the info column...
+      expect(
+        within(infoColumn).getByTestId('state-icons'),
+      ).toBeInTheDocument();
+      // ...and the same DOM node is the SOLE source for that testid
+      // (there's no second absolute-positioned copy hanging around).
+      expect(screen.getAllByTestId('state-icons')).toHaveLength(1);
+    });
+
+    it('state icon strip wrapper carries no `absolute` class', () => {
+      // Guards against a future regression that re-introduces absolute
+      // positioning. The wrapper around StateIcons is the parent of the
+      // strip — read its className via parentElement.
+      render(
+        <ClimbCard
+          climb={{
+            ...SAMPLE,
+            user_state: {
+              climb_uuid: 'abc-123',
+              angle: 40,
+              is_project: true,
+              best_result: 'send',
+              last_logged_at: null,
+            },
+          }}
+        />,
+      );
+      const wrapper = screen.getByTestId('state-icons').parentElement;
+      expect(wrapper).not.toBeNull();
+      expect(wrapper!.className).not.toMatch(/\babsolute\b/);
     });
   });
 });
