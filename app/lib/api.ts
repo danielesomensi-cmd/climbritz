@@ -185,6 +185,14 @@ export interface ClimbSearchResult {
   quality_average: number;
 }
 
+// B020: /api/climbs/search now returns an envelope so the client can
+// surface an overflow banner when total_count > climbs.length without a
+// second request.
+export interface ClimbSearchResponse {
+  climbs: ClimbSearchResult[];
+  total_count: number;
+}
+
 export interface HoldPosition {
   placement_id: number;
   role: string;
@@ -224,7 +232,7 @@ export interface ClimbSearchParams {
 
 export async function searchClimbs(
   params: ClimbSearchParams,
-): Promise<ClimbSearchResult[]> {
+): Promise<ClimbSearchResponse> {
   const qs = new URLSearchParams();
   if (params.q) qs.set('q', params.q);
   if (params.angle !== undefined) qs.set('angle', String(params.angle));
@@ -234,6 +242,8 @@ export async function searchClimbs(
   if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
   if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
   if (params.sort) qs.set('sort', params.sort);
+  // B020: backend default is now 500 (hard cap). Callers omit `limit`
+  // unless they specifically want a smaller window (e.g. autocomplete).
   if (params.limit !== undefined) qs.set('limit', String(params.limit));
 
   const res = await fetch(`${API_BASE}/api/climbs/search?${qs.toString()}`);

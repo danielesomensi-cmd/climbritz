@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import type { ClimbSearchResult } from '@/app/lib/api';
 import GradeDisplay from './GradeDisplay';
@@ -14,7 +15,10 @@ function formatAscents(count: number): string {
   return String(count);
 }
 
-export default function ClimbCard({ climb }: ClimbCardProps) {
+// B020: memoised — DiscoverPage now renders up to 500 cards, so we want
+// the card list to be stable across parent re-renders (filter UI state,
+// debounce ticks, sessionStorage writes) when the climb prop is unchanged.
+function ClimbCardComponent({ climb }: ClimbCardProps) {
   return (
     <Link
       href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
@@ -41,3 +45,5 @@ export default function ClimbCard({ climb }: ClimbCardProps) {
     </Link>
   );
 }
+
+export default memo(ClimbCardComponent);

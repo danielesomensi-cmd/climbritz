@@ -52,11 +52,16 @@ const SAMPLE_RESULTS = [
   },
 ];
 
+// B020: searchClimbs returns an envelope. Helper keeps test fixtures terse.
+function envelope(climbs: typeof SAMPLE_RESULTS, totalCount?: number) {
+  return { climbs, total_count: totalCount ?? climbs.length };
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   searchParamsString = '';
   window.sessionStorage.clear();
-  searchClimbsMock.mockResolvedValue(SAMPLE_RESULTS);
+  searchClimbsMock.mockResolvedValue(envelope(SAMPLE_RESULTS));
   mockUseAuth.mockReturnValue({ isLoaded: true, isSignedIn: true });
 });
 
@@ -147,8 +152,8 @@ describe('DiscoverPage', () => {
     });
   });
 
-  it('shows the no-results message when the API returns []', async () => {
-    searchClimbsMock.mockResolvedValueOnce([]);
+  it('shows the no-results message when the API returns 0 climbs', async () => {
+    searchClimbsMock.mockResolvedValueOnce(envelope([], 0));
     render(<DiscoverPage />);
     fireEvent.change(screen.getByTestId('search-input'), { target: { value: 'xyz' } });
     await waitFor(() => {
@@ -384,6 +389,66 @@ describe('DiscoverPage', () => {
           expect.objectContaining({ moves: '6-7' }),
         );
       });
+    });
+  });
+
+  describe('search cap + overflow banner (B020)', () => {
+    function fakeClimb(i: number) {
+      return {
+        uuid: `uuid-${i}`,
+        name: `Climb ${i}`,
+        setter: 'tester',
+        grade: '6a/V3',
+        angle: 40,
+        ascensionist_count: 10,
+        quality_average: 3.0,
+      };
+    }
+
+    it('does not pass an explicit limit (relies on backend default of 500)', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      const args = searchClimbsMock.mock.calls[0][0];
+      expect(args.limit).toBeUndefined();
+    });
+
+    it('renders every climb returned (200 mock climbs → 200 cards)', async () => {
+      const big = Array.from({ length: 200 }, (_, i) => fakeClimb(i));
+      searchClimbsMock.mockResolvedValue(envelope(big));
+      render(<DiscoverPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('climb-card-uuid-0')).toBeInTheDocument();
+      });
+      // Spot-check the tail to confirm no internal slice
+      expect(screen.getByTestId('climb-card-uuid-199')).toBeInTheDocument();
+    });
+
+    it('shows overflow banner when total_count > climbs.length', async () => {
+      const climbs = Array.from({ length: 500 }, (_, i) => fakeClimb(i));
+      searchClimbsMock.mockResolvedValue(envelope(climbs, 1500));
+      render(<DiscoverPage />);
+      const banner = await screen.findByTestId('results-overflow-banner');
+      expect(banner).toHaveTextContent('Mostro i primi 500 di 1500 risultati');
+      expect(banner).toHaveTextContent('Restringi i filtri');
+    });
+
+    it('does NOT show banner when total_count == climbs.length', async () => {
+      const climbs = Array.from({ length: 50 }, (_, i) => fakeClimb(i));
+      searchClimbsMock.mockResolvedValue(envelope(climbs, 50));
+      render(<DiscoverPage />);
+      await waitFor(() =>
+        expect(screen.getByTestId('climb-card-uuid-0')).toBeInTheDocument(),
+      );
+      expect(screen.queryByTestId('results-overflow-banner')).not.toBeInTheDocument();
+    });
+
+    it('does NOT show banner when no results at all', async () => {
+      searchClimbsMock.mockResolvedValue(envelope([], 0));
+      render(<DiscoverPage />);
+      await waitFor(() => {
+        expect(screen.getByTestId('results-empty')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('results-overflow-banner')).not.toBeInTheDocument();
     });
   });
 

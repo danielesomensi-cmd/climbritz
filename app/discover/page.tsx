@@ -101,6 +101,9 @@ function DiscoverPageInner() {
   const [filters, setFilters] = useState<Filters>(initialState.filters);
 
   const [results, setResults] = useState<ClimbSearchResult[]>([]);
+  // B020: total matches across all filters, ignoring the 500-result cap.
+  // When > results.length we surface an overflow banner.
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -130,6 +133,9 @@ function DiscoverPageInner() {
 
   // Debounced search. B012: query is now optional — when it's empty we
   // still fetch using the active filters (browse-by-filter mode).
+  // B020: backend defaults to limit=500 (hard cap) and returns
+  // {climbs, total_count}. We render all climbs and show an overflow
+  // banner when total_count > climbs.length.
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const runSearch = useCallback(async () => {
     setLoading(true);
@@ -145,13 +151,14 @@ function DiscoverPageInner() {
         min_quality: filters.minQuality,
         moves: filters.moves,
         sort: filters.sort,
-        limit: 30,
       });
-      setResults(res);
+      setResults(res.climbs);
+      setTotalCount(res.total_count);
     } catch (e) {
       const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
       setError(`[API_BASE=${API_BASE}] ${msg}`);
       setResults([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
@@ -308,6 +315,16 @@ function DiscoverPageInner() {
           {emptyState && !error && (
             <div className="text-center py-12 text-zinc-500 text-sm" data-testid="results-empty">
               {emptyState}
+            </div>
+          )}
+
+          {/* B020: overflow banner when results are capped below total match count. */}
+          {!loading && !error && totalCount > results.length && (
+            <div
+              data-testid="results-overflow-banner"
+              className="px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/40 text-orange-200 text-sm"
+            >
+              Mostro i primi {results.length} di {totalCount} risultati. Restringi i filtri per essere più preciso.
             </div>
           )}
 
