@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from app.core.config import get_settings
 from app.core.database import engine
-from app.api import videos, circuits, climbs, holds, admin
+from app.api import videos, circuits, climbs, holds, admin, logs, user_climbs, stats
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +130,11 @@ app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(climbs.router, prefix="/api/climbs", tags=["climbs"])
 app.include_router(holds.router, prefix="/api/holds", tags=["holds"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
+app.include_router(
+    user_climbs.router, prefix="/api/user-climbs", tags=["user-climbs"]
+)
+app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
 
 
 import time
