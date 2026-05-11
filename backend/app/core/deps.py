@@ -57,3 +57,18 @@ def get_current_user_id(
             return x_user_id
 
     raise HTTPException(status_code=401, detail="Authentication required")
+
+
+def get_optional_user_id(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> str | None:
+    """A021: like get_current_user_id but returns None instead of 401 when
+    no credential is present. Used by endpoints that work unauthenticated
+    but enrich the response when a user is identified (e.g. Discovery
+    search overlay attaches user_state when logged in).
+    """
+    try:
+        return get_current_user_id(request, db)
+    except HTTPException:
+        return None

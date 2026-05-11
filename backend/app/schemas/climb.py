@@ -1,12 +1,19 @@
 """Pydantic schemas for climb search and detail endpoints."""
 
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
+
+from app.schemas.logs import UserClimbState
 
 # Move-count bucket for the Discovery filter (A019).
 # Mapped in climb_service to a SQL WHERE clause on the cyan-hold count.
 MovesFilter = Literal["any", "le5", "6-7", "8-10", "gt10"]
+
+# A021 — Discovery chip filters for "done" (any flash/send log) and
+# "project" (is_project flag set). Tri-state: all (default), only, exclude.
+DoneFilter = Literal["all", "only", "exclude"]
+ProjectFilter = Literal["all", "only", "exclude"]
 
 
 class HoldPosition(BaseModel):
@@ -42,6 +49,10 @@ class ClimbSearchResult(BaseModel):
     angle: int
     ascensionist_count: int
     quality_average: float
+    # A021 — populated only when the caller is authenticated AND has a
+    # user_climbs row for this (uuid, angle). Discovery uses it to render
+    # the ⚡/✓/☆ icon strip on each card.
+    user_state: Optional[UserClimbState] = None
 
 
 class ClimbSearchResponse(BaseModel):
