@@ -24,19 +24,14 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
     <Link
       href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
       data-testid={`climb-card-${climb.uuid}`}
-      className="relative flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
+      className="flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
     >
-      {/* A021.4.1 — state icon strip in the top-right corner. Absolute
-          positioning keeps it from competing with the Angle column for
-          horizontal space. Renders nothing when the user has no history
-          and no project flag on this climb+angle. */}
-      <div className="absolute top-2 right-3">
-        <StateIcons userState={climb.user_state} />
-      </div>
-
       <GradeDisplay grade={climb.grade} size="lg" />
 
-      <div className="flex-1 min-w-0">
+      <div
+        data-testid="card-info-column"
+        className="flex-1 min-w-0"
+      >
         <div className="text-white font-semibold truncate">{climb.name}</div>
         <div className="text-xs text-zinc-400 truncate">by {climb.setter}</div>
         <div className="mt-1 flex items-center gap-3">
@@ -44,6 +39,15 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
           <span className="text-xs text-zinc-500">
             {formatAscents(climb.ascensionist_count)} ascents
           </span>
+        </div>
+        {/* B-A021-fix-2.4.1 — state icon strip as its own row INSIDE the
+            info column, below the stars/ascents line. Previously absolute-
+            positioned top-2/right-3, which on iPhone overlapped the Angle
+            column's "ANGLE" / "40°" stack. StateIcons returns null when
+            user_state is null/empty so this row collapses to zero height
+            for climbs the user has no history on. */}
+        <div className="mt-1 empty:hidden">
+          <StateIcons userState={climb.user_state} />
         </div>
       </div>
 
