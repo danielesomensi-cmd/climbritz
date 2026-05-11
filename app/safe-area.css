@@ -5,3 +5,14 @@
 .pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 0px);
 }
+
+/* B-A021-fix-1.6.1 — bottom padding for any page that mounts BottomNav.
+   Combines the BottomNav's content height (≈ 6rem on home-indicator
+   devices: py-2 + icon + label + border + pb-safe) with env(safe-area-
+   inset-bottom). The previous pb-24 (96px) gave only ~9px clearance on
+   iPhone with notch — the Coach button on /discover/detail collided with
+   the BottomNav. Use this utility wherever BottomNav is mounted; if the
+   BottomNav ever resizes, change one rule here instead of grepping. */
+.pb-nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}

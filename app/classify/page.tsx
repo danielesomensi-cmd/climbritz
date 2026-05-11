@@ -84,7 +84,7 @@ function ClassifyContent() {
   const handleExport = () => shareOrDownload(buildExportData(state));
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-safe px-4 pb-24">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-safe px-4 pb-nav">
       <div className="max-w-6xl mx-auto space-y-4">
 
         {/* Header */}

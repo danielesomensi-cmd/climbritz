@@ -108,7 +108,7 @@ function BleTestContent() {
   const canSend = status === 'connected' && activePreset !== null;
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white pt-safe px-4 pb-24">
+    <main className="min-h-screen bg-gray-900 text-white pt-safe px-4 pb-nav">
       <div className="max-w-lg mx-auto">
         <h1 className="text-2xl font-bold mb-1">BLE LED Test</h1>
         <p className="text-gray-400 text-sm mb-6">
