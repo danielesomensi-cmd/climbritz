@@ -200,6 +200,10 @@ export interface ClimbSearchResult {
   angle: number;
   ascensionist_count: number;
   quality_average: number;
+  /** A021.4 — populated only when the request is authenticated AND the
+   *  backend found a user_climbs row for this (uuid, angle). Discovery
+   *  uses it to render ⚡/✓/☆ icons on each card. */
+  user_state?: UserClimbState | null;
 }
 
 // B020: /api/climbs/search now returns an envelope so the client can

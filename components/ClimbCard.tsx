@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ClimbSearchResult } from '@/app/lib/api';
 import GradeDisplay from './GradeDisplay';
 import StarRating from './StarRating';
+import StateIcons from './StateIcons';
 
 interface ClimbCardProps {
   climb: ClimbSearchResult;
@@ -23,8 +24,16 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
     <Link
       href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
       data-testid={`climb-card-${climb.uuid}`}
-      className="flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
+      className="relative flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
     >
+      {/* A021.4.1 — state icon strip in the top-right corner. Absolute
+          positioning keeps it from competing with the Angle column for
+          horizontal space. Renders nothing when the user has no history
+          and no project flag on this climb+angle. */}
+      <div className="absolute top-2 right-3">
+        <StateIcons userState={climb.user_state} />
+      </div>
+
       <GradeDisplay grade={climb.grade} size="lg" />
 
       <div className="flex-1 min-w-0">
