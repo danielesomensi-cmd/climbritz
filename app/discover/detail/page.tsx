@@ -172,7 +172,7 @@ function ClimbDetailPageInner() {
             <div className="flex items-start gap-4">
               <GradeDisplay grade={stats.grade} size="lg" />
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold truncate" data-testid="climb-name">
+                <h1 className="text-xl font-bold truncate" data-testid="climb-name">
                   {climb.name}
                 </h1>
                 <div className="text-sm text-zinc-400">by {climb.setter}</div>
