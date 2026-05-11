@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Last updated: 7 May 2026
+> Last updated: 11 May 2026
 
 ---
 
@@ -79,7 +79,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Component | Path | Responsibility |
 |-----------|------|----------------|
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
-| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. |
+| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. B020: `limit` defaults to 500 with hard cap 500 (422 above); response is the envelope `{climbs, total_count}` so the UI can surface an overflow banner without a second request — `total_count` reflects all matching climbs ignoring the cap. |
 | **Holds API** | `api/holds.py` | Board composite image + individual hold images |
 | **Admin API** | `api/admin.py` | BoardLib DB sync + upload (Railway maintenance) |
 | **Circuits API** | `api/circuits.py` | Stub (legacy) |
@@ -103,7 +103,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Login | `login/page.tsx` | Redirect alias to `/sign-in` (backward compat) |
 | Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
 | Dashboard | `dashboard/page.tsx` | User overview |
-| Discover | `discover/page.tsx` | Climb search + filter panel (A011) |
+| Discover | `discover/page.tsx` | Climb search + filter panel (A011). B020: renders the full result set (no internal slice) up to the backend's 500-result cap; an orange overflow banner appears at the top when `total_count > climbs.length` |
 | Climb detail | `discover/detail/page.tsx` | Board visualization + BLE control bar (A015) + Next/Prev row through the filtered list (A014, sessionStorage-backed). Reuses `/ble-test` BLE stack via `ClimbBleControls` + `climb-to-leds.ts` |
 | Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
@@ -308,4 +308,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 7 May 2026 (A020)*
+*Architecture doc created: March 2026 (B002) — Last updated: 11 May 2026 (B020)*
