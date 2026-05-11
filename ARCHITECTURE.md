@@ -1,6 +1,6 @@
 # Kilter-Up — Architecture
 
-> Last updated: 11 May 2026
+> Last updated: 11 May 2026 (A021 climb logging + training history added)
 
 ---
 
@@ -79,12 +79,16 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Component | Path | Responsibility |
 |-----------|------|----------------|
 | **Video API** | `api/videos.py` | Upload, list, get, delete + background analysis |
-| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. B020: `limit` defaults to 500 with hard cap 500 (422 above); response is the envelope `{climbs, total_count}` so the UI can surface an overflow banner without a second request — `total_count` reflects all matching climbs ignoring the cap. |
+| **Climb API** | `api/climbs.py` | Search, detail, stats (BoardLib DB queries). Search excludes animated sequences (`frames_count > 1`) globally; A019 `moves` query param applies a SQL WHERE on the cyan-hold count. B020: `limit` defaults to 500 with hard cap 500 (422 above); response is the envelope `{climbs, total_count}` so the UI can surface an overflow banner without a second request — `total_count` reflects all matching climbs ignoring the cap. **A021.4 overlay:** when the request is authenticated, search now also accepts `done_filter` and `project_filter` chip params (`all`/`only`/`exclude`) and enriches each climb with a `user_state` object. The overlay is a Python merge (Option A) — BoardLib lives in a separate SQLite file from the app DB, so the API layer pre-fetches matching uuids from `user_climbs` and threads them as include/exclude lists into `_build_search_filters`. |
 | **Holds API** | `api/holds.py` | Board composite image + individual hold images |
 | **Admin API** | `api/admin.py` | BoardLib DB sync + upload (Railway maintenance) |
+| **Logs API** | `api/logs.py` | A021 — POST/GET/PATCH/DELETE `/api/logs` + `GET /api/logs/sessions`. Reads `X-User-Timezone` (IANA) to resolve `local_date`. Rejects animated sequences with 422. The `/sessions` endpoint memoises a BoardLib lookup so each session climb arrives with `climb_name + grade` already attached. |
+| **User-climbs API** | `api/user_climbs.py` | A021 — `GET /api/user-climbs/{uuid}` returns `{state, recent_logs}`; `PATCH /api/user-climbs/{uuid}/project` toggles the project flag. |
+| **Stats API** | `api/stats.py` | A021 — `/pyramid` (counts by grade band, flash/send_or_better/all filter) + `/trend` (ISO-week buckets, flash/send/attempt counts). Uses memoised BoardLib grade resolver to keep BoardLib hits sub-linear. |
 | **Circuits API** | `api/circuits.py` | Stub (legacy) |
 | **Gemini Service** | `services/gemini_service.py` | File API upload + Kilter Board-specific prompt (B007+B008) |
-| **Climb Service** | `services/climb_service.py` | Read-only sqlite3 queries against BoardLib DB |
+| **Climb Service** | `services/climb_service.py` | Read-only sqlite3 queries against BoardLib DB. A021: `get_climb_meta()` for the POST-/api/logs animated-sequence guard; `include_uuids` / `exclude_uuids` params on `_build_search_filters` for the Discovery chip-filter pipeline. |
+| **Log Service** | `services/log_service.py` | A021 — owns the climb_logs / user_climbs sync contract. `resolve_local_date(received_at, tz_header)`, `create_or_upgrade_log`, `_recompute_user_climb` (best_result via SQL existence probes, avoiding identity-map staleness), `list_sessions / compute_pyramid / compute_trend`. Decoupled from BoardLib — accepts injected resolvers for grade lookups. |
 | **Storage Service** | `services/storage_service.py` | Local filesystem (dev), S3 planned (prod) |
 | **Video Service** | `services/video_service.py` | ffmpeg utilities |
 | **Kilter Parser** | `utils/kilter_parser.py` | Layout string parser for BoardLib data |
@@ -97,20 +101,21 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 | Page | Path | What it does |
 |------|------|-------------|
-| Homepage | `page.tsx` | 4-tile hub (Demo LED, Discover, Classify, Video Analysis) |
+| Homepage | `page.tsx` | Tile hub (Demo LED, Discover, Classify, Video Analysis, History, Debug). Debug tile is hidden in production builds so end users only see the 5 product tiles. |
 | Sign in | `app/sign-in/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Sign up | `app/sign-up/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Login | `login/page.tsx` | Redirect alias to `/sign-in` (backward compat) |
 | Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
 | Dashboard | `dashboard/page.tsx` | User overview |
 | Discover | `discover/page.tsx` | Climb search + filter panel (A011). B020: renders the full result set (no internal slice) up to the backend's 500-result cap; an orange overflow banner appears at the top when `total_count > climbs.length` |
-| Climb detail | `discover/detail/page.tsx` | Board visualization + BLE control bar (A015) + Next/Prev row through the filtered list (A014, sessionStorage-backed). Reuses `/ble-test` BLE stack via `ClimbBleControls` + `climb-to-leds.ts` |
+| Climb detail | `discover/detail/page.tsx` | Board visualization + BLE control bar (A015) + Next/Prev row through the filtered list (A014, sessionStorage-backed). Reuses `/ble-test` BLE stack via `ClimbBleControls` + `climb-to-leds.ts`. **A021.3:** mounts `<LogSection>` (5-col grid Flash / Send / Attempt / Project / Remove, project-removal modal w/ Android back-button via `@capacitor/app`) + `<RecentLogs>` mini-list. Board capped at `max-w-[280px]` to fit a mid-height phone viewport (B-A021-fix-1 Round 2). |
 | Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
 | BLE test | `ble-test/page.tsx` | 10 pixel-art LED presets + #11 all-LEDs stress test, auto-apply on tap with 200ms debounce (A006/B009/B012/B014/B014-iter-2) |
 | Video detail | `videos/detail/page.tsx` | Analysis results display (query-param route) |
+| **History** | `history/page.tsx` | A021.5 — single-scroll page: stats header (sessions/flashes/sends/peak grade) + sticky date range picker (7d/30d/90d/1y/All, default 90d) + hand-rolled CSS-grid calendar heatmap + sessions list (cards desc, climb rows link to `/discover/detail`) + Recharts horizontal-bar grade pyramid (flash/send_or_better/all filter) + Recharts line trend chart (per-series toggle for flash/send/attempt). Recharts 3.8.1 pulled in for the two chart sections. |
 | Privacy | `privacy/page.tsx` | Privacy policy (Play Store requirement) |
-| Debug | `debug/page.tsx` | Network diagnostics (dev tool) |
+| Debug | `debug/page.tsx` | Network diagnostics (dev tool — hidden from homepage in prod builds) |
 
 Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the query-param routes above for Capacitor compatibility.
 
@@ -122,10 +127,79 @@ Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the
 |-------|-------------|-------|
 | `users` | id, clerk_id, created_at, updated_at | A020 — Clerk shadow row, no PII (email/name/etc. live in Clerk). UUID as String(36) |
 | `video_uploads` | id, user_id, filename, file_path, processing_status, form_analysis, gemini_file_id | form_analysis is JSON |
+| `climb_logs` | id, user_id, climb_uuid, angle, local_date, result_type (CHECK flash/send/attempt), attempts_count | A021 — append-mostly source of truth. UNIQUE on (user_id, climb_uuid, angle, local_date) so same-day re-taps upgrade in place. FK to users with ON DELETE CASCADE. |
+| `user_climbs` | id, user_id, climb_uuid, angle, is_project, best_result (CHECK flash/send/null), last_logged_at | A021 — derived state cache kept in sync by `log_service`. UNIQUE on (user_id, climb_uuid, angle). FK to users with ON DELETE CASCADE. |
 
 Processing statuses: `pending` → `processing` → `completed` / `failed`
 
 > **Planned:** `hold_classifications` table (HC-7) — will store grip-type tags per hold for Discovery features.
+
+---
+
+## Request Flow — Climb Logging (A021)
+
+```
+1. User taps result button on /discover/detail LogSection
+   │
+2. POST /api/logs (Clerk JWT + X-User-Timezone)
+   │  → climb_service.get_climb_meta(climb_uuid) confirms frames_count==1
+   │     (animated sequences rejected with 422)
+   │  → log_service.resolve_local_date(now_utc, tz_header)
+   │     • valid IANA tz (e.g. Europe/Rome) → date in that zone
+   │     • missing or unparseable → UTC fallback
+   │  → log_service.create_or_upgrade_log:
+   │     • UNIQUE conflict on (user, climb, angle, local_date)
+   │       → existing row: attempts_count++, result_type upgrades if stronger
+   │       → new row inserted otherwise
+   │     • _recompute_user_climb runs in the SAME transaction:
+   │       — best_result = strongest flash/send across all logs
+   │       — last_logged_at = max(created_at)
+   │       — is_project preserved (independent toggle)
+   │  → 201 with { log, user_state } envelope
+   │
+3. Frontend caches the new user_state at the page level
+   │  → LogSection refetches /api/user-climbs/{uuid}?angle= for the
+   │    Storico section (recent_logs list)
+   │  → /discover overlay picks up the new state on next search
+
+POST /api/logs (Flash on a project climb):
+   ProjectRemovalModal opens client-side BEFORE the POST.
+   ├─ "Yes, remove"   → POST /api/logs, THEN PATCH project=false
+   ├─ "No, keep it"   → POST /api/logs only
+   └─ "Cancel"        → no request
+
+Android system back button (Capacitor App.addListener('backButton'))
+dismisses the modal cleanly without navigating away from the page.
+```
+
+## /history page composition (A021.5)
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Sticky header: back link + date range picker            │
+├──────────────────────────────────────────────────────────┤
+│  Stats strip: Sessions / Flashes / Sends / Peak grade    │
+│                                                          │
+│  ── Activity ──                                          │
+│  Hand-rolled CSS-grid calendar heatmap                    │
+│  (month-by-month, intensity by climb count)               │
+│  Tap day → scrollIntoView the matching session card       │
+│                                                          │
+│  ── Sessions ──                                          │
+│  <SessionCard> per local_date (desc)                      │
+│   each: date · totals · per-climb mini-list (Link → /detail)│
+│                                                          │
+│  ── Grade pyramid ──                                     │
+│  Recharts horizontal BarChart                             │
+│  Filter chips: Flash only / Send or better / All          │
+│                                                          │
+│  ── Send-rate trend ──                                   │
+│  Recharts LineChart                                       │
+│  Series toggles: Flash / Send / Attempt                   │
+└──────────────────────────────────────────────────────────┘
+```
+
+Three GET fetches drive the page (`/api/logs/sessions`, `/api/stats/pyramid`, `/api/stats/trend`), all tied to the same date range and refetched atomically when the range changes.
 
 ---
 

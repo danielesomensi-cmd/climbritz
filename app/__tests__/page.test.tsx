@@ -26,12 +26,13 @@ describe('Home Page', () => {
     expect(screen.getByText('AI Climbing Companion')).toBeInTheDocument();
   });
 
-  it('renders all four tiles', () => {
+  it('renders the five product tiles', () => {
     render(<Home />);
     expect(screen.getByText('Demo LED Light')).toBeInTheDocument();
     expect(screen.getByText('Discover')).toBeInTheDocument();
     expect(screen.getByText('Classify')).toBeInTheDocument();
     expect(screen.getByText('Video Analysis')).toBeInTheDocument();
+    expect(screen.getByText('History')).toBeInTheDocument();
   });
 
   it('renders tile subtitles', () => {
@@ -40,6 +41,16 @@ describe('Home Page', () => {
     expect(screen.getByText('Search 160k+ climbs')).toBeInTheDocument();
     expect(screen.getByText('Tag hold grip types')).toBeInTheDocument();
     expect(screen.getByText('AI technique coaching')).toBeInTheDocument();
+    expect(screen.getByText('Sessions, pyramid, trend')).toBeInTheDocument();
+  });
+
+  // A021 follow-up — Debug tile is dev-only. In jest (NODE_ENV='test')
+  // the production guard is false, so Debug renders. The corresponding
+  // production-hide behaviour is exercised by `npm run build:mobile` →
+  // visual check on Vercel preview, not a unit test.
+  it('renders Debug tile in dev/test environment', () => {
+    render(<Home />);
+    expect(screen.getByText('Debug')).toBeInTheDocument();
   });
 
   it('shows lock icon on Video Analysis tile', () => {

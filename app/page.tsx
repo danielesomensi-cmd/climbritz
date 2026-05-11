@@ -11,6 +11,14 @@ interface Tile {
   locked?: boolean;
 }
 
+// A021 follow-up: Debug is a developer-only diagnostic. It stays at
+// /debug as a direct URL for emergency network checks, but the homepage
+// tile is hidden in production / mobile builds so end users see only
+// the 5 product tiles.
+const IS_PRODUCTION_BUILD =
+  process.env.NEXT_PUBLIC_MOBILE === 'true' ||
+  process.env.NODE_ENV === 'production';
+
 const TILES: Tile[] = [
   {
     href: '/ble-test',
@@ -46,12 +54,16 @@ const TILES: Tile[] = [
     subtitle: 'Sessions, pyramid, trend',
     icon: '📊',
   },
-  {
-    href: '/debug',
-    label: 'Debug',
-    subtitle: 'Network diagnostics',
-    icon: '🔧',
-  },
+  ...(IS_PRODUCTION_BUILD
+    ? []
+    : [
+        {
+          href: '/debug',
+          label: 'Debug',
+          subtitle: 'Network diagnostics',
+          icon: '🔧',
+        },
+      ]),
 ];
 
 function HomeContent() {

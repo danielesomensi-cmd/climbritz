@@ -8,11 +8,12 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('BottomNav', () => {
-  it('renders all four nav items', () => {
+  it('renders all five nav items (Home / Discover / History / Coach / Profile)', () => {
     mockPath = '/';
     render(<BottomNav />);
     expect(screen.getByTestId('nav-home')).toBeInTheDocument();
     expect(screen.getByTestId('nav-discover')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-history')).toBeInTheDocument();
     expect(screen.getByTestId('nav-coach')).toBeInTheDocument();
     expect(screen.getByTestId('nav-profile')).toBeInTheDocument();
   });
@@ -29,5 +30,14 @@ describe('BottomNav', () => {
     render(<BottomNav />);
     expect(screen.getByTestId('nav-discover').className).toMatch(/text-orange-400/);
     expect(screen.getByTestId('nav-home').className).not.toMatch(/text-orange-400/);
+  });
+
+  // A021 follow-up
+  it('marks the history tab active on /history', () => {
+    mockPath = '/history';
+    render(<BottomNav />);
+    expect(screen.getByTestId('nav-history').className).toMatch(/text-orange-400/);
+    expect(screen.getByTestId('nav-home').className).not.toMatch(/text-orange-400/);
+    expect(screen.getByTestId('nav-discover').className).not.toMatch(/text-orange-400/);
   });
 });

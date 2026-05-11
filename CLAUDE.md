@@ -93,6 +93,23 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 - `POST /api/admin/sync-db` → JWT-protected, runs `boardlib database kilter` to download/sync the BoardLib DB
 - `POST /api/admin/upload-db` → upload BoardLib DB to Railway volume (temporary, ADMIN_SECRET-protected)
 
+**Logs API surface (A021 Phase 2):**
+- `POST /api/logs` → 201, create or upgrade today's log on a climb. Body `{climb_uuid, angle, result_type}`. Result strength flash > send > attempt; tapping the same result on the same day increments `attempts_count` instead of inserting a new row; tapping a stronger result upgrades and increments. Rejects animated sequences (`frames_count > 1`) with 422. Reads `X-User-Timezone` (IANA, e.g. `Europe/Rome`) to resolve `local_date`; UTC fallback when header absent.
+- `GET /api/logs?climb_uuid=&from=&to=&limit=` → flat list, scoped to the current user.
+- `GET /api/logs/sessions?from=&to=` → grouped by `local_date`, descending. Each session climb is enriched with `climb_name` + `grade` via a per-request memoised BoardLib lookup (A021.5.0) so `/history` avoids N+1.
+- `PATCH /api/logs/{id}` → update `result_type` and/or `attempts_count`. Recomputes the matching `user_climbs` row.
+- `DELETE /api/logs/{id}` → 204. Recomputes the matching `user_climbs.best_result` from the remaining logs.
+
+**User-climbs API surface (A021 Phase 2):**
+- `GET /api/user-climbs/{climb_uuid}?angle=&recent_limit=` → `{state, recent_logs}`. Powers LogSection + RecentLogs on `/discover/detail`.
+- `PATCH /api/user-climbs/{climb_uuid}/project` → toggle `is_project` (idempotent — submits the desired boolean, not a flip request).
+
+**Stats API surface (A021 Phase 2):**
+- `GET /api/stats/pyramid?from=&to=&result_filter=` → `[{grade_band, count}]`. `result_filter` ∈ `flash | send_or_better | all`.
+- `GET /api/stats/trend?from=&to=` → `[{week_start, flash_count, send_count, attempt_count}]`. ISO-week bucketed (Monday).
+
+**Search overlay (A021 Phase 2 + Phase 4):** `GET /api/climbs/search` now accepts optional `done_filter` and `project_filter` query params (`all | only | exclude`) and, when the request is authenticated, enriches each returned climb with a `user_state` object `{is_project, best_result, last_logged_at}`. The chip filters pre-fetch matching uuids from `user_climbs` and pass them as include/exclude lists to the underlying search — both chips on `only` are intersected (climbs that are done AND flagged project).
+
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/kilter-up`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
 **Next:** B017 gym re-validation (Prev/Next tap-target on iPhone/Android, page titles clear of the notch/clock, filters restore on return from detail), B018 repo-hygiene pre/post-task checks (queued — triggered by a stale git-status snapshot at the start of B017), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
@@ -104,7 +121,7 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 ## Core Rules for Claude Development
 
 ### 📋 Code Standards
-- **Language**: English for code, Italian for comments when needed
+- **Language**: English for code AND rendered UI strings (climbing jargon — flash / send / attempt / project — stays untranslated). Comments + commit bodies can be Italian when natural, but never user-visible text. See `feedback_ui_english.md` in the memory store for the full rule + history.
 - **Style**: Follow PEP 8 (Python), ESLint (TypeScript)
 - **No secrets in code**: Use environment variables for API keys
 - **Type safety**: Always use TypeScript types, Python type hints
@@ -147,25 +164,32 @@ kilter-training-app/
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── videos.py           ✅ Upload, list, get, delete (uses get_current_user_id, A020)
-│   │   │   ├── climbs.py           ✅ Search, detail, stats (Phase 3b)
+│   │   │   ├── climbs.py           ✅ Search (+ A021.4 done_filter/project_filter + user_state overlay), detail, stats
 │   │   │   ├── holds.py            ✅ Board image + hold images (HC-5)
 │   │   │   ├── admin.py            ✅ Protected: sync-db + upload-db (B013, uses get_current_user_id, A020)
+│   │   │   ├── logs.py             ✅ A021 — POST/GET/PATCH/DELETE /api/logs + /api/logs/sessions (X-User-Timezone resolves local_date)
+│   │   │   ├── user_climbs.py      ✅ A021 — GET/PATCH /api/user-climbs/{uuid}
+│   │   │   ├── stats.py            ✅ A021 — /pyramid + /trend (uses memoised BoardLib grade resolver)
 │   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── core/
 │   │   │   ├── config.py           ✅ (A020: production guard on CLERK_JWKS_URL, extra="ignore")
 │   │   │   ├── database.py         ✅
 │   │   │   ├── clerk.py            ✅ A020 — Clerk JWT verification (JWKS) + shadow-row upsert + 5-min in-process clerk_id cache
-│   │   │   └── deps.py             ✅ (A020: get_current_user_id — Bearer or dev-only X-User-ID)
+│   │   │   └── deps.py             ✅ (A020: get_current_user_id + A021.2.6: get_optional_user_id for overlay-only search)
 │   │   ├── models/
 │   │   │   ├── user.py             ✅ (A020: id + clerk_id + created_at + updated_at — Clerk shadow row)
-│   │   │   └── video.py            ✅
+│   │   │   ├── video.py            ✅
+│   │   │   ├── climb_log.py        ✅ A021 — append-mostly source of truth (one row per user/climb/angle/local_date)
+│   │   │   └── user_climb.py       ✅ A021 — derived state cache (is_project + best_result + last_logged_at)
 │   │   ├── schemas/
 │   │   │   ├── user.py             ✅
 │   │   │   ├── video.py            ✅ VideoResponse, FormFeedbackResponse
-│   │   │   └── climb.py            ✅ ClimbSearchResult, ClimbDetail
+│   │   │   ├── climb.py            ✅ ClimbSearchResult (+ user_state, A021.4), ClimbDetail
+│   │   │   └── logs.py             ✅ A021 — LogCreate / LogResponse / UserClimbState / SessionResponse / PyramidEntry / TrendEntry
 │   │   ├── services/
 │   │   │   ├── gemini_service.py   ✅ File API (lazy init, Kilter Board prompt)
-│   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries
+│   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries (+ A021: get_climb_meta + include/exclude uuids on _build_search_filters)
+│   │   │   ├── log_service.py      ✅ A021 — resolve_local_date / create_or_upgrade_log / list_sessions / compute_pyramid / compute_trend
 │   │   │   ├── video_service.py    ✅ ffmpeg utils
 │   │   │   └── storage_service.py  ✅ Local filesystem
 │   │   ├── utils/
@@ -174,14 +198,18 @@ kilter-training-app/
 │   ├── alembic/versions/
 │   │   ├── 001_initial_migration.py ✅
 │   │   ├── 002_video_form_analysis.py ✅
-│   │   └── 003_clerk_auth.py       ✅ A020 — drop legacy users columns, recreate as Clerk shadow row
+│   │   ├── 003_clerk_auth.py       ✅ A020 — drop legacy users columns, recreate as Clerk shadow row
+│   │   └── 004_a021_climb_logging.py ✅ A021 — climb_logs + user_climbs tables (FK to users, ON DELETE CASCADE)
 │   ├── tests/
 │   │   ├── test_videos.py          ✅ video + gemini tests
 │   │   ├── test_climb_service.py   ✅ climb service tests
 │   │   ├── test_climbs_api.py      ✅ climb API tests
+│   │   ├── test_climbs_search_overlay.py ✅ A021.4 — done/project filters + user_state attach
 │   │   ├── test_holds_api.py       ✅ holds API tests
 │   │   ├── test_admin_api.py       ✅ admin sync-db tests (B013)
 │   │   ├── test_clerk_auth.py      ✅ A020 — Clerk verification + shadow-row upsert + dep gating
+│   │   ├── test_logs.py            ✅ A021 — sync rules, tz resolution (Europe/Rome / LA / UTC fallback), session enrichment
+│   │   ├── test_stats.py           ✅ A021 — pyramid grade-band grouping + trend ISO-week bucketing
 │   │   ├── test_startup_validation.py ✅ D014 boardlib DB checks
 │   │   ├── test_kilter_parser.py   ✅
 │   │   └── fixtures/test_kilter.db ✅ test fixture DB
@@ -209,7 +237,13 @@ kilter-training-app/
 │   ├── discover/filtered-list-storage.ts ✅ A014 — sessionStorage-backed persistence of the filtered climb list (24h TTL)
 │   ├── discover/discover-filters-storage.ts ✅ B017 — sessionStorage-backed persistence of the filter UI state (query + angle + filters, 24h TTL)
 │   ├── discover/[climb_uuid]/page.tsx ✅ Legacy redirect → /discover/detail?id=
-│   ├── discover/__tests__/         ✅ Discovery tests (search, detail, filtered-list-storage)
+│   ├── discover/__tests__/         ✅ Discovery tests (search, detail, filtered-list-storage, chip-filters A021.4)
+│   ├── history/page.tsx            ✅ A021.5 — /history page: stats header + calendar + sessions + pyramid + trend
+│   ├── history/calendar.tsx        ✅ A021.5 — hand-rolled CSS-grid month-by-month heatmap, no library
+│   ├── history/sessions-list.tsx   ✅ A021.5 — per-day session cards w/ click-through to /discover/detail
+│   ├── history/grade-pyramid.tsx   ✅ A021.5 — Recharts horizontal BarChart + flash/send_or_better/all filter
+│   ├── history/trend-chart.tsx     ✅ A021.5 — Recharts LineChart + per-series toggle (flash/send/attempt)
+│   ├── history/__tests__/          ✅ A021.5 — date-range, pyramid filter, calendar→scroll, error state
 │   ├── ble-test/page.tsx           ✅ BLE LED test page — 10 presets + board preview (A006/B009/B014 auto-apply)
 │   ├── ble-test/presets.ts         ✅ LED preset data — 10 pixel-art presets + #11 all-LEDs stress test (B014-iter-2)
 │   ├── ble-test/board-preview.tsx  ✅ Board image + colored circles overlay (B009)
@@ -231,8 +265,11 @@ kilter-training-app/
 ├── components/
 │   ├── BoardMap.tsx                ✅ 12x12 board canvas (HC-2)
 │   ├── ClimbBoardView.tsx          ✅ Climb detail board wrapper (A011)
-│   ├── ClimbCard.tsx               ✅ Search result card (A011)
-│   ├── FilterPanel.tsx             ✅ Discovery filters (A011)
+│   ├── ClimbCard.tsx               ✅ Search result card (A011 + A021.4 StateIcons in info column, B-A021-fix-2 moved out of absolute)
+│   ├── StateIcons.tsx              ✅ A021.4 — ⚡/✓/★ icon strip, renders null when userState has no history + no project flag
+│   ├── LogSection.tsx              ✅ A021.3 — 5-col single-row grid (Flash / Send / Attempt / Project / Remove) + project-removal modal w/ Android back-button
+│   ├── RecentLogs.tsx              ✅ A021.3 — "History on this climb" mini-list on /discover/detail
+│   ├── FilterPanel.tsx             ✅ Discovery filters (A011 + A021.4 doneFilter/projectFilter on Filters type)
 │   ├── GradeDisplay.tsx            ✅ Font/V grade display (A011)
 │   ├── StarRating.tsx              ✅ 5-star widget (A011)
 │   ├── BottomNav.tsx               ✅ App bottom navigation (A011, A015: now on /classify + /ble-test)
