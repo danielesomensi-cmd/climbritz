@@ -42,6 +42,8 @@ def _build_search_filters(
     min_ascents: int | None,
     min_quality: float | None,
     moves: str | None,
+    include_uuids: list[str] | None = None,
+    exclude_uuids: list[str] | None = None,
 ) -> tuple[str, list]:
     """Build the WHERE-clause fragment + params shared by ``search_climbs``
     and ``count_matching_climbs``. Returned ``where_sql`` starts with
@@ -50,6 +52,12 @@ def _build_search_filters(
 
     The animated-sequence exclusion (``frames_count = 1``) is part of the
     shared base — circuits never appear in either count or list.
+
+    A021: ``include_uuids`` / ``exclude_uuids`` back the ``done_filter``
+    and ``project_filter`` chips on Discovery. The user's logs and
+    project flags live in the app DB (different SQLite file from
+    BoardLib), so the API layer pre-fetches matching uuids and passes
+    them in for inclusion/exclusion at the SQL level.
     """
     where_sql = """
         WHERE c.layout_id = 1
@@ -101,6 +109,20 @@ def _build_search_filters(
         elif moves == "gt10":
             where_sql += f" AND {move_expr} > 10"
 
+    # A021 include/exclude lists. include_uuids=[] short-circuits to zero
+    # results (the user has e.g. done_filter=only but no logged climbs).
+    if include_uuids is not None:
+        if len(include_uuids) == 0:
+            where_sql += " AND 1 = 0"
+        else:
+            placeholders = ",".join("?" for _ in include_uuids)
+            where_sql += f" AND c.uuid IN ({placeholders})"
+            params.extend(include_uuids)
+    if exclude_uuids:
+        placeholders = ",".join("?" for _ in exclude_uuids)
+        where_sql += f" AND c.uuid NOT IN ({placeholders})"
+        params.extend(exclude_uuids)
+
     return where_sql, params
 
 
@@ -114,6 +136,8 @@ def search_climbs(
     moves: str | None = None,
     sort: str = "popularity",
     limit: int = 500,
+    include_uuids: list[str] | None = None,
+    exclude_uuids: list[str] | None = None,
 ) -> list[dict]:
     """Search/browse climbs. Autocomplete-friendly when `query` is provided,
     pure browse-by-filter when it's None or empty.
@@ -149,6 +173,8 @@ def search_climbs(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        include_uuids=include_uuids,
+        exclude_uuids=exclude_uuids,
     )
 
     # Whitelist sort to prevent SQL injection. Unknown → popularity.
@@ -193,6 +219,8 @@ def count_matching_climbs(
     min_ascents: int | None = None,
     min_quality: float | None = None,
     moves: str | None = None,
+    include_uuids: list[str] | None = None,
+    exclude_uuids: list[str] | None = None,
 ) -> int:
     """Count climbs matching the same filter set as ``search_climbs``,
     ignoring sort/limit. Backs the ``total_count`` field in the search
@@ -210,6 +238,8 @@ def count_matching_climbs(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        include_uuids=include_uuids,
+        exclude_uuids=exclude_uuids,
     )
 
     sql = f"""
@@ -221,6 +251,29 @@ def count_matching_climbs(
 
     with _get_connection() as conn:
         return conn.execute(sql, params).fetchone()[0]
+
+
+def get_climb_meta(climb_uuid: str) -> dict | None:
+    """Lightweight metadata lookup. Used by POST /api/logs (A021) to
+    reject animated sequences (frames_count > 1) before persisting a
+    log that the user could never re-discover via search.
+
+    Returns ``{frames_count, is_listed, layout_id}`` or ``None`` when the
+    climb_uuid doesn't exist in BoardLib.
+    """
+    with _get_connection() as conn:
+        row = conn.execute(
+            "SELECT frames_count, is_listed, layout_id "
+            "FROM climbs WHERE uuid = ?",
+            (climb_uuid,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {
+            "frames_count": row["frames_count"],
+            "is_listed": bool(row["is_listed"]),
+            "layout_id": row["layout_id"],
+        }
 
 
 def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
