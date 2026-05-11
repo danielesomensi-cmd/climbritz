@@ -41,6 +41,12 @@ const TILES: Tile[] = [
     locked: true,
   },
   {
+    href: '/history',
+    label: 'History',
+    subtitle: 'Sessions, pyramid, trend',
+    icon: '📊',
+  },
+  {
     href: '/debug',
     label: 'Debug',
     subtitle: 'Network diagnostics',
