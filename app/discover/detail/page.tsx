@@ -35,7 +35,7 @@ function formatAscents(count: number): string {
 export default function ClimbDetailPage() {
   return (
     <AuthGuard>
-      <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <Suspense fallback={<div className="min-h-dvh bg-zinc-950" />}>
         <ClimbDetailPageInner />
       </Suspense>
     </AuthGuard>
@@ -138,7 +138,7 @@ function ClimbDetailPageInner() {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-24">
+    <div className="min-h-dvh bg-zinc-950 text-white pb-24">
       <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 flex items-center gap-3">
           <Link

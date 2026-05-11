@@ -10,9 +10,13 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* B-A021-fix-1.2.1 — `scroll-behavior: smooth` was the root cause of an
+   iOS Safari "snap-to-top" bug on /discover/detail: any browser-initiated
+   scroll-position adjustment during async layout shifts (LogSection +
+   RecentLogs fetches resolving) was animated by the global rule, which
+   the user perceived as the page drifting back to the top. The app has
+   zero in-page anchor navigation that would benefit from smooth scroll,
+   so the rule is removed wholesale rather than scoped. */
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
