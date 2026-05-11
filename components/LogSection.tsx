@@ -216,7 +216,14 @@ export default function LogSection({
         Logga il tentativo
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      {/* B-A021-fix-1.1.1 — single-row grid. 5 cols when a Remove
+          button is present (today's log exists), 4 cols otherwise.
+          All buttons share the same icon-over-label stack so they read
+          consistently at the narrow per-cell width on a phone. */}
+      <div
+        data-testid="log-grid"
+        className={`grid ${todaysLog ? 'grid-cols-5' : 'grid-cols-4'} gap-2`}
+      >
         {RESULT_BUTTONS.map((btn) => {
           const isPending = pending === btn.result;
           const isTodaysResult = todaysLog?.result_type === btn.result;
@@ -228,7 +235,7 @@ export default function LogSection({
               onClick={() => handleResultButton(btn.result)}
               disabled={pending !== null}
               className={[
-                'min-h-16 px-3 rounded-lg text-white font-bold text-base',
+                'min-h-16 px-1 rounded-lg text-white font-bold',
                 'border-2 transition-all flex flex-col items-center justify-center gap-0.5',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 btn.color,
@@ -236,7 +243,7 @@ export default function LogSection({
               ].join(' ')}
             >
               <span className="text-2xl leading-none">{btn.icon}</span>
-              <span className="text-xs">
+              <span className="text-[11px] leading-tight">
                 {isPending ? '…' : btn.label}
                 {isTodaysResult && todaysLog && todaysLog.attempts_count > 1
                   ? ` ×${todaysLog.attempts_count}`
@@ -245,25 +252,25 @@ export default function LogSection({
             </button>
           );
         })}
-      </div>
 
-      <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           data-testid="log-btn-project"
           onClick={handleProjectToggle}
           disabled={pending !== null}
           className={[
-            'min-h-14 px-3 rounded-lg border-2 font-bold text-sm',
-            'flex items-center justify-center gap-2 transition-all',
+            'min-h-16 px-1 rounded-lg border-2 font-bold',
+            'flex flex-col items-center justify-center gap-0.5 transition-all',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             isProject
               ? 'bg-orange-500 border-orange-600 text-white hover:bg-orange-400'
               : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-500',
           ].join(' ')}
         >
-          <span className="text-lg leading-none">{isProject ? '★' : '☆'}</span>
-          <span>{pending === 'project' ? '…' : isProject ? 'In progetto' : 'Aggiungi a progetti'}</span>
+          <span className="text-2xl leading-none">{isProject ? '★' : '☆'}</span>
+          <span className="text-[11px] leading-tight">
+            {pending === 'project' ? '…' : 'Progetto'}
+          </span>
         </button>
 
         {todaysLog && (
@@ -272,9 +279,12 @@ export default function LogSection({
             data-testid="log-btn-remove"
             onClick={handleRemoveTodaysLog}
             disabled={pending !== null}
-            className="min-h-14 px-3 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold text-sm hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-16 px-1 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0.5 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            🗑 {pending === 'remove' ? '…' : 'Rimuovi log di oggi'}
+            <span className="text-2xl leading-none">🗑</span>
+            <span className="text-[11px] leading-tight">
+              {pending === 'remove' ? '…' : 'Rimuovi'}
+            </span>
           </button>
         )}
       </div>

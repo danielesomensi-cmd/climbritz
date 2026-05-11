@@ -390,6 +390,35 @@ describe('LogSection — remove today log', () => {
     expect(screen.getByTestId('log-btn-remove')).toBeInTheDocument();
   });
 
+  // B-A021-fix-1.1.1 — single-row grid. The grid switches between 5 and
+  // 4 columns depending on whether the Remove button is present, so the
+  // other four buttons redistribute to fill the row evenly.
+  it('uses grid-cols-5 when today’s log exists', () => {
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ recent_logs: [mkLog()] })}
+        onMutated={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('log-grid')).toHaveClass('grid-cols-5');
+    expect(screen.getByTestId('log-grid')).not.toHaveClass('grid-cols-4');
+  });
+
+  it('uses grid-cols-4 when no log exists for today', () => {
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail()}
+        onMutated={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('log-grid')).toHaveClass('grid-cols-4');
+    expect(screen.getByTestId('log-grid')).not.toHaveClass('grid-cols-5');
+  });
+
   it('tapping remove calls DELETE /api/logs/{id} with the right id', async () => {
     const log = mkLog({ id: 'todays-log-42' });
     render(
