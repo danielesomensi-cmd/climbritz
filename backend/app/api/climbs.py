@@ -5,19 +5,24 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.climb import (
-    ClimbSearchResult,
+    ClimbSearchResponse,
     ClimbDetail,
     DbStatsResponse,
     MovesFilter,
 )
-from app.services.climb_service import search_climbs, get_climb, get_db_stats
+from app.services.climb_service import (
+    search_climbs,
+    count_matching_climbs,
+    get_climb,
+    get_db_stats,
+)
 
 router = APIRouter()
 
 SortField = Literal["popularity", "quality", "grade_asc", "grade_desc"]
 
 
-@router.get("/search", response_model=list[ClimbSearchResult])
+@router.get("/search", response_model=ClimbSearchResponse)
 async def search(
     q: str | None = Query(
         default=None,
@@ -53,10 +58,23 @@ async def search(
         default="popularity",
         description="Sort field: popularity | quality | grade_asc | grade_desc",
     ),
-    limit: int = Query(default=10, ge=1, le=50, description="Max results"),
+    limit: int = Query(
+        default=500,
+        ge=1,
+        le=500,
+        description="Max results returned (hard cap 500). The response "
+        "includes total_count so the client can surface an overflow banner.",
+    ),
 ):
-    """Search Kilter Board climbs. Autocomplete-friendly with rich filters."""
-    return search_climbs(
+    """Search Kilter Board climbs. Autocomplete-friendly with rich filters.
+
+    Response envelope (B020): ``{ climbs: [...], total_count: int }``.
+    ``total_count`` reflects every climb matching the filters, ignoring
+    the limit cap — so a broad search returning the first 500 of 1247
+    matches sets ``total_count=1247`` and the UI can prompt the user to
+    narrow the filters.
+    """
+    climbs = search_climbs(
         query=q,
         angle=angle,
         grade_min=grade_min,
@@ -67,6 +85,16 @@ async def search(
         sort=sort,
         limit=limit,
     )
+    total_count = count_matching_climbs(
+        query=q,
+        angle=angle,
+        grade_min=grade_min,
+        grade_max=grade_max,
+        min_ascents=min_ascents,
+        min_quality=min_quality,
+        moves=moves,
+    )
+    return ClimbSearchResponse(climbs=climbs, total_count=total_count)
 
 
 @router.get("/stats", response_model=DbStatsResponse)

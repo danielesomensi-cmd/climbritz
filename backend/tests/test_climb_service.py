@@ -263,6 +263,74 @@ class TestSearchClimbs:
         assert none_uuids == no_uuids
 
 
+class TestCountMatchingClimbs:
+    """B020: count_matching_climbs shares the same WHERE-clause builder as
+    search_climbs, so the count must equal len(search_climbs(...)) when the
+    search isn't truncated by ``limit``."""
+
+    def test_count_matches_search_length_no_filters(self):
+        from app.services.climb_service import (
+            count_matching_climbs,
+            search_climbs,
+        )
+
+        # Default limit is 500, fixture has 7 listed singles → no truncation.
+        assert count_matching_climbs() == len(search_climbs())
+
+    def test_count_matches_search_length_with_filters(self):
+        from app.services.climb_service import (
+            count_matching_climbs,
+            search_climbs,
+        )
+
+        kwargs = dict(query="Benchmark", angle=40)
+        assert count_matching_climbs(**kwargs) == len(search_climbs(**kwargs))
+
+    def test_count_zero_when_no_match(self):
+        from app.services.climb_service import count_matching_climbs
+
+        assert count_matching_climbs(query="xyznonexistent") == 0
+
+    def test_count_ignores_limit_kwarg(self):
+        """The function doesn't accept ``limit`` — count is always exhaustive.
+        Guards against future drift if someone adds limit/sort by accident."""
+        from app.services.climb_service import count_matching_climbs
+
+        with pytest.raises(TypeError):
+            count_matching_climbs(limit=1)  # type: ignore[call-arg]
+
+    def test_count_excludes_animated_sequences(self):
+        """frames_count > 1 rows must be excluded from the count, same as
+        from the search list."""
+        from app.services.climb_service import count_matching_climbs
+
+        # Fixture has 7 listed singles + 1 animated sequence. Count = 7.
+        assert count_matching_climbs() == 7
+
+    def test_count_unaffected_by_dg_join_omission(self):
+        """The count query drops the difficulty_grades JOIN that the search
+        query keeps for projection. Validate that for the fixture (where
+        every display_difficulty maps cleanly to dg.difficulty) the two
+        agree across a representative filter sweep."""
+        from app.services.climb_service import (
+            count_matching_climbs,
+            search_climbs,
+        )
+
+        for kwargs in [
+            dict(),
+            dict(angle=40),
+            dict(grade_min=18, grade_max=22),
+            dict(min_ascents=2000),
+            dict(min_quality=3.8),
+            dict(moves="le5"),
+            dict(query="e", angle=40, grade_min=18),
+        ]:
+            assert count_matching_climbs(**kwargs) == len(
+                search_climbs(**kwargs)
+            ), kwargs
+
+
 class TestGetClimb:
     def test_get_existing_climb(self):
         from app.services.climb_service import get_climb

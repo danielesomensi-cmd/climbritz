@@ -23,23 +23,28 @@ def mock_boardlib_db():
 
 
 class TestSearchEndpoint:
+    # B020: response is now an envelope {"climbs": [...], "total_count": int}
+    # rather than a flat list. Every body read goes through resp.json()["climbs"].
+
     def test_search_returns_results(self):
         resp = client.get("/api/climbs/search?q=Benchmark")
         assert resp.status_code == 200
-        data = resp.json()
-        assert len(data) >= 2
-        assert data[0]["name"] == "Benchmark Alpha"
+        climbs = resp.json()["climbs"]
+        assert len(climbs) >= 2
+        assert climbs[0]["name"] == "Benchmark Alpha"
 
     def test_search_with_angle(self):
         resp = client.get("/api/climbs/search?q=Benchmark&angle=40")
         assert resp.status_code == 200
-        data = resp.json()
-        assert all(r["angle"] == 40 for r in data)
+        climbs = resp.json()["climbs"]
+        assert all(r["angle"] == 40 for r in climbs)
 
     def test_search_empty_results(self):
         resp = client.get("/api/climbs/search?q=xyznonexistent")
         assert resp.status_code == 200
-        assert resp.json() == []
+        body = resp.json()
+        assert body["climbs"] == []
+        assert body["total_count"] == 0
 
     def test_search_without_query_returns_all(self):
         # B012: q is now optional. With no q, return everything matching
@@ -49,12 +54,12 @@ class TestSearchEndpoint:
         # excluded by the global frames_count=1 filter.
         resp = client.get("/api/climbs/search")
         assert resp.status_code == 200
-        assert len(resp.json()) == 7
+        assert len(resp.json()["climbs"]) == 7
 
     def test_search_empty_query_string_returns_all(self):
         resp = client.get("/api/climbs/search?q=")
         assert resp.status_code == 200
-        assert len(resp.json()) == 7
+        assert len(resp.json()["climbs"]) == 7
 
     def test_search_no_query_with_filters(self):
         # Browse-by-filter: angle=40 + grade_min=18 → Beta(20) + Crimp(22)
@@ -62,20 +67,22 @@ class TestSearchEndpoint:
             "/api/climbs/search?angle=40&grade_min=18&sort=quality"
         )
         assert resp.status_code == 200
-        data = resp.json()
-        assert len(data) == 2
+        climbs = resp.json()["climbs"]
+        assert len(climbs) == 2
         # quality sort: Beta (4.0) before Crimp (3.8)
-        assert data[0]["name"] == "Benchmark Beta"
+        assert climbs[0]["name"] == "Benchmark Beta"
 
     def test_search_with_limit(self):
         resp = client.get("/api/climbs/search?q=Benchmark&limit=1")
         assert resp.status_code == 200
-        assert len(resp.json()) == 1
+        assert len(resp.json()["climbs"]) == 1
 
     def test_search_result_structure(self):
         resp = client.get("/api/climbs/search?q=Benchmark&angle=40")
-        data = resp.json()
-        r = data[0]
+        body = resp.json()
+        assert "climbs" in body
+        assert "total_count" in body
+        r = body["climbs"][0]
         assert "uuid" in r
         assert "name" in r
         assert "setter" in r
@@ -90,40 +97,40 @@ class TestSearchEndpoint:
         resp = client.get("/api/climbs/search?q=e&grade_min=18&grade_max=20")
         assert resp.status_code == 200
         # Alpha@45 (18) + Beta@40 (20)
-        assert len(resp.json()) == 2
+        assert len(resp.json()["climbs"]) == 2
 
     def test_search_min_ascents(self):
         resp = client.get("/api/climbs/search?q=e&min_ascents=3000")
         assert resp.status_code == 200
-        data = resp.json()
-        assert all(r["ascensionist_count"] >= 3000 for r in data)
+        climbs = resp.json()["climbs"]
+        assert all(r["ascensionist_count"] >= 3000 for r in climbs)
 
     def test_search_min_quality(self):
         resp = client.get("/api/climbs/search?q=e&min_quality=3.8")
         assert resp.status_code == 200
-        data = resp.json()
-        assert all(r["quality_average"] >= 3.8 for r in data)
+        climbs = resp.json()["climbs"]
+        assert all(r["quality_average"] >= 3.8 for r in climbs)
 
     def test_search_sort_quality(self):
         resp = client.get("/api/climbs/search?q=e&sort=quality")
         assert resp.status_code == 200
-        data = resp.json()
+        climbs = resp.json()["climbs"]
         # First result must be the highest-quality row
-        assert data[0]["quality_average"] == max(r["quality_average"] for r in data)
+        assert climbs[0]["quality_average"] == max(r["quality_average"] for r in climbs)
 
     def test_search_sort_grade_asc(self):
         # q="Benchmark" rather than "e" so the A019 fixture rows
         # (diff=14) don't sort ahead of Alpha@40 (diff=16).
         resp = client.get("/api/climbs/search?q=Benchmark&sort=grade_asc")
         assert resp.status_code == 200
-        data = resp.json()
-        assert data[0]["name"] == "Benchmark Alpha"
-        assert data[0]["angle"] == 40
+        climbs = resp.json()["climbs"]
+        assert climbs[0]["name"] == "Benchmark Alpha"
+        assert climbs[0]["angle"] == 40
 
     def test_search_sort_grade_desc(self):
         resp = client.get("/api/climbs/search?q=e&sort=grade_desc")
-        data = resp.json()
-        assert data[0]["name"] == "The Crimp Test"
+        climbs = resp.json()["climbs"]
+        assert climbs[0]["name"] == "The Crimp Test"
 
     def test_search_invalid_sort_rejected(self):
         resp = client.get("/api/climbs/search?q=e&sort=bogus")
@@ -142,9 +149,9 @@ class TestSearchEndpoint:
             "/api/climbs/search?q=e&angle=40&grade_min=18&min_ascents=2000&sort=quality"
         )
         assert resp.status_code == 200
-        data = resp.json()
-        assert len(data) == 1
-        assert data[0]["name"] == "Benchmark Beta"
+        climbs = resp.json()["climbs"]
+        assert len(climbs) == 1
+        assert climbs[0]["name"] == "Benchmark Beta"
 
     # ── A019: moves filter ──────────────────────────────────────────────────
 
@@ -153,45 +160,105 @@ class TestSearchEndpoint:
         from search globally — they're circuits, not boulders."""
         resp = client.get("/api/climbs/search")
         assert resp.status_code == 200
-        names = [r["name"] for r in resp.json()]
+        names = [r["name"] for r in resp.json()["climbs"]]
         assert "A019 Fixture - Animated Sequence" not in names
 
     def test_search_moves_le5_returns_only_short_boulders(self):
         resp = client.get("/api/climbs/search?moves=le5")
         assert resp.status_code == 200
-        names = {r["name"] for r in resp.json()}
+        names = {r["name"] for r in resp.json()["climbs"]}
         # Pre-A019 fixtures all sit in ≤5: Alpha (4 moves), Beta (3), Crimp (3).
         assert names == {"Benchmark Alpha", "Benchmark Beta", "The Crimp Test"}
 
     def test_search_moves_6_7(self):
         resp = client.get("/api/climbs/search?moves=6-7")
         assert resp.status_code == 200
-        names = [r["name"] for r in resp.json()]
+        names = [r["name"] for r in resp.json()["climbs"]]
         assert names == ["A019 Fixture - Bucket 6-7"]
 
     def test_search_moves_8_10(self):
         resp = client.get("/api/climbs/search?moves=8-10")
         assert resp.status_code == 200
-        names = [r["name"] for r in resp.json()]
+        names = [r["name"] for r in resp.json()["climbs"]]
         assert names == ["A019 Fixture - Bucket 8-10"]
 
     def test_search_moves_gt10(self):
         resp = client.get("/api/climbs/search?moves=gt10")
         assert resp.status_code == 200
-        names = [r["name"] for r in resp.json()]
+        names = [r["name"] for r in resp.json()["climbs"]]
         assert names == ["A019 Fixture - Bucket >10"]
 
     def test_search_moves_any_does_not_filter(self):
         """`moves=any` is equivalent to omitting the parameter."""
         resp_any = client.get("/api/climbs/search?moves=any")
         resp_no = client.get("/api/climbs/search")
-        assert {r["uuid"] for r in resp_any.json()} == {
-            r["uuid"] for r in resp_no.json()
+        assert {r["uuid"] for r in resp_any.json()["climbs"]} == {
+            r["uuid"] for r in resp_no.json()["climbs"]
         }
 
     def test_search_moves_invalid_value_returns_422(self):
         resp = client.get("/api/climbs/search?moves=bogus")
         assert resp.status_code == 422
+
+    # ── B020: envelope + 500-cap ────────────────────────────────────────────
+
+    def test_search_response_has_envelope(self):
+        """B020: response is {"climbs": [...], "total_count": int}, not a flat list."""
+        resp = client.get("/api/climbs/search")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert isinstance(body, dict)
+        assert "climbs" in body
+        assert "total_count" in body
+        assert isinstance(body["climbs"], list)
+        assert isinstance(body["total_count"], int)
+
+    def test_search_total_count_at_least_climbs_len(self):
+        """Invariant: total_count >= len(climbs) for every filter combo."""
+        # Sample a handful of filter combos rather than enumerate.
+        for path in [
+            "/api/climbs/search",
+            "/api/climbs/search?q=Benchmark",
+            "/api/climbs/search?angle=40",
+            "/api/climbs/search?moves=le5",
+            "/api/climbs/search?grade_min=18&grade_max=22",
+        ]:
+            resp = client.get(path)
+            assert resp.status_code == 200, path
+            body = resp.json()
+            assert body["total_count"] >= len(body["climbs"]), path
+
+    def test_search_total_count_independent_of_limit(self):
+        """Same filters → same total_count regardless of limit."""
+        resp_small = client.get("/api/climbs/search?limit=1")
+        resp_big = client.get("/api/climbs/search?limit=500")
+        assert resp_small.json()["total_count"] == resp_big.json()["total_count"]
+        # And the small response is actually truncated:
+        assert len(resp_small.json()["climbs"]) == 1
+        assert len(resp_big.json()["climbs"]) == resp_big.json()["total_count"]
+
+    def test_search_total_count_zero_when_no_match(self):
+        resp = client.get("/api/climbs/search?q=xyznonexistent")
+        assert resp.json()["total_count"] == 0
+
+    def test_search_limit_above_500_rejected(self):
+        resp = client.get("/api/climbs/search?limit=501")
+        assert resp.status_code == 422
+
+    def test_search_limit_at_cap_accepted(self):
+        resp = client.get("/api/climbs/search?limit=500")
+        assert resp.status_code == 200
+
+    def test_search_limit_below_minimum_rejected(self):
+        resp = client.get("/api/climbs/search?limit=0")
+        assert resp.status_code == 422
+
+    def test_search_default_limit_returns_all_matching(self):
+        """With the fixture's 7 listed singles, the default-limit response
+        should equal total_count (no truncation, since 7 << 500 cap)."""
+        resp = client.get("/api/climbs/search")
+        body = resp.json()
+        assert len(body["climbs"]) == body["total_count"]
 
 
 class TestDetailEndpoint:

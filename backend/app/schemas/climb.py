@@ -44,6 +44,20 @@ class ClimbSearchResult(BaseModel):
     quality_average: float
 
 
+class ClimbSearchResponse(BaseModel):
+    """Envelope around search results so the client can render an overflow
+    banner ("showing 500 of 1247 results") without a second request. B020."""
+
+    climbs: list[ClimbSearchResult]
+    total_count: int = Field(
+        ...,
+        description=(
+            "Total climbs matching the filters, ignoring the limit cap. "
+            "When > len(climbs), the client surfaces an overflow banner."
+        ),
+    )
+
+
 class ClimbDetail(BaseModel):
     """Full detail for a single climb."""
 

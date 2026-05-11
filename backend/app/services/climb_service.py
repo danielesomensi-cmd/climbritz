@@ -34,6 +34,76 @@ SORT_OPTIONS: dict[str, str] = {
 }
 
 
+def _build_search_filters(
+    query: str | None,
+    angle: int | None,
+    grade_min: int | None,
+    grade_max: int | None,
+    min_ascents: int | None,
+    min_quality: float | None,
+    moves: str | None,
+) -> tuple[str, list]:
+    """Build the WHERE-clause fragment + params shared by ``search_climbs``
+    and ``count_matching_climbs``. Returned ``where_sql`` starts with
+    ``WHERE`` and assumes the caller's FROM includes ``climbs c`` aliased
+    and a JOIN to ``climb_stats cs``. B020.
+
+    The animated-sequence exclusion (``frames_count = 1``) is part of the
+    shared base — circuits never appear in either count or list.
+    """
+    where_sql = """
+        WHERE c.layout_id = 1
+          AND c.is_listed = 1
+          AND c.frames_count = 1
+          AND cs.ascensionist_count > 0
+    """
+    params: list = []
+
+    if query:
+        where_sql += " AND c.name LIKE ?"
+        params.append(f"%{query}%")
+
+    if angle is not None:
+        where_sql += " AND cs.angle = ?"
+        params.append(angle)
+
+    if grade_min is not None:
+        where_sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) >= ?"
+        params.append(grade_min)
+
+    if grade_max is not None:
+        where_sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) <= ?"
+        params.append(grade_max)
+
+    if min_ascents is not None:
+        where_sql += " AND cs.ascensionist_count >= ?"
+        params.append(min_ascents)
+
+    if min_quality is not None:
+        where_sql += " AND cs.quality_average >= ?"
+        params.append(min_quality)
+
+    # A019 — moves filter. Counts cyan/middle holds (role 13) by counting
+    # 'r13' substrings in the frames blob: each occurrence is 3 chars, so
+    # (LENGTH(frames) - LENGTH(REPLACE(frames, 'r13', ''))) / 3 is the
+    # middle-hold count. Add 2 (one start, one finish) for total moves.
+    # The substring trick is safe because layout_id=1 restricts roles to
+    # {12,13,14,15} (2-digit), so 'r13' can never collide with a longer
+    # role like 'r130'. If layout filter is ever relaxed, revisit.
+    if moves and moves != "any":
+        move_expr = "((LENGTH(c.frames) - LENGTH(REPLACE(c.frames, 'r13', ''))) / 3 + 2)"
+        if moves == "le5":
+            where_sql += f" AND {move_expr} <= 5"
+        elif moves == "6-7":
+            where_sql += f" AND {move_expr} BETWEEN 6 AND 7"
+        elif moves == "8-10":
+            where_sql += f" AND {move_expr} BETWEEN 8 AND 10"
+        elif moves == "gt10":
+            where_sql += f" AND {move_expr} > 10"
+
+    return where_sql, params
+
+
 def search_climbs(
     query: str | None = None,
     angle: int | None = None,
@@ -43,7 +113,7 @@ def search_climbs(
     min_quality: float | None = None,
     moves: str | None = None,
     sort: str = "popularity",
-    limit: int = 10,
+    limit: int = 500,
 ) -> list[dict]:
     """Search/browse climbs. Autocomplete-friendly when `query` is provided,
     pure browse-by-filter when it's None or empty.
@@ -64,17 +134,27 @@ def search_climbs(
                "8-10", "gt10". "any" or None means no move filter.
         sort: One of "popularity", "quality", "grade_asc", "grade_desc".
               Defaults to "popularity". Unknown values fall back to popularity.
-        limit: Max results to return (default 10).
+        limit: Max results to return. Default 500 (B020). The API endpoint
+               clamps this to ≤ 500; the service layer trusts the caller.
 
     Returns:
         List of dicts with: uuid, name, setter, grade, angle,
         ascensionist_count, quality_average.
     """
-    # Always exclude animated multi-frame sequences (Pump 540°, Driftwood,
-    # etc. — frames_count > 1). They're circuits, not boulders, and the
-    # moves formula and per-hold colour mapping don't apply. Phase 8+ will
-    # surface them in a dedicated UX. (D016 / A019)
-    sql = """
+    where_sql, params = _build_search_filters(
+        query=query,
+        angle=angle,
+        grade_min=grade_min,
+        grade_max=grade_max,
+        min_ascents=min_ascents,
+        min_quality=min_quality,
+        moves=moves,
+    )
+
+    # Whitelist sort to prevent SQL injection. Unknown → popularity.
+    order_clause = SORT_OPTIONS.get(sort, SORT_OPTIONS["popularity"])
+
+    sql = f"""
         SELECT c.uuid, c.name, c.setter_username,
                cs.angle, cs.display_difficulty, cs.ascensionist_count,
                cs.quality_average,
@@ -83,58 +163,9 @@ def search_climbs(
         JOIN climb_stats cs ON c.uuid = cs.climb_uuid
         JOIN difficulty_grades dg
             ON CAST(ROUND(cs.display_difficulty) AS INT) = dg.difficulty
-        WHERE c.layout_id = 1
-          AND c.is_listed = 1
-          AND c.frames_count = 1
-          AND cs.ascensionist_count > 0
+        {where_sql}
+        ORDER BY {order_clause} LIMIT ?
     """
-    params: list = []
-
-    if query:
-        sql += " AND c.name LIKE ?"
-        params.append(f"%{query}%")
-
-    if angle is not None:
-        sql += " AND cs.angle = ?"
-        params.append(angle)
-
-    if grade_min is not None:
-        sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) >= ?"
-        params.append(grade_min)
-
-    if grade_max is not None:
-        sql += " AND CAST(ROUND(cs.display_difficulty) AS INT) <= ?"
-        params.append(grade_max)
-
-    if min_ascents is not None:
-        sql += " AND cs.ascensionist_count >= ?"
-        params.append(min_ascents)
-
-    if min_quality is not None:
-        sql += " AND cs.quality_average >= ?"
-        params.append(min_quality)
-
-    # A019 — moves filter. Counts cyan/middle holds (role 13) by counting
-    # 'r13' substrings in the frames blob: each occurrence is 3 chars, so
-    # (LENGTH(frames) - LENGTH(REPLACE(frames, 'r13', ''))) / 3 is the
-    # middle-hold count. Add 2 (one start, one finish) for total moves.
-    # The substring trick is safe because layout_id=1 restricts roles to
-    # {12,13,14,15} (2-digit), so 'r13' can never collide with a longer
-    # role like 'r130'. If layout filter is ever relaxed, revisit.
-    if moves and moves != "any":
-        move_expr = "((LENGTH(c.frames) - LENGTH(REPLACE(c.frames, 'r13', ''))) / 3 + 2)"
-        if moves == "le5":
-            sql += f" AND {move_expr} <= 5"
-        elif moves == "6-7":
-            sql += f" AND {move_expr} BETWEEN 6 AND 7"
-        elif moves == "8-10":
-            sql += f" AND {move_expr} BETWEEN 8 AND 10"
-        elif moves == "gt10":
-            sql += f" AND {move_expr} > 10"
-
-    # Whitelist sort to prevent SQL injection. Unknown → popularity.
-    order_clause = SORT_OPTIONS.get(sort, SORT_OPTIONS["popularity"])
-    sql += f" ORDER BY {order_clause} LIMIT ?"
     params.append(limit)
 
     with _get_connection() as conn:
@@ -152,6 +183,44 @@ def search_climbs(
         }
         for row in rows
     ]
+
+
+def count_matching_climbs(
+    query: str | None = None,
+    angle: int | None = None,
+    grade_min: int | None = None,
+    grade_max: int | None = None,
+    min_ascents: int | None = None,
+    min_quality: float | None = None,
+    moves: str | None = None,
+) -> int:
+    """Count climbs matching the same filter set as ``search_climbs``,
+    ignoring sort/limit. Backs the ``total_count`` field in the search
+    response envelope (B020).
+
+    The COUNT query omits the ``difficulty_grades`` join — that's a
+    projection-only join (for ``boulder_name``), not a filter. Dropping it
+    saves work on broad searches where the candidate set is large.
+    """
+    where_sql, params = _build_search_filters(
+        query=query,
+        angle=angle,
+        grade_min=grade_min,
+        grade_max=grade_max,
+        min_ascents=min_ascents,
+        min_quality=min_quality,
+        moves=moves,
+    )
+
+    sql = f"""
+        SELECT COUNT(*)
+        FROM climbs c
+        JOIN climb_stats cs ON c.uuid = cs.climb_uuid
+        {where_sql}
+    """
+
+    with _get_connection() as conn:
+        return conn.execute(sql, params).fetchone()[0]
 
 
 def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
