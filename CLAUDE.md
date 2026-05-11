@@ -347,5 +347,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.26 (B020 Discover search cap 30→500 + total_count envelope 2026-05-11)
+**Version:** 2.27 (A021 climb logging + training history Phases 1–5 + B-A021-fix-1 Round 1+2 + UI English i18n pass + B-A021-fix-2 StateIcons overlap fix — 2026-05-11)
 **Owner:** Daniele Somensi + Claude Code
