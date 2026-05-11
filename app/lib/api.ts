@@ -37,6 +37,21 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
+// A021: every request carries the user's IANA tz name so the backend can
+// resolve local_date correctly when logging climbs. Browser/Capacitor
+// both expose Intl. Failure (older WebViews, mocked envs) → silently
+// drop the header, backend falls back to UTC.
+function getTimezoneHeader(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) return { 'X-User-Timezone': tz };
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
 // --- Fetch wrapper ---
 
 async function apiFetch<T>(
@@ -45,8 +60,10 @@ async function apiFetch<T>(
   isRetry = false,
 ): Promise<T> {
   const authHeaders = await getAuthHeaders();
+  const tzHeader = getTimezoneHeader();
   const headers: Record<string, string> = {
     ...authHeaders,
+    ...tzHeader,
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -246,12 +263,9 @@ export async function searchClimbs(
   // unless they specifically want a smaller window (e.g. autocomplete).
   if (params.limit !== undefined) qs.set('limit', String(params.limit));
 
-  const res = await fetch(`${API_BASE}/api/climbs/search?${qs.toString()}`);
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ detail: 'Search failed' }));
-    throw new ApiError(res.status, data.detail || 'Search failed');
-  }
-  return res.json();
+  // A021: route through apiFetch so the Clerk JWT + X-User-Timezone are
+  // attached. Backend uses the JWT to overlay user_state on each result.
+  return apiFetch<ClimbSearchResponse>(`/api/climbs/search?${qs.toString()}`);
 }
 
 export async function getClimbDetail(
@@ -259,10 +273,89 @@ export async function getClimbDetail(
   angle?: number,
 ): Promise<ClimbDetail> {
   const qs = angle !== undefined ? `?angle=${angle}` : '';
-  const res = await fetch(`${API_BASE}/api/climbs/${uuid}${qs}`);
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({ detail: 'Climb not found' }));
-    throw new ApiError(res.status, data.detail || 'Climb not found');
-  }
-  return res.json();
+  return apiFetch<ClimbDetail>(`/api/climbs/${uuid}${qs}`);
+}
+
+// --- A021: Logs / user_climbs API ---
+
+export type LogResultType = 'flash' | 'send' | 'attempt';
+export type BestResult = 'flash' | 'send';
+
+export interface ClimbLogResponse {
+  id: string;
+  user_id: string;
+  climb_uuid: string;
+  angle: number;
+  local_date: string;
+  result_type: LogResultType;
+  attempts_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserClimbState {
+  climb_uuid: string;
+  angle: number;
+  is_project: boolean;
+  best_result: BestResult | null;
+  last_logged_at: string | null;
+}
+
+export interface UserClimbDetail {
+  state: UserClimbState | null;
+  recent_logs: ClimbLogResponse[];
+}
+
+export interface LogCreateResponse {
+  log: ClimbLogResponse;
+  user_state: UserClimbState;
+}
+
+/** Create or upgrade today's log. Returns the persisted log + updated
+ *  user_climbs row in one envelope so the UI doesn't need a follow-up GET. */
+export async function createLog(
+  climbUuid: string,
+  angle: number,
+  resultType: LogResultType,
+): Promise<LogCreateResponse> {
+  return apiFetch<LogCreateResponse>('/api/logs', {
+    method: 'POST',
+    body: JSON.stringify({
+      climb_uuid: climbUuid,
+      angle,
+      result_type: resultType,
+    }),
+  });
+}
+
+export async function deleteLog(logId: string): Promise<void> {
+  return apiFetch<void>(`/api/logs/${logId}`, { method: 'DELETE' });
+}
+
+/** Get current user state for a climb at an angle, plus the most recent
+ *  N logs (default 20 server-side). Used by LogSection + RecentLogs. */
+export async function getUserClimb(
+  climbUuid: string,
+  angle: number,
+): Promise<UserClimbDetail> {
+  return apiFetch<UserClimbDetail>(
+    `/api/user-climbs/${climbUuid}?angle=${angle}`,
+  );
+}
+
+/** Toggle the project flag. Always submits the desired state explicitly
+ *  rather than asking the server to flip — keeps client/server agreement
+ *  predictable if a request retries. */
+export async function patchUserClimbProject(
+  climbUuid: string,
+  angle: number,
+  isProject: boolean,
+): Promise<UserClimbState> {
+  return apiFetch<UserClimbState>(
+    `/api/user-climbs/${climbUuid}/project`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ angle, is_project: isProject }),
+    },
+  );
 }
