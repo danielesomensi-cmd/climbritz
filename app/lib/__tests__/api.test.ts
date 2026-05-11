@@ -56,7 +56,7 @@ describe('apiFetch — 401 handling (A019 redirect-loop hotfix)', () => {
 
     const { getVideos } = await import('../api');
 
-    await expect(getVideos()).rejects.toThrow(/Sessione scaduta/);
+    await expect(getVideos()).rejects.toThrow(/Session expired/);
     expect(hrefSetter).toHaveBeenCalledWith('/sign-in');
   });
 
@@ -71,7 +71,7 @@ describe('apiFetch — 401 handling (A019 redirect-loop hotfix)', () => {
 
     const { getVideos } = await import('../api');
 
-    await expect(getVideos()).rejects.toThrow(/sessione attiva/i);
+    await expect(getVideos()).rejects.toThrow(/active session/i);
     expect(hrefSetter).not.toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe('apiFetch — 401 handling (A019 redirect-loop hotfix)', () => {
 
     const { getVideos } = await import('../api');
 
-    await expect(getVideos()).rejects.toThrow(/sessione attiva/i);
+    await expect(getVideos()).rejects.toThrow(/active session/i);
     expect(hrefSetter).not.toHaveBeenCalled();
   });
 

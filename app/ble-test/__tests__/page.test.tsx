@@ -107,7 +107,7 @@ describe('BleTestPage — auto-apply with debounce', () => {
     fireEvent.click(screen.getByRole('button', { name: /Space Invader/i }));
     // Reset before the debounce fires
     act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Reset anteprima/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Reset preview/i }));
     });
     act(() => { jest.advanceTimersByTime(500); });
     // The scheduled auto-apply was cancelled — no sendLEDs ever ran

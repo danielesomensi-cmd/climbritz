@@ -253,18 +253,18 @@ function VideoContent() {
               <div className="absolute inset-0 border-4 border-[#FF6B35]/20 rounded-full" />
               <div className="absolute inset-0 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
             </div>
-            <h2 className="text-lg font-semibold text-white mb-2">Analisi in corso</h2>
-            <p className="text-zinc-400">Gemini sta analizzando la tua tecnica...</p>
+            <h2 className="text-lg font-semibold text-white mb-2">Analysis in progress</h2>
+            <p className="text-zinc-400">Gemini is analyzing your technique…</p>
           </div>
         )}
 
         {video.processing_status === 'failed' && (
           <div className="bg-zinc-900 border border-red-500/30 rounded-2xl p-8 text-center">
             <div className="text-5xl mb-4">&#10060;</div>
-            <h2 className="text-lg font-semibold text-white mb-2">Analisi fallita</h2>
-            <p className="text-zinc-400 mb-6">Si &egrave; verificato un errore durante l&apos;analisi del video.</p>
+            <h2 className="text-lg font-semibold text-white mb-2">Analysis failed</h2>
+            <p className="text-zinc-400 mb-6">An error occurred while analyzing the video.</p>
             <Link href="/upload" className="px-8 py-3 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors inline-block">
-              Carica un nuovo video
+              Upload a new video
             </Link>
           </div>
         )}

@@ -128,7 +128,7 @@ export default function LogSection({
         const fresh = await getUserClimb(climbUuid, angle);
         onMutated(fresh);
       } catch (e) {
-        const message = e instanceof ApiError ? e.message : 'Errore di rete';
+        const message = e instanceof ApiError ? e.message : 'Network error';
         setError(message);
       } finally {
         setPending(null);
@@ -157,7 +157,7 @@ export default function LogSection({
       const fresh = await getUserClimb(climbUuid, angle);
       onMutated(fresh);
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : 'Errore di rete';
+      const message = e instanceof ApiError ? e.message : 'Network error';
       setError(message);
     } finally {
       setPending(null);
@@ -174,7 +174,7 @@ export default function LogSection({
       const fresh = await getUserClimb(climbUuid, angle);
       onMutated(fresh);
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : 'Errore di rete';
+      const message = e instanceof ApiError ? e.message : 'Network error';
       setError(message);
     } finally {
       setPending(null);
@@ -194,7 +194,7 @@ export default function LogSection({
       const fresh = await getUserClimb(climbUuid, angle);
       onMutated(fresh);
     } catch (e) {
-      const message = e instanceof ApiError ? e.message : 'Errore di rete';
+      const message = e instanceof ApiError ? e.message : 'Network error';
       setError(message);
     }
   };
@@ -213,7 +213,7 @@ export default function LogSection({
   return (
     <div data-testid="log-section" className="space-y-3">
       <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-        Logga il tentativo
+        Log your attempt
       </div>
 
       {/* B-A021-fix-1.1.1 — single-row grid. 5 cols when a Remove
@@ -269,7 +269,7 @@ export default function LogSection({
         >
           <span className="text-xl leading-none">{isProject ? '★' : '☆'}</span>
           <span className="text-[10px] leading-tight">
-            {pending === 'project' ? '…' : 'Progetto'}
+            {pending === 'project' ? '…' : 'Project'}
           </span>
         </button>
 
@@ -283,7 +283,7 @@ export default function LogSection({
           >
             <span className="text-xl leading-none">🗑</span>
             <span className="text-[10px] leading-tight">
-              {pending === 'remove' ? '…' : 'Rimuovi'}
+              {pending === 'remove' ? '…' : 'Remove'}
             </span>
           </button>
         )}
@@ -339,10 +339,10 @@ function ProjectRemovalModal({
             id="project-removal-title"
             className="text-lg font-bold text-white"
           >
-            Vuoi rimuoverlo dai progetti?
+            Remove from projects?
           </h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Hai chiuso questo problema — il flag &ldquo;progetto&rdquo; resta utile?
+            You sent this problem — keep the &ldquo;project&rdquo; flag?
           </p>
         </div>
 
@@ -353,7 +353,7 @@ function ProjectRemovalModal({
             onClick={onConfirmRemove}
             className="min-h-14 px-4 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-bold border-2 border-orange-600"
           >
-            Sì, rimuovi
+            Yes, remove
           </button>
           <button
             type="button"
@@ -361,7 +361,7 @@ function ProjectRemovalModal({
             onClick={onKeep}
             className="min-h-14 px-4 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold border-2 border-zinc-700"
           >
-            No, mantienilo
+            No, keep it
           </button>
           <button
             type="button"
@@ -369,7 +369,7 @@ function ProjectRemovalModal({
             onClick={onCancel}
             className="min-h-12 px-4 rounded-lg text-zinc-500 hover:text-zinc-300 text-sm"
           >
-            Annulla
+            Cancel
           </button>
         </div>
       </div>

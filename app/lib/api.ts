@@ -93,19 +93,19 @@ async function apiFetch<T>(
     const trulySignedOut = clerkUser === null;
     if (trulySignedOut) {
       window.location.href = '/sign-in';
-      throw new ApiError(401, 'Sessione scaduta. Effettua di nuovo il login.');
+      throw new ApiError(401, 'Session expired. Please sign in again.');
     }
     throw new ApiError(
       401,
-      'Il server ha rifiutato una sessione attiva. Riprova fra qualche minuto; se persiste, le credenziali Clerk del backend potrebbero non essere configurate.',
+      'The server rejected an active session. Retry in a few minutes; if it persists, the backend Clerk credentials may not be configured.',
     );
   }
 
   if (!response.ok) {
     const data = await response
       .json()
-      .catch(() => ({ detail: 'Errore sconosciuto' }));
-    throw new ApiError(response.status, data.detail || 'Errore del server');
+      .catch(() => ({ detail: 'Unknown error' }));
+    throw new ApiError(response.status, data.detail || 'Server error');
   }
 
   if (response.status === 204) {

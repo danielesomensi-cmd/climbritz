@@ -428,8 +428,8 @@ describe('DiscoverPage', () => {
       searchClimbsMock.mockResolvedValue(envelope(climbs, 1500));
       render(<DiscoverPage />);
       const banner = await screen.findByTestId('results-overflow-banner');
-      expect(banner).toHaveTextContent('Mostro i primi 500 di 1500 risultati');
-      expect(banner).toHaveTextContent('Restringi i filtri');
+      expect(banner).toHaveTextContent('Showing the first 500 of 1500 results');
+      expect(banner).toHaveTextContent('Narrow the filters');
     });
 
     it('does NOT show banner when total_count == climbs.length', async () => {

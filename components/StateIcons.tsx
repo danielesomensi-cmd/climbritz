@@ -19,7 +19,7 @@ interface StateIconsProps {
  *   ☆ = flagged as project (current state, independent of history)
  *
  * Both icons can render together (e.g. flashed + still on the project
- * list — a real case: user flashes a climb and answers "No, mantienilo"
+ * list — a real case: user flashes a climb and answers "No, keep it"
  * on the project-removal modal). Order is fixed: best_result first,
  * then project flag.
  */

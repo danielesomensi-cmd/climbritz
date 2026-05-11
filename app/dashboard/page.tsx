@@ -7,14 +7,14 @@ import AuthGuard from '@/components/AuthGuard';
 import { getVideos, Video } from '@/app/lib/api';
 
 const STATUS_BADGE: Record<Video['processing_status'], { bg: string; label: string }> = {
-  pending:    { bg: 'bg-yellow-500', label: 'In attesa' },
-  processing: { bg: 'bg-blue-500',   label: 'Analisi...' },
-  completed:  { bg: 'bg-green-500',  label: 'Completato' },
-  failed:     { bg: 'bg-red-500',    label: 'Errore' },
+  pending:    { bg: 'bg-yellow-500', label: 'Pending' },
+  processing: { bg: 'bg-blue-500',   label: 'Analyzing…' },
+  completed:  { bg: 'bg-green-500',  label: 'Completed' },
+  failed:     { bg: 'bg-red-500',    label: 'Error' },
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('it-IT', {
+  return new Date(iso).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -52,12 +52,12 @@ function DashboardContent() {
 
       <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">I tuoi video</h1>
+          <h1 className="text-2xl font-bold text-white">Your videos</h1>
           <Link
             href="/upload"
             className="px-4 py-2.5 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            + Carica video
+            + Upload video
           </Link>
         </div>
 
@@ -68,15 +68,15 @@ function DashboardContent() {
         ) : videos.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🎬</div>
-            <h2 className="text-xl font-semibold text-white mb-2">Nessun video ancora</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">No videos yet</h2>
             <p className="text-zinc-400 mb-6">
-              Carica il tuo primo video di arrampicata per ricevere un&apos;analisi AI della tua tecnica.
+              Upload your first climbing video for an AI analysis of your technique.
             </p>
             <Link
               href="/upload"
               className="inline-block px-6 py-3 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors"
             >
-              Carica il tuo primo video
+              Upload your first video
             </Link>
           </div>
         ) : (

@@ -68,7 +68,7 @@ function UploadContent() {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("Errore durante l'upload. Riprova.");
+        setError("Upload failed. Please retry.");
       }
     }
   };
@@ -85,7 +85,7 @@ function UploadContent() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-white mb-6">Carica un video</h1>
+        <h1 className="text-2xl font-bold text-white mb-6">Upload a video</h1>
 
         {/* Drop zone */}
         <div
@@ -112,7 +112,7 @@ function UploadContent() {
                   onClick={(e) => { e.stopPropagation(); setFile(null); }}
                   className="mt-3 text-sm text-zinc-500 hover:text-red-400 transition-colors"
                 >
-                  Cambia file
+                  Change file
                 </button>
               )}
             </div>
@@ -120,10 +120,10 @@ function UploadContent() {
             <div>
               <div className="text-5xl mb-4">🎬</div>
               <p className="text-white font-semibold text-lg mb-1">
-                Trascina il video qui
+                Drag your video here
               </p>
               <p className="text-zinc-400 text-sm">
-                oppure clicca per selezionare
+                or click to select
               </p>
               <p className="text-zinc-600 text-xs mt-3">
                 MP4, MOV, WebM &bull; Max 500MB
@@ -135,12 +135,12 @@ function UploadContent() {
         {/* Title */}
         {file && !uploading && (
           <div className="mt-4">
-            <label className="block text-sm text-zinc-400 mb-1.5">Titolo (opzionale)</label>
+            <label className="block text-sm text-zinc-400 mb-1.5">Title (optional)</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Es: Sessione slab V4, Red problem gym"
+              placeholder="e.g. Slab session V4, Red problem gym"
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-[#FF6B35] transition-colors"
             />
           </div>
@@ -157,7 +157,7 @@ function UploadContent() {
         {uploading && (
           <div className="mt-6">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-zinc-400">Caricamento in corso...</span>
+              <span className="text-zinc-400">Uploading…</span>
               <span className="text-[#FF6B35] font-semibold">{Math.round(progress)}%</span>
             </div>
             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
@@ -175,7 +175,7 @@ function UploadContent() {
             onClick={handleUpload}
             className="mt-6 w-full py-3.5 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors text-lg"
           >
-            Carica e analizza
+            Upload and analyze
           </button>
         )}
       </main>

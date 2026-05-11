@@ -21,14 +21,14 @@ const STATUS_COLORS: Record<BleStatus, string> = {
 };
 
 const STATUS_LABELS: Record<BleStatus, string> = {
-  idle: 'Disconnesso',
-  requesting: 'Richiesta...',
-  scanning: 'Scansione...',
-  connecting: 'Connessione...',
-  connected: 'Connesso',
-  disconnecting: 'Disconnessione...',
-  sending: 'Invio...',
-  error: 'Errore',
+  idle: 'Disconnected',
+  requesting: 'Requesting…',
+  scanning: 'Scanning…',
+  connecting: 'Connecting…',
+  connected: 'Connected',
+  disconnecting: 'Disconnecting…',
+  sending: 'Sending…',
+  error: 'Error',
 };
 
 const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
@@ -114,7 +114,7 @@ export default function ClimbBleControls({
   if (!isCapacitorNative && !Capacitor.isNativePlatform()) {
     return (
       <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700/60 rounded text-sm text-amber-200">
-        💡 Accendi i LED: disponibile solo nell&apos;app Kilter-Up installata.
+        💡 Light up LEDs: only available in the installed Kilter-Up app.
       </div>
     );
   }
@@ -149,7 +149,7 @@ export default function ClimbBleControls({
           <button
             onClick={clearError}
             className="text-red-400 hover:text-red-200 font-bold text-lg leading-none flex-shrink-0"
-            aria-label="Chiudi errore"
+            aria-label="Dismiss error"
           >
             &times;
           </button>
@@ -164,7 +164,7 @@ export default function ClimbBleControls({
           className="w-full py-2.5 rounded-lg font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="ble-disconnect-btn"
         >
-          Disconnetti
+          Disconnect
         </button>
       ) : busy ? (
         <button
@@ -179,7 +179,7 @@ export default function ClimbBleControls({
           className="w-full py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-500 transition-colors"
           data-testid="ble-connect-btn"
         >
-          Connetti alla board
+          Connect to board
         </button>
       )}
 
@@ -197,7 +197,7 @@ export default function ClimbBleControls({
             ].join(' ')}
             data-testid="ble-illuminate-btn"
           >
-            {isSending ? 'Invio...' : '💡 Illumina board'}
+            {isSending ? 'Sending…' : '💡 Light up board'}
           </button>
           <button
             onClick={handleReset}

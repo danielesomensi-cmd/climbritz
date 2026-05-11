@@ -25,9 +25,9 @@ const DEFAULT_ANGLE = 40;
 // same tri-state vocabulary; only labels and testids vary. Inline as a
 // helper since it's local to this page.
 const CHIP_OPTIONS: Array<{ value: 'all' | 'only' | 'exclude'; label: string }> = [
-  { value: 'all', label: 'Tutti' },
-  { value: 'only', label: 'Solo' },
-  { value: 'exclude', label: 'Escludi' },
+  { value: 'all', label: 'All' },
+  { value: 'only', label: 'Only' },
+  { value: 'exclude', label: 'Exclude' },
 ];
 
 interface ChipRowProps {
@@ -308,17 +308,17 @@ function DiscoverPageInner() {
           />
 
           {/* A021.4 — tri-state chip filters above the Filters button.
-              Each row is "label : [Tutti] [Solo] [Escludi]". Active
-              non-Tutti values contribute to the Filters badge count. */}
+              Each row is "label : [All] [Only] [Exclude]". Active
+              non-All values contribute to the Filters badge count. */}
           <div data-testid="chip-filters" className="space-y-2">
             <ChipRow
-              label="Fatti"
+              label="Done"
               testidPrefix="chip-done"
               value={filters.doneFilter ?? 'all'}
               onChange={(v) => setFilters({ ...filters, doneFilter: v as DoneFilter })}
             />
             <ChipRow
-              label="Progetti"
+              label="Project"
               testidPrefix="chip-project"
               value={filters.projectFilter ?? 'all'}
               onChange={(v) =>
@@ -418,7 +418,7 @@ function DiscoverPageInner() {
               data-testid="results-overflow-banner"
               className="px-4 py-3 rounded-lg bg-orange-500/10 border border-orange-500/40 text-orange-200 text-sm"
             >
-              Mostro i primi {results.length} di {totalCount} risultati. Restringi i filtri per essere più preciso.
+              Showing the first {results.length} of {totalCount} results. Narrow the filters to be more precise.
             </div>
           )}
 

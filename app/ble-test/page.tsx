@@ -25,14 +25,14 @@ const STATUS_COLORS: Record<BleStatus, string> = {
 };
 
 const STATUS_LABELS: Record<BleStatus, string> = {
-  idle: 'Disconnesso',
-  requesting: 'Richiesta...',
-  scanning: 'Scansione...',
-  connecting: 'Connessione...',
-  connected: 'Connesso',
-  disconnecting: 'Disconnessione...',
-  sending: 'Invio...',
-  error: 'Errore',
+  idle: 'Disconnected',
+  requesting: 'Requesting…',
+  scanning: 'Scanning…',
+  connecting: 'Connecting…',
+  connected: 'Connected',
+  disconnecting: 'Disconnecting…',
+  sending: 'Sending…',
+  error: 'Error',
 };
 
 const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
@@ -140,7 +140,7 @@ function BleTestContent() {
                 disabled={isSending}
                 className="w-full p-3 rounded-lg font-semibold text-base bg-gray-700 hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Disconnetti
+                Disconnect
               </button>
             ) : busy ? (
               <button
@@ -154,7 +154,7 @@ function BleTestContent() {
                 onClick={connect}
                 className="w-full p-3 rounded-lg font-semibold text-base bg-blue-600 hover:bg-blue-500 transition-all"
               >
-                Connetti
+                Connect
               </button>
             )}
           </div>
@@ -162,7 +162,7 @@ function BleTestContent() {
 
         {!isCapacitorNative && (
           <div className="mb-4 p-3 bg-amber-900/40 border border-amber-600 rounded text-sm text-amber-200">
-            Questa funzione richiede l&apos;app Kilter-Up installata.
+            This feature requires the installed Kilter-Up app.
           </div>
         )}
 
@@ -179,7 +179,7 @@ function BleTestContent() {
             <button
               onClick={clearError}
               className="text-red-400 hover:text-red-200 font-bold text-lg leading-none flex-shrink-0"
-              aria-label="Chiudi errore"
+              aria-label="Dismiss error"
             >
               &times;
             </button>
@@ -198,7 +198,7 @@ function BleTestContent() {
                 : 'bg-gray-700 text-gray-500 cursor-not-allowed',
             ].join(' ')}
           >
-            {isSending ? 'Invio...' : 'Illumina board'}
+            {isSending ? 'Sending…' : 'Light up board'}
           </button>
         )}
 
@@ -208,7 +208,7 @@ function BleTestContent() {
           disabled={isSending}
           className="w-full mb-4 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-semibold text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSending ? 'Invio...' : 'Reset anteprima'}
+          {isSending ? 'Sending…' : 'Reset preview'}
         </button>
 
         {/* Preset grid */}

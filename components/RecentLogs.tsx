@@ -32,7 +32,7 @@ function formatDate(localDate: string): string {
   const [y, m, d] = localDate.split('-').map(Number);
   if (!y || !m || !d) return localDate;
   const dt = new Date(y, m - 1, d);
-  return dt.toLocaleDateString('it-IT', {
+  return dt.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -44,13 +44,13 @@ export default function RecentLogs({ logs, limit = 10 }: RecentLogsProps) {
     return (
       <div data-testid="recent-logs" className="space-y-2">
         <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-          Storico su questo climb
+          History on this climb
         </div>
         <div
           data-testid="recent-logs-empty"
           className="text-sm text-zinc-500 italic"
         >
-          Nessun tentativo ancora. Logga il primo qua sopra.
+          No attempts yet. Log your first one above.
         </div>
       </div>
     );
@@ -61,7 +61,7 @@ export default function RecentLogs({ logs, limit = 10 }: RecentLogsProps) {
   return (
     <div data-testid="recent-logs" className="space-y-2">
       <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-        Storico su questo climb
+        History on this climb
       </div>
       <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800 bg-zinc-900/60">
         {visible.map((log) => (
