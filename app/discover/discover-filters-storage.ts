@@ -75,6 +75,11 @@ export function loadDiscoverFilters(): DiscoverFilters | null {
 
 const SORT_VALUES = ['popularity', 'quality', 'grade_asc', 'grade_desc'];
 const MOVES_VALUES = ['any', 'le5', '6-7', '8-10', 'gt10'];
+// A021.4 — tri-state chip filters. Forward-compatible: a stored entry
+// from before Phase 4 won't have these keys, isDiscoverFilters tolerates
+// the absence; the discover page defaults missing values to 'all'.
+const DONE_VALUES = ['all', 'only', 'exclude'];
+const PROJECT_VALUES = ['all', 'only', 'exclude'];
 
 function isDiscoverFilters(x: unknown): x is DiscoverFilters {
   if (!x || typeof x !== 'object') return false;
@@ -88,6 +93,9 @@ function isDiscoverFilters(x: unknown): x is DiscoverFilters {
   if (!SORT_VALUES.includes(f.sort as string)) return false;
   // moves is optional for backwards compatibility with pre-A019 entries.
   if (f.moves !== undefined && !MOVES_VALUES.includes(f.moves as string)) return false;
+  // A021.4 — doneFilter / projectFilter optional, default 'all' on read.
+  if (f.doneFilter !== undefined && !DONE_VALUES.includes(f.doneFilter as string)) return false;
+  if (f.projectFilter !== undefined && !PROJECT_VALUES.includes(f.projectFilter as string)) return false;
   for (const k of ['gradeMin', 'gradeMax', 'minAscents', 'minQuality']) {
     if (f[k] !== undefined && typeof f[k] !== 'number') return false;
   }

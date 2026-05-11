@@ -1,6 +1,6 @@
 'use client';
 
-import type { MovesFilter, SortField } from '@/app/lib/api';
+import type { DoneFilter, MovesFilter, ProjectFilter, SortField } from '@/app/lib/api';
 import { GRADES } from '@/app/lib/grades';
 
 export interface Filters {
@@ -10,6 +10,13 @@ export interface Filters {
   minQuality?: number;
   moves?: MovesFilter;
   sort: SortField;
+  /** A021.4 — tri-state chip filters surfaced ABOVE this panel on
+   *  /discover, not inside it. The panel doesn't render UI for them
+   *  (the chips are in the page header) but the Filters object is the
+   *  single source of truth — countActiveFilters / search params /
+   *  sessionStorage all flow through here. Default 'all'. */
+  doneFilter?: DoneFilter;
+  projectFilter?: ProjectFilter;
 }
 
 interface FilterPanelProps {
@@ -52,7 +59,9 @@ export function countActiveFilters(value: Filters): number {
     (value.minAscents !== undefined ? 1 : 0) +
     (value.minQuality !== undefined ? 1 : 0) +
     (value.moves !== undefined && value.moves !== 'any' ? 1 : 0) +
-    (value.sort !== 'popularity' ? 1 : 0)
+    (value.sort !== 'popularity' ? 1 : 0) +
+    (value.doneFilter !== undefined && value.doneFilter !== 'all' ? 1 : 0) +
+    (value.projectFilter !== undefined && value.projectFilter !== 'all' ? 1 : 0)
   );
 }
 
@@ -67,6 +76,8 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       minAscents: undefined,
       minQuality: undefined,
       moves: 'any',
+      doneFilter: 'all',
+      projectFilter: 'all',
     });
 
   if (!expanded) return null;

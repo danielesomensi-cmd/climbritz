@@ -192,6 +192,11 @@ export type SortField = 'popularity' | 'quality' | 'grade_asc' | 'grade_desc';
 
 export type MovesFilter = 'any' | 'le5' | '6-7' | '8-10' | 'gt10';
 
+// A021.4 — chip filter values. Backend accepts the same three on
+// done_filter and project_filter query params (Phase 2 work).
+export type DoneFilter = 'all' | 'only' | 'exclude';
+export type ProjectFilter = 'all' | 'only' | 'exclude';
+
 export interface ClimbSearchResult {
   uuid: string;
   name: string;
@@ -249,6 +254,11 @@ export interface ClimbSearchParams {
   moves?: MovesFilter;
   sort?: SortField;
   limit?: number;
+  // A021.4 — chip filter params. Omit or pass 'all' to skip the filter
+  // server-side. Authenticated requests only; backend ignores them
+  // when the JWT is absent.
+  done_filter?: DoneFilter;
+  project_filter?: ProjectFilter;
 }
 
 export async function searchClimbs(
@@ -263,6 +273,8 @@ export async function searchClimbs(
   if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
   if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
   if (params.sort) qs.set('sort', params.sort);
+  if (params.done_filter && params.done_filter !== 'all') qs.set('done_filter', params.done_filter);
+  if (params.project_filter && params.project_filter !== 'all') qs.set('project_filter', params.project_filter);
   // B020: backend default is now 500 (hard cap). Callers omit `limit`
   // unless they specifically want a smaller window (e.g. autocomplete).
   if (params.limit !== undefined) qs.set('limit', String(params.limit));

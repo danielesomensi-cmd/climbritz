@@ -84,6 +84,9 @@ describe('FilterPanel', () => {
       minAscents: undefined,
       minQuality: undefined,
       moves: 'any',
+      // A021.4 — reset also clears the new chip filters back to 'all'.
+      doneFilter: 'all',
+      projectFilter: 'all',
     });
   });
 
