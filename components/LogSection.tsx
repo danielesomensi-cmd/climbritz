@@ -235,15 +235,15 @@ export default function LogSection({
               onClick={() => handleResultButton(btn.result)}
               disabled={pending !== null}
               className={[
-                'min-h-16 px-1 rounded-lg text-white font-bold',
-                'border-2 transition-all flex flex-col items-center justify-center gap-0.5',
+                'min-h-12 px-1 rounded-lg text-white font-bold',
+                'border-2 transition-all flex flex-col items-center justify-center gap-0',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 btn.color,
                 isTodaysResult ? 'ring-2 ring-white' : '',
               ].join(' ')}
             >
-              <span className="text-2xl leading-none">{btn.icon}</span>
-              <span className="text-[11px] leading-tight">
+              <span className="text-xl leading-none">{btn.icon}</span>
+              <span className="text-[10px] leading-tight">
                 {isPending ? '…' : btn.label}
                 {isTodaysResult && todaysLog && todaysLog.attempts_count > 1
                   ? ` ×${todaysLog.attempts_count}`
@@ -259,16 +259,16 @@ export default function LogSection({
           onClick={handleProjectToggle}
           disabled={pending !== null}
           className={[
-            'min-h-16 px-1 rounded-lg border-2 font-bold',
-            'flex flex-col items-center justify-center gap-0.5 transition-all',
+            'min-h-12 px-1 rounded-lg border-2 font-bold',
+            'flex flex-col items-center justify-center gap-0 transition-all',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             isProject
               ? 'bg-orange-500 border-orange-600 text-white hover:bg-orange-400'
               : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-500',
           ].join(' ')}
         >
-          <span className="text-2xl leading-none">{isProject ? '★' : '☆'}</span>
-          <span className="text-[11px] leading-tight">
+          <span className="text-xl leading-none">{isProject ? '★' : '☆'}</span>
+          <span className="text-[10px] leading-tight">
             {pending === 'project' ? '…' : 'Progetto'}
           </span>
         </button>
@@ -279,10 +279,10 @@ export default function LogSection({
             data-testid="log-btn-remove"
             onClick={handleRemoveTodaysLog}
             disabled={pending !== null}
-            className="min-h-16 px-1 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0.5 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-12 px-1 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="text-2xl leading-none">🗑</span>
-            <span className="text-[11px] leading-tight">
+            <span className="text-xl leading-none">🗑</span>
+            <span className="text-[10px] leading-tight">
               {pending === 'remove' ? '…' : 'Rimuovi'}
             </span>
           </button>
