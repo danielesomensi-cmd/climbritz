@@ -3,13 +3,20 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getClimbDetail, type ClimbDetail } from '@/app/lib/api';
+import {
+  getClimbDetail,
+  getUserClimb,
+  type ClimbDetail,
+  type UserClimbDetail,
+} from '@/app/lib/api';
 import ClimbBoardView, { ROLE_COLORS } from '@/components/ClimbBoardView';
 import ClimbBleControls from '@/components/ClimbBleControls';
 import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import LogSection from '@/components/LogSection';
+import RecentLogs from '@/components/RecentLogs';
 import { climbToLedCommands } from './climb-to-leds';
 import { resolvePosition } from '../filtered-list-storage';
 
@@ -45,6 +52,9 @@ function ClimbDetailPageInner() {
   const [climb, setClimb] = useState<ClimbDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // A021 — user_climb detail (state + recent_logs) for the LogSection +
+  // RecentLogs components. null while loading or for unauth users.
+  const [userClimb, setUserClimb] = useState<UserClimbDetail | null>(null);
 
   // A014: Resolve Next/Prev navigation context from the sessionStorage list
   // saved by /discover. Recomputed on every uuid change (nav updates query
@@ -88,6 +98,32 @@ function ClimbDetailPageInner() {
       cancelled = true;
     };
   }, [uuid, angle]);
+
+  // A021 — fetch user_climb state alongside the climb detail. Reads
+  // the angle that the page is currently viewing; if no angle param,
+  // wait for the climb to load so we can use its primary stats[0].angle.
+  useEffect(() => {
+    if (!uuid || !climb) {
+      setUserClimb(null);
+      return;
+    }
+    const resolvedAngle = angle ?? climb.stats[0]?.angle;
+    if (resolvedAngle === undefined) return;
+    let cancelled = false;
+    getUserClimb(uuid, resolvedAngle)
+      .then((data) => {
+        if (!cancelled) setUserClimb(data);
+      })
+      .catch(() => {
+        // Silent: an unauth user or a transient failure shouldn't block
+        // the rest of the detail page. The LogSection itself surfaces
+        // mutation errors when the user actually tries to log.
+        if (!cancelled) setUserClimb(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uuid, angle, climb]);
 
   const stats = climb?.stats[0];
   const roleCounts = climb
@@ -163,6 +199,16 @@ function ClimbDetailPageInner() {
               autoSendOnKeyChange={autoSendOnNav}
             />
 
+            {/* A021 — log section: record what the user did, plus the
+                project toggle. Mounted above the board so it's reachable
+                without scrolling on a phone. */}
+            <LogSection
+              climbUuid={climb.uuid}
+              angle={angle ?? climb.stats[0].angle}
+              detail={userClimb}
+              onMutated={setUserClimb}
+            />
+
             {/* Board visualization */}
             <ClimbBoardView holds={climb.holds} />
 
@@ -200,6 +246,11 @@ function ClimbDetailPageInner() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* A021 — last N logs on this climb for the user, descending. */}
+            {userClimb && (
+              <RecentLogs logs={userClimb.recent_logs} limit={10} />
             )}
 
             {/* Actions — "Light up" moved into the ClimbBleControls bar above. */}
