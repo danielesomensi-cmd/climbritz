@@ -375,3 +375,89 @@ export async function patchUserClimbProject(
     },
   );
 }
+
+// --- A021.5 — /history page: sessions / pyramid / trend ---
+
+export interface SessionClimb {
+  climb_uuid: string;
+  angle: number;
+  result_type: LogResultType;
+  attempts_count: number;
+  log_id: string;
+  climb_name: string | null;
+  grade: string | null;
+}
+
+export interface SessionResponse {
+  date: string;
+  total_climbs: number;
+  sends: number;
+  flashes: number;
+  attempts: number;
+  climbs: SessionClimb[];
+}
+
+export type PyramidResultFilter = 'flash' | 'send_or_better' | 'all';
+
+export interface PyramidEntry {
+  grade_band: string;
+  count: number;
+}
+
+export interface TrendEntry {
+  week_start: string;
+  flash_count: number;
+  send_count: number;
+  attempt_count: number;
+}
+
+function buildDateRangeQs(
+  dateFrom?: string,
+  dateTo?: string,
+  extra?: Record<string, string | undefined>,
+): string {
+  const qs = new URLSearchParams();
+  if (dateFrom) qs.set('from', dateFrom);
+  if (dateTo) qs.set('to', dateTo);
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) {
+      if (v !== undefined) qs.set(k, v);
+    }
+  }
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+/** GET /api/logs/sessions — daily session summaries. Each climb in the
+ *  list carries name + grade resolved server-side from BoardLib. */
+export async function getSessions(
+  dateFrom?: string,
+  dateTo?: string,
+): Promise<SessionResponse[]> {
+  return apiFetch<SessionResponse[]>(
+    `/api/logs/sessions${buildDateRangeQs(dateFrom, dateTo)}`,
+  );
+}
+
+/** GET /api/stats/pyramid — counts grouped by grade band. */
+export async function getPyramid(
+  dateFrom?: string,
+  dateTo?: string,
+  resultFilter: PyramidResultFilter = 'send_or_better',
+): Promise<PyramidEntry[]> {
+  return apiFetch<PyramidEntry[]>(
+    `/api/stats/pyramid${buildDateRangeQs(dateFrom, dateTo, {
+      result_filter: resultFilter,
+    })}`,
+  );
+}
+
+/** GET /api/stats/trend — counts by ISO week (Monday-anchored). */
+export async function getTrend(
+  dateFrom?: string,
+  dateTo?: string,
+): Promise<TrendEntry[]> {
+  return apiFetch<TrendEntry[]>(
+    `/api/stats/trend${buildDateRangeQs(dateFrom, dateTo)}`,
+  );
+}
