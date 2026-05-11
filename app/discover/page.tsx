@@ -6,7 +6,9 @@ import {
   searchClimbs,
   API_BASE,
   type ClimbSearchResult,
+  type DoneFilter,
   type MovesFilter,
+  type ProjectFilter,
   type SortField,
 } from '@/app/lib/api';
 import ClimbCard from '@/components/ClimbCard';
@@ -18,8 +20,57 @@ import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-sto
 
 const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const DEFAULT_ANGLE = 40;
+
+// A021.4 — chip row used twice (Done + Project). Each chip has the
+// same tri-state vocabulary; only labels and testids vary. Inline as a
+// helper since it's local to this page.
+const CHIP_OPTIONS: Array<{ value: 'all' | 'only' | 'exclude'; label: string }> = [
+  { value: 'all', label: 'Tutti' },
+  { value: 'only', label: 'Solo' },
+  { value: 'exclude', label: 'Escludi' },
+];
+
+interface ChipRowProps {
+  label: string;
+  testidPrefix: string;
+  value: 'all' | 'only' | 'exclude';
+  onChange: (value: 'all' | 'only' | 'exclude') => void;
+}
+
+function ChipRow({ label, testidPrefix, value, onChange }: ChipRowProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide shrink-0 w-16">
+        {label}
+      </span>
+      <div className="flex gap-1 flex-1">
+        {CHIP_OPTIONS.map((opt) => {
+          const active = value === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              data-testid={`${testidPrefix}-${opt.value}`}
+              onClick={() => onChange(opt.value)}
+              aria-pressed={active}
+              className={`flex-1 px-2 py-1.5 rounded-full text-xs border transition-colors ${
+                active
+                  ? 'bg-orange-500 border-orange-500 text-white font-semibold'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 const SORT_VALUES: SortField[] = ['popularity', 'quality', 'grade_asc', 'grade_desc'];
 const MOVES_VALUES: MovesFilter[] = ['any', 'le5', '6-7', '8-10', 'gt10'];
+const DONE_VALUES: DoneFilter[] = ['all', 'only', 'exclude'];
+const PROJECT_VALUES: ProjectFilter[] = ['all', 'only', 'exclude'];
 
 function parseInitialQuery(params: URLSearchParams): string {
   return params.get('q') ?? '';
@@ -34,6 +85,8 @@ function parseInitialAngle(params: URLSearchParams): number {
 function parseInitialFilters(params: URLSearchParams): Filters {
   const sort = params.get('sort');
   const moves = params.get('moves');
+  const doneFilter = params.get('done_filter');
+  const projectFilter = params.get('project_filter');
   return {
     gradeMin: params.get('grade_min') ? Number(params.get('grade_min')) : undefined,
     gradeMax: params.get('grade_max') ? Number(params.get('grade_max')) : undefined,
@@ -41,6 +94,12 @@ function parseInitialFilters(params: URLSearchParams): Filters {
     minQuality: params.get('min_quality') ? Number(params.get('min_quality')) : undefined,
     moves: (MOVES_VALUES.includes(moves as MovesFilter) ? moves : 'any') as MovesFilter,
     sort: (SORT_VALUES.includes(sort as SortField) ? sort : 'popularity') as SortField,
+    doneFilter: (DONE_VALUES.includes(doneFilter as DoneFilter)
+      ? doneFilter
+      : 'all') as DoneFilter,
+    projectFilter: (PROJECT_VALUES.includes(projectFilter as ProjectFilter)
+      ? projectFilter
+      : 'all') as ProjectFilter,
   };
 }
 
@@ -53,6 +112,8 @@ const URL_FILTER_KEYS = [
   'min_quality',
   'moves',
   'sort',
+  'done_filter',
+  'project_filter',
 ];
 
 // Initial state resolution: URL params take priority (deep-link intent),
@@ -75,7 +136,12 @@ function resolveInitialState(
   return {
     query: '',
     angle: DEFAULT_ANGLE,
-    filters: { sort: 'popularity', moves: 'any' },
+    filters: {
+      sort: 'popularity',
+      moves: 'any',
+      doneFilter: 'all',
+      projectFilter: 'all',
+    },
   };
 }
 
@@ -121,6 +187,12 @@ function DiscoverPageInner() {
     if (filters.minQuality !== undefined) qs.set('min_quality', String(filters.minQuality));
     if (filters.moves && filters.moves !== 'any') qs.set('moves', filters.moves);
     if (filters.sort !== 'popularity') qs.set('sort', filters.sort);
+    if (filters.doneFilter && filters.doneFilter !== 'all') {
+      qs.set('done_filter', filters.doneFilter);
+    }
+    if (filters.projectFilter && filters.projectFilter !== 'all') {
+      qs.set('project_filter', filters.projectFilter);
+    }
     router.replace(`/discover?${qs.toString()}`, { scroll: false });
   }, [query, angle, filters, router]);
 
@@ -151,6 +223,8 @@ function DiscoverPageInner() {
         min_quality: filters.minQuality,
         moves: filters.moves,
         sort: filters.sort,
+        done_filter: filters.doneFilter,
+        project_filter: filters.projectFilter,
       });
       setResults(res.climbs);
       setTotalCount(res.total_count);
@@ -232,6 +306,26 @@ function DiscoverPageInner() {
             placeholder="Search climbs by name…"
             className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
+
+          {/* A021.4 — tri-state chip filters above the Filters button.
+              Each row is "label : [Tutti] [Solo] [Escludi]". Active
+              non-Tutti values contribute to the Filters badge count. */}
+          <div data-testid="chip-filters" className="space-y-2">
+            <ChipRow
+              label="Done"
+              testidPrefix="chip-done"
+              value={filters.doneFilter ?? 'all'}
+              onChange={(v) => setFilters({ ...filters, doneFilter: v as DoneFilter })}
+            />
+            <ChipRow
+              label="Project"
+              testidPrefix="chip-project"
+              value={filters.projectFilter ?? 'all'}
+              onChange={(v) =>
+                setFilters({ ...filters, projectFilter: v as ProjectFilter })
+              }
+            />
+          </div>
 
           {/* Prominent Filters button (B017 follow-up) */}
           <button
