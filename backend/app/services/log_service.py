@@ -383,9 +383,19 @@ def list_sessions(
     user_id: str,
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
+    climb_meta_resolver: Optional[
+        Callable[[str, int], Optional[dict]]
+    ] = None,
 ) -> list[dict]:
     """Group logs by local_date. Newest day first. One entry per day
-    even if multiple climbs were logged."""
+    even if multiple climbs were logged.
+
+    ``climb_meta_resolver`` (A021.5): optional callable that returns
+    ``{"name": str, "grade": str}`` for a given (climb_uuid, angle).
+    The API layer builds it from climb_service so the service stays
+    decoupled from BoardLib reads. When None, climb_name and grade
+    fields stay None — existing callers (tests pre-Phase-5) still work.
+    """
     q = db.query(ClimbLog).filter(ClimbLog.user_id == user_id)
     if date_from is not None:
         q = q.filter(ClimbLog.local_date >= date_from)
@@ -402,6 +412,23 @@ def list_sessions(
     sessions = []
     for d in sorted(by_date.keys(), reverse=True):
         day_logs = by_date[d]
+        climbs_out: list[dict] = []
+        for l in day_logs:
+            entry: dict = {
+                "climb_uuid": l.climb_uuid,
+                "angle": l.angle,
+                "result_type": l.result_type,
+                "attempts_count": l.attempts_count,
+                "log_id": l.id,
+                "climb_name": None,
+                "grade": None,
+            }
+            if climb_meta_resolver is not None:
+                meta = climb_meta_resolver(l.climb_uuid, l.angle)
+                if meta is not None:
+                    entry["climb_name"] = meta.get("name")
+                    entry["grade"] = meta.get("grade")
+            climbs_out.append(entry)
         sessions.append(
             {
                 "date": d,
@@ -411,16 +438,7 @@ def list_sessions(
                 "attempts": sum(
                     1 for l in day_logs if l.result_type == "attempt"
                 ),
-                "climbs": [
-                    {
-                        "climb_uuid": l.climb_uuid,
-                        "angle": l.angle,
-                        "result_type": l.result_type,
-                        "attempts_count": l.attempts_count,
-                        "log_id": l.id,
-                    }
-                    for l in day_logs
-                ],
+                "climbs": climbs_out,
             }
         )
     return sessions

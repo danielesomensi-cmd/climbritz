@@ -103,6 +103,29 @@ def list_logs(
     return [LogResponse.model_validate(r) for r in rows]
 
 
+def _session_climb_meta_resolver_factory():
+    """A021.5 — memoised (climb_uuid, angle) → {name, grade} lookup so a
+    session with many logs on the same climb hits BoardLib once. Same
+    pattern as the pyramid grade_resolver."""
+    cache: dict[tuple[str, int], Optional[dict]] = {}
+
+    def resolve(climb_uuid: str, angle: int) -> Optional[dict]:
+        key = (climb_uuid, angle)
+        if key in cache:
+            return cache[key]
+        climb = climb_service.get_climb(climb_uuid=climb_uuid, angle=angle)
+        result: Optional[dict] = None
+        if climb:
+            grade: Optional[str] = None
+            if climb.get("stats"):
+                grade = climb["stats"][0].get("grade")
+            result = {"name": climb.get("name"), "grade": grade}
+        cache[key] = result
+        return result
+
+    return resolve
+
+
 @router.get("/sessions", response_model=list[SessionResponse])
 def list_sessions(
     date_from: Optional[date] = Query(default=None, alias="from"),
@@ -115,6 +138,7 @@ def list_sessions(
         user_id=current_user_id,
         date_from=date_from,
         date_to=date_to,
+        climb_meta_resolver=_session_climb_meta_resolver_factory(),
     )
     return [SessionResponse(**s) for s in sessions]
 

@@ -570,6 +570,30 @@ class TestListSessions:
         assert sessions[0]["sends"] == 1
         assert sessions[0]["flashes"] == 1
 
+    def test_sessions_climbs_carry_name_and_grade(self):
+        """A021.5 — each climb in the session list is enriched with
+        name + grade resolved server-side from BoardLib, so the
+        /history page can render readable session cards in one
+        request instead of N follow-up climb-detail fetches."""
+        user = _create_user()
+        client.post(
+            "/api/logs",
+            json={
+                "climb_uuid": CLIMB_UUID,
+                "angle": CLIMB_ANGLE,
+                "result_type": "send",
+            },
+            headers=_auth(user.id),
+        )
+        r = client.get("/api/logs/sessions", headers=_auth(user.id))
+        assert r.status_code == 200
+        climbs = r.json()[0]["climbs"]
+        assert len(climbs) == 1
+        # Fixture: UUID-BENCH-001 / angle 40 → "Benchmark Alpha"
+        # with display difficulty 16 → boulder name "6a/V3" (in fixture).
+        assert climbs[0]["climb_name"] == "Benchmark Alpha"
+        assert climbs[0]["grade"] is not None
+
     def test_sessions_empty_for_new_user(self):
         user = _create_user()
         r = client.get("/api/logs/sessions", headers=_auth(user.id))

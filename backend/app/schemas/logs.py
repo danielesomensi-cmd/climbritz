@@ -94,6 +94,12 @@ class SessionClimb(BaseModel):
     result_type: ResultType
     attempts_count: int
     log_id: str
+    # A021.5 — populated by the sessions endpoint via a memoised BoardLib
+    # lookup. Both nullable so a deleted-from-BoardLib climb still appears
+    # in the session list with a usable result_type / count, just without
+    # the human-readable name.
+    climb_name: Optional[str] = None
+    grade: Optional[str] = None
 
 
 class SessionResponse(BaseModel):
