@@ -253,7 +253,13 @@ function ClimbDetailPageInner() {
               <RecentLogs logs={userClimb.recent_logs} limit={10} />
             )}
 
-            {/* Actions — "Light up" moved into the ClimbBleControls bar above. */}
+            {/* Actions — order (top-to-bottom):
+                  1. Favorite (placeholder)
+                  2. Next/Prev row — moved here in B-A021-fix-1.1.2 so the
+                     LogSection on this page doesn't push it out of reach
+                     on mid-height phone screens.
+                  3. Analyze with Coach
+                "Light up" already lives in ClimbBleControls above. */}
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
@@ -263,12 +269,6 @@ function ClimbDetailPageInner() {
               >
                 ❤️ Favorite
               </button>
-              <Link
-                href="/upload"
-                className="flex-1 py-3 rounded-lg bg-orange-500 text-white text-sm font-semibold text-center hover:bg-orange-600 transition-colors"
-              >
-                🎬 Analyze with Coach
-              </Link>
             </div>
 
             {/* A014: Next/Prev through the saved filtered list. Hidden on
@@ -276,7 +276,7 @@ function ClimbDetailPageInner() {
             {hasNav && (
               <div
                 data-testid="list-nav"
-                className="flex items-center gap-3 pt-3"
+                className="flex items-center gap-3"
               >
                 <button
                   type="button"
@@ -304,6 +304,13 @@ function ClimbDetailPageInner() {
                 </button>
               </div>
             )}
+
+            <Link
+              href="/upload"
+              className="block w-full py-3 rounded-lg bg-orange-500 text-white text-sm font-semibold text-center hover:bg-orange-600 transition-colors"
+            >
+              🎬 Analyze with Coach
+            </Link>
           </>
         )}
       </main>
