@@ -312,13 +312,13 @@ function DiscoverPageInner() {
               non-Tutti values contribute to the Filters badge count. */}
           <div data-testid="chip-filters" className="space-y-2">
             <ChipRow
-              label="Done"
+              label="Fatti"
               testidPrefix="chip-done"
               value={filters.doneFilter ?? 'all'}
               onChange={(v) => setFilters({ ...filters, doneFilter: v as DoneFilter })}
             />
             <ChipRow
-              label="Project"
+              label="Progetti"
               testidPrefix="chip-project"
               value={filters.projectFilter ?? 'all'}
               onChange={(v) =>
