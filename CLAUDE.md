@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.27 (A021 climb logging + training history Phases 1–5 + B-A021-fix-1 Round 1+2 + UI English i18n pass + B-A021-fix-2 StateIcons overlap fix — 2026-05-11)
+**Version:** 2.28 (A021 closeout — CLAUDE.md API surface + project tree, ARCHITECTURE.md A021 flows, English-UI rule pinned, Debug tile prod-guard, BottomNav 5th History slot — 2026-05-12)
 **Owner:** Daniele Somensi + Claude Code
