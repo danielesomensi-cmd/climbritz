@@ -162,7 +162,7 @@ function BleTestContent() {
 
         {!isCapacitorNative && (
           <div className="mb-4 p-3 bg-amber-900/40 border border-amber-600 rounded text-sm text-amber-200">
-            This feature requires the installed Kilter-Up app.
+            This feature requires the installed Climbritz app.
           </div>
         )}
 
@@ -273,7 +273,7 @@ function BleTestContent() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          Richiede l&apos;app Kilter-Up (BLE via Capacitor)
+          Richiede l&apos;app Climbritz (BLE via Capacitor)
         </p>
       </div>
       <BottomNav />

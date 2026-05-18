@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Kilter Up</string>
+        <string>Climbritz</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -48,7 +48,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Kilter Up uses Bluetooth to connect to your Kilter Board and control the LED lighting.</string>
+	<string>Climbritz uses Bluetooth to connect to your Kilter Board and control the LED lighting.</string>
 	<!--
 	  A019: WKAppBoundDomains restricts which non-bundle origins are allowed
 	  to load script + interact with the WebView's session. iOS WKWebView

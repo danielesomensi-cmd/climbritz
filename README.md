@@ -1,4 +1,4 @@
-# Kilter-Up — AI Climbing Companion for Kilter Board
+# Climbritz — AI Climbing Companion for Kilter Board
 
 AI climbing companion for Kilter Board — search 160k+ climbs by grip type, build AI training sessions, connect to your board via Bluetooth (Discovery, free) + video technique analysis powered by Gemini 2.5 Flash (Coach, €7.99/month).
 
@@ -35,7 +35,7 @@ cd backend && pytest -v
 
 ## Deployment
 - **Backend:** Railway (FastAPI + SQLite, auto-migrates on deploy)
-- **Frontend:** Vercel — kilter-up-coach.vercel.app
+- **Frontend:** Vercel — climbritz.app
 - **CI:** Alembic migrations run automatically via `startCommand` in `backend/railway.toml`
 
 ## API Endpoints
@@ -45,4 +45,4 @@ Core endpoints: videos (upload/list/get/delete), climbs (search/detail/stats), h
 See `CLAUDE.md` for the complete API surface with parameters and response codes.
 
 ## Repo
-https://github.com/danielesomensi-cmd/kilter-up
+https://github.com/danielesomensi-cmd/climbritz

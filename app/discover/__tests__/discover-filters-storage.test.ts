@@ -5,7 +5,7 @@ import {
   type DiscoverFilters,
 } from '../discover-filters-storage';
 
-const KEY = 'kilter-up:discover:filters';
+const KEY = 'climbritz:discover:filters';
 
 beforeEach(() => {
   window.sessionStorage.clear();

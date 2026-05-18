@@ -45,7 +45,7 @@ MOCK_GEMINI_ANALYSIS = {
 
 MOCK_NOT_KILTER_BOARD = {
     "error": "not_kilter_board",
-    "message": "This does not appear to be a Kilter Board climbing video. Kilter-Up currently only supports Kilter Board analysis.",
+    "message": "This does not appear to be a Kilter Board climbing video. Climbritz currently only supports Kilter Board analysis.",
 }
 
 

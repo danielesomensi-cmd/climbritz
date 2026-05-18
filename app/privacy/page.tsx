@@ -76,8 +76,8 @@ export default function PrivacyPolicy() {
           </h2>
           <p style={{ lineHeight: 1.8 }}>
             For privacy-related inquiries, contact us at{' '}
-            <a href="mailto:daniele@kilterup.com" style={{ color: '#FF6B35' }}>
-              daniele@kilterup.com
+            <a href="mailto:daniele.somensi@gmail.com" style={{ color: '#FF6B35' }}>
+              daniele.somensi@gmail.com
             </a>
             .
           </p>

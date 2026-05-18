@@ -1,4 +1,4 @@
-# Kilter-Up — Ecosystem Research & Technical Audit
+# Climbritz — Ecosystem Research & Technical Audit
 > Last updated: April 2026
 > Purpose: Map existing tools, data sources, and technical feasibility for AI climbing coaching
 
@@ -6,7 +6,7 @@
 
 ## Core Vision Shift
 
-Kilter-Up is a two-tier product: **Discovery (free)** + **Coach (paid, €7.99/month)**.
+Climbritz is a two-tier product: **Discovery (free)** + **Coach (paid, €7.99/month)**.
 
 **Discovery's differentiator** is the proprietary hold classification asset — every hold on the Kilter Board tagged by grip type (jug, good crimp, crimp, sloper, undercling, pinch). This enables grip-type filtering, AI session building, problem generation, and BLE "illuminate only crimps" — features no competitor has.
 
@@ -91,7 +91,7 @@ Key tables in the SQLite database:
 ## BLE / Capacitor Integration (Phase 3e — In Scope)
 
 ### Why Capacitor
-Web Bluetooth API is not available on iOS Safari. To support BLE on both iOS and Android from the same codebase, Kilter-Up wraps the existing Next.js frontend with Capacitor — zero frontend rewrite, native plugin system.
+Web Bluetooth API is not available on iOS Safari. To support BLE on both iOS and Android from the same codebase, Climbritz wraps the existing Next.js frontend with Capacitor — zero frontend rewrite, native plugin system.
 
 - **Plugin:** `@capacitor-community/bluetooth-le`
 - **Flow:** Capacitor app → BLE scan → discover Kilter Board → connect → send LED packets
@@ -111,7 +111,7 @@ The BoardLib database `leds` table maps `hole_id → LED position`. This means:
 1. Query `hold_classifications` table for all holds of category X (e.g., "crimp")
 2. Map those hold IDs → hole IDs → LED positions via `leds` table
 3. Send BLE packet — board lights up only holds of that grip type
-4. **This feature is unique to Kilter-Up — requires the hold classification asset**
+4. **This feature is unique to Climbritz — requires the hold classification asset**
 
 ---
 

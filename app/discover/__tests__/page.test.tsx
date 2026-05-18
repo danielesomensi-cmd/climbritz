@@ -188,7 +188,7 @@ describe('DiscoverPage', () => {
     it('restores angle from sessionStorage when URL has no params', async () => {
       // Seed storage as if the user had set angle=45 on a prior mount
       window.sessionStorage.setItem(
-        'kilter-up:discover:filters',
+        'climbritz:discover:filters',
         JSON.stringify({
           query: '',
           angle: 45,
@@ -203,7 +203,7 @@ describe('DiscoverPage', () => {
 
     it('URL params override sessionStorage on mount', async () => {
       window.sessionStorage.setItem(
-        'kilter-up:discover:filters',
+        'climbritz:discover:filters',
         JSON.stringify({
           query: '',
           angle: 45,
@@ -222,7 +222,7 @@ describe('DiscoverPage', () => {
       fireEvent.click(screen.getByTestId('angle-55'));
 
       await waitFor(() => {
-        const raw = window.sessionStorage.getItem('kilter-up:discover:filters');
+        const raw = window.sessionStorage.getItem('climbritz:discover:filters');
         expect(raw).not.toBeNull();
         const parsed = JSON.parse(raw!);
         expect(parsed.angle).toBe(55);
@@ -235,7 +235,7 @@ describe('DiscoverPage', () => {
 
       // Give the save useEffect a chance to run
       await waitFor(() => {
-        const raw = window.sessionStorage.getItem('kilter-up:discover:filters');
+        const raw = window.sessionStorage.getItem('climbritz:discover:filters');
         expect(raw).not.toBeNull();
         expect(JSON.parse(raw!).angle).toBe(65);
       });
@@ -247,7 +247,7 @@ describe('DiscoverPage', () => {
 
     it('falls back to defaults after sessionStorage is cleared', async () => {
       window.sessionStorage.setItem(
-        'kilter-up:discover:filters',
+        'climbritz:discover:filters',
         JSON.stringify({
           query: '',
           angle: 45,
@@ -255,7 +255,7 @@ describe('DiscoverPage', () => {
           timestamp: Date.now(),
         }),
       );
-      window.sessionStorage.removeItem('kilter-up:discover:filters');
+      window.sessionStorage.removeItem('climbritz:discover:filters');
 
       render(<DiscoverPage />);
       expect(screen.getByTestId('angle-40').className).toMatch(/bg-orange-500/);

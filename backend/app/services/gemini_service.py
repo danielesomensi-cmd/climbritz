@@ -54,7 +54,7 @@ KILTER BOARD COMPLETION RULES:
 
 BOARD DETECTION:
 First, determine if this video shows climbing on a Kilter Board (flat board with uniform grid of plastic holds, often with colored LED lights visible).
-- If this is NOT a Kilter Board or NOT a climbing video, return: {"error": "not_kilter_board", "message": "This does not appear to be a Kilter Board climbing video. Kilter-Up currently only supports Kilter Board analysis."}
+- If this is NOT a Kilter Board or NOT a climbing video, return: {"error": "not_kilter_board", "message": "This does not appear to be a Kilter Board climbing video. Climbritz currently only supports Kilter Board analysis."}
 - If it IS a Kilter Board, proceed with the analysis below.
 
 ANALYSIS INSTRUCTIONS:

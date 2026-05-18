@@ -1,6 +1,6 @@
 # Kilter Backend — FastAPI Application
 
-FastAPI backend for the Kilter-Up video analysis platform.
+FastAPI backend for the Climbritz video analysis platform.
 
 ## Quick Start
 

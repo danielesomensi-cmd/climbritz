@@ -1,4 +1,4 @@
-# Kilter-Up Discovery — Product Design Document
+# Climbritz Discovery — Product Design Document
 
 > Version: 0.2 — April 2, 2026
 > Author: Daniele Somensi + Claude (strategy)
@@ -8,7 +8,7 @@
 
 ## 1. Product Vision
 
-**Kilter Climb Discovery** is the free tier of Kilter-Up. It turns the 160,000+ Kilter Board climb database into an intelligent training companion: search climbs by grip type, get AI-built sessions, generate new problems, and light up the board — all from one app.
+**Kilter Climb Discovery** is the free tier of Climbritz. It turns the 160,000+ Kilter Board climb database into an intelligent training companion: search climbs by grip type, get AI-built sessions, generate new problems, and light up the board — all from one app.
 
 **One-liner:** "The AI training partner that knows every hold on your Kilter Board."
 
@@ -26,7 +26,7 @@
 | BLE | Non-negotiable. In plan from day 1. | Two apps open = friction that kills habitual use |
 | Native framework | Capacitor (wraps existing Next.js) | Zero frontend rewrite. BLE plugin available. iOS + Android. |
 | Launch sequence | Web first (weeks 1-3), then Capacitor wrap + BLE (week 4) | Web = fast dev environment. Same codebase becomes the native app. |
-| Generated problems | Internal to Kilter-Up only (not shared to Kilter Board community) | Keeps the asset proprietary |
+| Generated problems | Internal to Climbritz only (not shared to Kilter Board community) | Keeps the asset proprietary |
 | Coach pricing | €7.99/month, 1 free analysis for all signups | Council-validated. Revisit at 50+ paying users. |
 
 ---
@@ -139,7 +139,7 @@ AI creates NEW boulder problems using classified hold data.
 - User specifies: "10 moves, crimps only, V5, 40°"
 - Algorithm selects holds matching criteria from classified DB
 - Validates reachability (x/y distance between consecutive holds)
-- Generates valid layout string (internal to Kilter-Up only)
+- Generates valid layout string (internal to Climbritz only)
 - Users can save and name generated problems
 
 **Limitations:**
@@ -170,7 +170,7 @@ Connect directly to the Kilter Board via Bluetooth from the app.
 4. Sends BLE packet with positions + color
 5. Board lights up only jugs
 
-**This feature is unique to Kilter-Up. No other app has hold classification data.**
+**This feature is unique to Climbritz. No other app has hold classification data.**
 
 ### 4.5 Attempt Logging (MVP — Lightweight)
 

@@ -7,7 +7,7 @@ Read the following project files carefully:
 
 Then produce a concise project brief in this exact format:
 
-# KILTER-UP — Brief
+# CLIMBRITZ — Brief
 > Generated: [today's date]
 
 ## Status

@@ -44,7 +44,7 @@ function DashboardContent() {
       {/* Header */}
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-black text-[#FF6B35]">KILTER UP</Link>
+          <Link href="/" className="text-xl font-black text-[#FF6B35]">CLIMBRITZ</Link>
           {/* A019: Clerk's hosted menu — account management + sign-out. */}
           <UserButton afterSignOutUrl="/sign-in" />
         </div>

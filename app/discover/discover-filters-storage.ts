@@ -5,7 +5,7 @@
 
 import type { Filters } from '@/components/FilterPanel';
 
-const KEY = 'kilter-up:discover:filters';
+const KEY = 'climbritz:discover:filters';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export interface DiscoverFilters {

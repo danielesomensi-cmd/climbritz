@@ -1,4 +1,4 @@
-# Kilter-Up — Lessons Learned
+# Climbritz — Lessons Learned
 
 > Append-only. Format: `[YYYY-MM-DD] [BRIEF-ID]: Lesson`
 > Never delete entries. Never rewrite. Just append.

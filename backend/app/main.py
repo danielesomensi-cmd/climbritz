@@ -83,7 +83,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Kilter Up API",
+    title="Climbritz API",
     description="AI-powered climbing video form analysis",
     version="0.1.0",
     docs_url="/docs",

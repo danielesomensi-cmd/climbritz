@@ -190,7 +190,7 @@ describe('ClimbDetailPage', () => {
         expect(screen.getByTestId('climb-name')).toBeInTheDocument();
       });
       expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
-      expect(window.sessionStorage.getItem('kilter-up:discover:filtered-list')).toBeNull();
+      expect(window.sessionStorage.getItem('climbritz:discover:filtered-list')).toBeNull();
     });
 
     it('tapping Next routes to the next climb, keeping the list angle', async () => {

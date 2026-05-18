@@ -4,8 +4,8 @@ import "./globals.css";
 import "./safe-area.css";
 
 export const metadata: Metadata = {
-  title: "Kilter Up - AI Training for Climbing",
-  description: "AI-powered circuit generation and training planning for Kilterboard",
+  title: "Climbritz - AI Training for Climbing",
+  description: "AI-powered circuit generation and training planning for the Kilter Board",
   icons: {
     icon: '/favicon.svg',
     apple: '/favicon.svg',

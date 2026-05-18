@@ -1,4 +1,4 @@
-# Kilter-Up — Active Roadmap
+# Climbritz — Active Roadmap
 > Updated: 12 May 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
@@ -6,7 +6,7 @@
 
 ## Vision
 
-Kilter-Up is an AI-powered climbing companion for Kilter Board users. Two tiers, one product:
+Climbritz is an AI-powered climbing companion for Kilter Board users. Two tiers, one product:
 
 | Tier | Name | What it does | Price |
 |------|------|-------------|-------|
@@ -63,7 +63,7 @@ Three levels of coaching intelligence (Coach tier):
 - Climbdex is free — can't charge for search
 - Discovery's job: build audience, create habit, funnel to Coach
 - AI session builder + grip type filter = differentiator, offered free to maximize adoption
-- BLE connection = stickiness (users open Kilter-Up every session)
+- BLE connection = stickiness (users open Climbritz every session)
 
 **Why €7.99/month Coach:**
 - Below €10 psychological threshold
@@ -180,7 +180,7 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **B014-iter-2:** Art presets overhaul — replaced diagnostic presets #1-#5 with pixel art (Space Invader green, Ghost Blinky red + white/cyan eyes, Zelda Heart mono-red 8-bit, yellow 5-point Star, orange-centre + yellow-rays Sun) + added preset #11 All LEDs Diagnostic stress test (476 LEDs cycling through 8-colour rainbow y-bands)
 - [x] **A015:** Universal BottomNav on `/classify` and `/ble-test` + BLE illumination on `/discover/detail` — `ClimbBleControls` component (reuses `use-kilter-ble` hook), `climb-to-leds.ts` helper, static `app/data/leds_12x12.json` (476-entry placement_id → LED position map). Connetti → Illumina board → role colors sent via existing `kilter-protocol.ts` encoder.
 - [x] **A014:** Next/Prev navigation on `/discover/detail` with auto-illuminate when connected — `filtered-list-storage.ts` (sessionStorage, 24h TTL), `← Prev / N of M / Next →` row, `ClimbBleControls.climbKey`+`autoSendOnKeyChange` props with 300ms debounce so rapid taps coalesce. Deep links hide the row.
-- [x] **B017:** Discovery UX fixes after gym validation — (1) Prev/Next buttons on `/discover/detail` enlarged to card-sized tap targets (`min-h-16`, `text-xl font-bold`); (2) app-wide safe-area sweep — `.pt-safe`/`.pb-safe` utilities in `app/safe-area.css` (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint), `viewport-fit=cover` in `app/layout.tsx`, applied to all 12 pages + BottomNav; (3) Discovery filter state persists in sessionStorage (`kilter-up:discover:filters`, 24h TTL) so filters restore on return from detail. URL params still win on mount for shareable deep links; (4) prominent Filters button — full-width 56px-tall toggle in the sticky `/discover` header, brand-orange + count badge when any filter is active (grade range, min ascents, min stars, or non-default sort). Panel `expanded` state lifted to `DiscoverPage`; `countActiveFilters()` exported for reuse.
+- [x] **B017:** Discovery UX fixes after gym validation — (1) Prev/Next buttons on `/discover/detail` enlarged to card-sized tap targets (`min-h-16`, `text-xl font-bold`); (2) app-wide safe-area sweep — `.pt-safe`/`.pb-safe` utilities in `app/safe-area.css` (separate from globals.css because Tailwind v4 strips plain class rules from the Tailwind entrypoint), `viewport-fit=cover` in `app/layout.tsx`, applied to all 12 pages + BottomNav; (3) Discovery filter state persists in sessionStorage (`climbritz:discover:filters`, 24h TTL) so filters restore on return from detail. URL params still win on mount for shareable deep links; (4) prominent Filters button — full-width 56px-tall toggle in the sticky `/discover` header, brand-orange + count badge when any filter is active (grade range, min ascents, min stars, or non-default sort). Panel `expanded` state lifted to `DiscoverPage`; `countActiveFilters()` exported for reuse.
 - [x] **BLE scan → light up a problem from search results** — shipped as part of A015: user flow is tap climb in `/discover` → Connetti → Illumina board. Remaining work: auto-connect on page load (future), in-session memory of last-connected device (future).
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → map to LED positions → send BLE packet
 - [ ] Light up generated problems
@@ -191,7 +191,7 @@ Three levels of coaching intelligence (Coach tier):
 ### 3f — Problem Generation (1-2 weeks)
 - [ ] `POST /api/climbs/generate` — constraints: grip types, move count, grade target, angle
 - [ ] Algorithm: select holds from classified DB → validate reachability (x/y distances) → assign roles (start/middle/finish/foot)
-- [ ] Generate valid layout string (internal to Kilter-Up only — not shared to Kilter community)
+- [ ] Generate valid layout string (internal to Climbritz only — not shared to Kilter community)
 - [ ] User can save, name generated problems
 - [ ] Frontend: generation UI with constraint inputs + result preview
 - [ ] Tests
@@ -276,7 +276,7 @@ Three levels of coaching intelligence (Coach tier):
 - **Android device verification (2026-05-10) ✅:** APK v0.1.1 build 3 sideloaded on Daniele's tablet via Drive. Sign-in via Google OAuth works (the OAuth flow correctly punts to external Chrome for the Google identity step then returns to the app — this is anti-phishing behavior all OAuth providers enforce, NOT a Capacitor/`allowNavigation` bug). Once signed in: homepage 4-tile renders, Discover loads list of climbs, Demo LED renders, Classify renders, Dashboard shows "Nessun video ancora" (= Railway is accepting the Clerk JWT, no 401).
 - **Mobile API_BASE precedence hotfix (2026-05-10):** discovered during build #2 testing that `app/lib/api.ts` was reading `NEXT_PUBLIC_API_URL` (set to `http://localhost:8001` in `.env.local` for web dev) ahead of the `NEXT_PUBLIC_MOBILE` switch — leaking the local URL into the APK and silently breaking every backend call. Fixed by inverting precedence: when `NEXT_PUBLIC_MOBILE=true` the Railway URL is hardcoded and `NEXT_PUBLIC_API_URL` is ignored. Verified by grepping for `web-production-cea9` and absence of `localhost:8001` in the rebuilt APK chunks. Updated `.env.example`, `CLAUDE.md` (Capacitor rule #3), `ARCHITECTURE.md`. APK bumped to versionCode 3.
 - **Railway env vars ✅ (2026-05-10):** `CLERK_JWKS_URL`, `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `ENVIRONMENT=production` confirmed set by Daniele the night before. Backend Dashboard call from the Android APK returns 200 (= JWKS verification + shadow-row upsert + endpoint dependency injection all working in prod).
-- **iOS device verification ✅ (2026-05-10):** iPhone 15 connected via USB-C, Xcode Run (Apple Developer team `daniele.somensi@icloud.com`, automatic signing, bundle id `com.kilterup.app`). Google OAuth opens an in-app `SFSafariViewController` (the in-app browser with the "Done" button), completes Google identity, returns to the WebView with the Clerk session attached. **`WKAppBoundDomains = [sound-cub-94.clerk.accounts.dev]` (`ios/App/App/Info.plist:60-63`) confirmed working** — without it the OAuth redirect would have punted to standalone Safari and broken the auth context. Post-login: homepage + Discover + Demo LED + Classify + Dashboard all render with Clerk JWT accepted by Railway.
+- **iOS device verification ✅ (2026-05-10):** iPhone 15 connected via USB-C, Xcode Run (Apple Developer team `daniele.somensi@icloud.com`, automatic signing, bundle id `app.climbritz`). Google OAuth opens an in-app `SFSafariViewController` (the in-app browser with the "Done" button), completes Google identity, returns to the WebView with the Clerk session attached. **`WKAppBoundDomains = [sound-cub-94.clerk.accounts.dev]` (`ios/App/App/Info.plist:60-63`) confirmed working** — without it the OAuth redirect would have punted to standalone Safari and broken the auth context. Post-login: homepage + Discover + Demo LED + Classify + Dashboard all render with Clerk JWT accepted by Railway.
 - **Pending (Daniele's dashboard work, not blocking):**
   - **Vercel env vars:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`, `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/`, `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/` — all three environments (Production + Preview + Development). Required when promoting from `pk_test_*` to `pk_live_*` Clerk keys; current Vercel Preview already auths fine without these because Daniele's local-built bundles include them via `.env.local`.
 
@@ -298,7 +298,7 @@ Three levels of coaching intelligence (Coach tier):
 - Both issues vanish in Production Clerk environment because of first-party HttpOnly cookies on the customer's FAPI domain (no third-party ITP problem) and because production accepts the customer's own redirect URLs by design
 
 **Required steps:**
-1. Acquire/configure custom domain (e.g. `clerk.kilterup.app`) with CNAME records per Clerk dashboard instructions
+1. Acquire/configure custom domain (e.g. `clerk.climbritz.app`) with CNAME records per Clerk dashboard instructions
 2. Create production OAuth credentials in Google Cloud Console (Clerk's shared dev creds aren't allowed in prod)
 3. Configure prod Clerk instance via dashboard, generate `pk_live_*` + `sk_live_*` keys
 4. Swap `pk_test_*` → `pk_live_*` across: Vercel env vars, Railway env vars, local `.env.local` (3 places — see A020 closeout for the exact var list)

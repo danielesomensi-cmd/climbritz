@@ -114,7 +114,7 @@ export default function ClimbBleControls({
   if (!isCapacitorNative && !Capacitor.isNativePlatform()) {
     return (
       <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700/60 rounded text-sm text-amber-200">
-        💡 Light up LEDs: only available in the installed Kilter-Up app.
+        💡 Light up LEDs: only available in the installed Climbritz app.
       </div>
     );
   }

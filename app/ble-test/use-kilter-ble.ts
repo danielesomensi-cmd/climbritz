@@ -57,7 +57,7 @@ export function useKilterBle(): UseKilterBle {
 
   const connect = useCallback(async () => {
     if (!isCapacitorNative) {
-      setErrorMessage('Questa funzione richiede l\u2019app Kilter-Up installata.');
+      setErrorMessage('Questa funzione richiede l\u2019app Climbritz installata.');
       setStatus('error');
       return;
     }

@@ -2,7 +2,7 @@
 // so /discover/detail can offer Next/Prev navigation without re-fetching the
 // whole page. Scope is per-tab and per-session — intentionally short-lived.
 
-const LIST_KEY = 'kilter-up:discover:filtered-list';
+const LIST_KEY = 'climbritz:discover:filtered-list';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export interface FilteredList {

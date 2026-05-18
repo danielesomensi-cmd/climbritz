@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.kilterup.app',
-  appName: 'Kilter Up',
+  appId: 'app.climbritz',
+  appName: 'Climbritz',
   webDir: 'out', // Next.js static export output
   server: {
     allowNavigation: [

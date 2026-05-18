@@ -16,9 +16,9 @@ jest.mock('next/navigation', () => ({
 import Home from '../page';
 
 describe('Home Page', () => {
-  it('renders the KILTER UP heading', () => {
+  it('renders the CLIMBRITZ heading', () => {
     render(<Home />);
-    expect(screen.getByText('KILTER UP')).toBeInTheDocument();
+    expect(screen.getByText('CLIMBRITZ')).toBeInTheDocument();
   });
 
   it('renders the subtitle', () => {

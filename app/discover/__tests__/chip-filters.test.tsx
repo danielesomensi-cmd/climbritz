@@ -179,7 +179,7 @@ describe('Discovery chip filters — persistence', () => {
     // Simulate a sessionStorage entry written by the pre-Phase-4 code path:
     // no doneFilter / projectFilter keys in filters.
     window.sessionStorage.setItem(
-      'kilter-up:discover:filters',
+      'climbritz:discover:filters',
       JSON.stringify({
         query: '',
         angle: 40,

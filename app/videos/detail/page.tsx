@@ -221,7 +221,7 @@ function VideoContent() {
     <div className="min-h-screen bg-zinc-950">
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-black text-[#FF6B35]">KILTER UP</Link>
+          <Link href="/dashboard" className="text-xl font-black text-[#FF6B35]">CLIMBRITZ</Link>
           <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Dashboard</Link>
         </div>
       </header>

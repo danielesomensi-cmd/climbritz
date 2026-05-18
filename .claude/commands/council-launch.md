@@ -1,19 +1,19 @@
 ---
-description: Run Council with the pre-loaded Kilter-Up product strategy question
+description: Run Council with the pre-loaded Climbritz product strategy question
 ---
 
 Run /council with this question:
 
-Kilter-Up: single product vs two-product split strategy
+Climbritz: single product vs two-product split strategy
 
-WHAT IS KILTER-UP:
+WHAT IS CLIMBRITZ:
 - AI-powered climbing coach for Kilter Board users
 - Core: upload climbing video → Gemini 2.5 Flash analyzes technique → structured coaching feedback
 - 3-level system: L1 solo analysis (working), L2 contextual with BoardLib data (Phase 3b complete), L3 expert comparison (future)
 - Stack: Next.js 14 + FastAPI + SQLite/PostgreSQL + Gemini 2.5 Flash
 - Status: Phase 1-2 complete, Phase 3a+3b complete (BoardLib DB + climb search API), B007 prompt rework done
 - Monetization plan: 1 free analysis (signup required) → €7.99/month unlimited
-- Deploy: Backend on Railway, Frontend on Vercel (kilter-up-coach.vercel.app)
+- Deploy: Backend on Railway, Frontend on Vercel (climbritz.app)
 - Team: solo founder, bootstrapped, no funding, no marketing budget
 - Target: intermediate Kilter Board climbers (V3-V7), train 2-4x/week
 
@@ -44,8 +44,8 @@ EXISTING COMPETITORS FOR AI COACH:
 - Climbah, ClimbAI, Climbalyzer exist but are generic (not Kilter-specific) and very early stage.
 
 THE STRATEGIC QUESTION:
-1. TWO SEPARATE PRODUCTS IN PARALLEL: Coach (kilter-up-coach) + Discovery (kilter-discover). Separate landing pages, separate value props, potential future merge. Risk: solo founder focus dilution, double the marketing.
-2. ONE PRODUCT, TWO TRACKS: Discovery as a feature inside Kilter-Up that funnels users to the AI Coach. Lower overhead, clearer brand, but Discovery feels bolted-on rather than first-class.
+1. TWO SEPARATE PRODUCTS IN PARALLEL: Coach (climbritz-coach) + Discovery (kilter-discover). Separate landing pages, separate value props, potential future merge. Risk: solo founder focus dilution, double the marketing.
+2. ONE PRODUCT, TWO TRACKS: Discovery as a feature inside Climbritz that funnels users to the AI Coach. Lower overhead, clearer brand, but Discovery feels bolted-on rather than first-class.
 
 CONSTRAINTS:
 - Solo founder, bootstrapped, no funding, no marketing budget

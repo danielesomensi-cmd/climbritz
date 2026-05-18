@@ -41,22 +41,22 @@ describe('filtered-list-storage', () => {
     saveFilteredList(stale);
     expect(readFilteredList()).toBeNull();
     // And the stale entry is wiped so we don't keep re-parsing it
-    expect(window.sessionStorage.getItem('kilter-up:discover:filtered-list')).toBeNull();
+    expect(window.sessionStorage.getItem('climbritz:discover:filtered-list')).toBeNull();
   });
 
   it('returns null and clears on corrupt JSON', () => {
-    window.sessionStorage.setItem('kilter-up:discover:filtered-list', '{ not json');
+    window.sessionStorage.setItem('climbritz:discover:filtered-list', '{ not json');
     expect(readFilteredList()).toBeNull();
-    expect(window.sessionStorage.getItem('kilter-up:discover:filtered-list')).toBeNull();
+    expect(window.sessionStorage.getItem('climbritz:discover:filtered-list')).toBeNull();
   });
 
   it('returns null and clears when shape is wrong', () => {
     window.sessionStorage.setItem(
-      'kilter-up:discover:filtered-list',
+      'climbritz:discover:filtered-list',
       JSON.stringify({ climbIds: 'not-an-array', angle: 40, timestamp: Date.now() }),
     );
     expect(readFilteredList()).toBeNull();
-    expect(window.sessionStorage.getItem('kilter-up:discover:filtered-list')).toBeNull();
+    expect(window.sessionStorage.getItem('climbritz:discover:filtered-list')).toBeNull();
   });
 
   describe('resolvePosition', () => {

@@ -4,7 +4,7 @@ description: Run the Strategic Advisory Council — 5 parallel advisors + peer r
 
 # Strategic Advisory Council
 
-You are orchestrating a strategic advisory council for Kilter-Up.
+You are orchestrating a strategic advisory council for Climbritz.
 
 ## Flags
 

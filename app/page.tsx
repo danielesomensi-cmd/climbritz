@@ -93,7 +93,7 @@ function HomeContent() {
           textAlign: 'center',
         }}
       >
-        KILTER UP
+        CLIMBRITZ
       </h1>
       <p
         style={{

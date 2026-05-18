@@ -132,6 +132,6 @@ describe('ClimbBleControls — auto-send on climbKey change (A014)', () => {
     mockIsCapacitorNative = false;
     render(<ClimbBleControls ledCommands={[mkHold(10)]} climbKey="uuid-A" autoSendOnKeyChange />);
     expect(screen.queryByTestId('climb-ble-controls')).not.toBeInTheDocument();
-    expect(screen.getByText(/installed Kilter-Up app/)).toBeInTheDocument();
+    expect(screen.getByText(/installed Climbritz app/)).toBeInTheDocument();
   });
 });

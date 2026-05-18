@@ -303,7 +303,7 @@ thumb: https://api.kilterboardapp.com/img/beta_link_thumbnails/B3Pi401jD8z.jpg
 | 6 | Tycho | 1 |
 | 7 | Kilter Board Homewall | 1 |
 
-For Kilter-Up, products 1 and 7 are the relevant boards.
+For Climbritz, products 1 and 7 are the relevant boards.
 
 ---
 
@@ -380,7 +380,7 @@ Bell curve centered at 7a/V6 (14,334 climbs) and 6c/V5 (11,262). Grades below V3
 
 ## 6. Usefulness Assessment
 
-| Table / Field | Category | For Kilter-Up |
+| Table / Field | Category | For Climbritz |
 |---------------|----------|---------------|
 | `climbs.name` | 🟢 Critical | Level 2 prompt: "You are watching {name}" |
 | `climbs.frames` | 🟢 Critical | Parse → hold positions + roles for prompt |
