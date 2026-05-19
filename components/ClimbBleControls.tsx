@@ -176,7 +176,7 @@ export default function ClimbBleControls({
       ) : (
         <button
           onClick={connect}
-          className="w-full py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-500 transition-colors"
+          className="w-full py-2.5 rounded-lg font-semibold text-sm bg-orange-500 hover:bg-orange-400 text-white transition-colors"
           data-testid="ble-connect-btn"
         >
           Connect to board

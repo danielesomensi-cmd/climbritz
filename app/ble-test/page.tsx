@@ -152,7 +152,7 @@ function BleTestContent() {
             ) : (
               <button
                 onClick={connect}
-                className="w-full p-3 rounded-lg font-semibold text-base bg-blue-600 hover:bg-blue-500 transition-all"
+                className="w-full p-3 rounded-lg font-semibold text-base bg-orange-500 hover:bg-orange-400 text-white transition-all"
               >
                 Connect
               </button>
@@ -224,7 +224,7 @@ function BleTestContent() {
                   'p-3 rounded-lg text-left transition-all',
                   isStressTest ? 'col-span-2 border border-amber-600/60' : '',
                   isActive
-                    ? 'bg-blue-700 ring-2 ring-blue-400'
+                    ? 'bg-orange-500/20 ring-2 ring-orange-500'
                     : isStressTest
                       ? 'bg-amber-950/40 hover:bg-amber-900/60'
                       : 'bg-gray-800 hover:bg-gray-700',
@@ -246,7 +246,7 @@ function BleTestContent() {
           <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
             Anteprima visiva
             {activePreset !== null && (
-              <span className="ml-2 text-blue-400 normal-case font-normal">
+              <span className="ml-2 text-orange-300 normal-case font-normal">
                 — Preset #{activePreset}: {PRESETS.find(p => p.id === activePreset)?.name}
               </span>
             )}
