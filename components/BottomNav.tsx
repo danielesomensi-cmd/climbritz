@@ -11,14 +11,13 @@ interface NavItem {
   match?: string;
 }
 
-// A021 follow-up: History added as a 5th slot now that climb logging is
-// shipped. Order chosen so the daily-use flow (Discover → log a climb →
-// check History) reads left-to-right.
+// B021 (2026-05-19): Coach slot removed pending Coach tier production
+// readiness — the Video Analysis tile on the homepage carries a COMING
+// SOON badge instead. Future revert restores the 5th slot at /upload.
 const ITEMS: NavItem[] = [
   { href: '/', label: 'Home', icon: '🏠', match: '/' },
   { href: '/discover', label: 'Discover', icon: '🔍', match: '/discover' },
   { href: '/history', label: 'History', icon: '📊', match: '/history' },
-  { href: '/upload', label: 'Coach', icon: '🎬', match: '/upload' },
   { href: '/dashboard', label: 'Profile', icon: '👤', match: '/dashboard' },
 ];
 
@@ -36,7 +35,7 @@ export default function BottomNav() {
       data-testid="bottom-nav"
       className="fixed bottom-0 left-0 right-0 z-30 pb-safe bg-zinc-950/95 backdrop-blur border-t border-zinc-800"
     >
-      <div className="max-w-2xl mx-auto grid grid-cols-5">
+      <div className="max-w-2xl mx-auto grid grid-cols-4">
         {ITEMS.map((item) => {
           const active = isActive(pathname, item);
           return (

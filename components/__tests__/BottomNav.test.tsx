@@ -8,14 +8,27 @@ jest.mock('next/navigation', () => ({
 }));
 
 describe('BottomNav', () => {
-  it('renders all five nav items (Home / Discover / History / Coach / Profile)', () => {
+  it('renders all four nav items (Home / Discover / History / Profile)', () => {
     mockPath = '/';
     render(<BottomNav />);
     expect(screen.getByTestId('nav-home')).toBeInTheDocument();
     expect(screen.getByTestId('nav-discover')).toBeInTheDocument();
     expect(screen.getByTestId('nav-history')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-coach')).toBeInTheDocument();
     expect(screen.getByTestId('nav-profile')).toBeInTheDocument();
+  });
+
+  // B021: Coach slot removed pending Coach tier production readiness.
+  it('does not render the Coach nav slot', () => {
+    mockPath = '/';
+    render(<BottomNav />);
+    expect(screen.queryByTestId('nav-coach')).not.toBeInTheDocument();
+  });
+
+  it('renders exactly 4 nav items', () => {
+    mockPath = '/';
+    const { container } = render(<BottomNav />);
+    const links = container.querySelectorAll('[data-testid^="nav-"]');
+    expect(links).toHaveLength(4);
   });
 
   it('marks the home tab active on /', () => {
