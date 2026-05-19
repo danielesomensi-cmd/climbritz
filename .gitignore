@@ -43,3 +43,6 @@ android/keystore.properties
 
 # Pre-built mobile artifacts (manual sideload to test devices)
 /dist/
+
+# iOS AppIcon backups left by deploy_climbritz.sh Phase 3 (transient rollback safety net)
+ios/App/App/Assets.xcassets/AppIcon_*.appiconset.bak/

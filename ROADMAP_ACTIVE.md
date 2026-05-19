@@ -1,5 +1,5 @@
 # Climbritz — Active Roadmap
-> Updated: 12 May 2026
+> Updated: 19 May 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 
 ---
@@ -80,6 +80,7 @@ Three levels of coaching intelligence (Coach tier):
 
 - [x] **Register Apple Developer Account** — approved + active; first iOS device build running via A016 (17 April 2026)
 - [x] **Clerk dashboard configured** — Development environment, Frontend API host = sound-cub-94.clerk.accounts.dev, email + password (verification code only, no magic links). Phone/Username/Passkeys disabled.
+- [x] **iOS TestFlight first upload** — Climbritz 1.0.0 (build 1) uploaded to App Store Connect via `deploy_climbritz.sh` (19 May 2026). Bundle `app.climbritz`, team `KSD2RSAZP2`, Delivery UUID `2ea1488e-d81f-4dad-9db0-879456377304`. Internal testing pending Apple processing (~10–45 min). App-specific password used in upload to be revoked from appleid.apple.com.
 - [ ] **Write pro climber list** — names + Instagram/YouTube handles of known strong Kilter Board climbers (Daniele's knowledge)
 - [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check if 6 categories make sense
 - [ ] **Validate hold classifications** in gym — use mobile validation tool, physically check ambiguous holds (~2-3 hours)

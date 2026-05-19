@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.28 (A021 closeout — CLAUDE.md API surface + project tree, ARCHITECTURE.md A021 flows, English-UI rule pinned, Debug tile prod-guard, BottomNav 5th History slot — 2026-05-12)
+**Version:** 2.29 (iOS TestFlight first upload — Climbritz 1.0.0 build 1 to App Store Connect, AppIcon swap committed, deploy script patched for new repo path + xcodeproj + xcconfig-aware version refs + modern altool flags — 2026-05-19)
 **Owner:** Daniele Somensi + Claude Code
