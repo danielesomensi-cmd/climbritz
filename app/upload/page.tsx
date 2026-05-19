@@ -22,9 +22,9 @@ function UploadContent() {
     if (rejectedFiles && (rejectedFiles as Array<{errors: Array<{code: string}>}>).length > 0) {
       const rejection = (rejectedFiles as Array<{errors: Array<{code: string}>}>)[0];
       if (rejection.errors[0]?.code === 'file-too-large') {
-        setError('File troppo grande. Max 500MB.');
+        setError('File too large. Max 500MB.');
       } else {
-        setError('Formato non supportato. Usa MP4, MOV o WebM.');
+        setError('Unsupported format. Use MP4, MOV, or WebM.');
       }
       return;
     }

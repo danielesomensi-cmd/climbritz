@@ -244,7 +244,7 @@ function BleTestContent() {
         {/* Board visual preview */}
         <div className="mb-6">
           <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">
-            Anteprima visiva
+            Visual preview
             {activePreset !== null && (
               <span className="ml-2 text-orange-300 normal-case font-normal">
                 — Preset #{activePreset}: {PRESETS.find(p => p.id === activePreset)?.name}
@@ -256,7 +256,7 @@ function BleTestContent() {
 
         {/* Legend */}
         <div className="p-3 bg-gray-800 rounded-lg">
-          <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Colori ruolo</p>
+          <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Role colors</p>
           <div className="grid grid-cols-2 gap-1 text-xs">
             {[
               { label: 'Start (12)', color: '#00FF00' },
@@ -273,7 +273,7 @@ function BleTestContent() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          Richiede l&apos;app Climbritz (BLE via Capacitor)
+          Requires the installed Climbritz app (BLE via Capacitor)
         </p>
       </div>
       <BottomNav />

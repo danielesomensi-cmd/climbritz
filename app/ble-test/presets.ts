@@ -213,7 +213,7 @@ export const PRESETS: Preset[] = [
   {
     id: 1,
     name: 'Space Invader',
-    description: 'Alieno pixel art — Taito 1978',
+    description: 'Pixel-art alien — Taito 1978',
     holds: [
       ...[
         // Antennae (top)
@@ -234,7 +234,7 @@ export const PRESETS: Preset[] = [
   {
     id: 2,
     name: 'Ghost Blinky',
-    description: 'Fantasma rosso Pac-Man con occhi',
+    description: 'Red Pac-Man ghost with eyes',
     holds: [
       // Red body — dome, face, body, 3-hump wavy bottom
       ...[
@@ -256,7 +256,7 @@ export const PRESETS: Preset[] = [
   {
     id: 3,
     name: 'Zelda Heart',
-    description: 'Heart container 8-bit in rosso puro',
+    description: 'Pure-red 8-bit heart container',
     holds: [
       // Mono-red 8-bit heart — two humps at top tapering to a single point.
       ...[
@@ -271,7 +271,7 @@ export const PRESETS: Preset[] = [
   {
     id: 4,
     name: 'Star',
-    description: 'Stella gialla a 5 punte',
+    description: 'Yellow five-point star',
     holds: [
       // Filled 5-pointed star — top point, horizontal arms at row 12, V-legs.
       ...[
@@ -287,7 +287,7 @@ export const PRESETS: Preset[] = [
   {
     id: 5,
     name: 'Sun',
-    description: 'Sole arancione con raggi gialli',
+    description: 'Orange sun with yellow rays',
     holds: [
       // Orange centre circle (11 LEDs)
       ...[
@@ -323,7 +323,7 @@ export const PRESETS: Preset[] = [
   {
     id: 6,
     name: 'DANI',
-    description: 'Scritta "DANI" in LED rossi',
+    description: '"DANI" lettering in red LEDs',
     holds: [
       // D (cols 0-3, rows 6-10): XXX. / X..X / X..X / X..X / XXX.
       grid(0,10), grid(1,10), grid(2,10),
@@ -350,7 +350,7 @@ export const PRESETS: Preset[] = [
   {
     id: 7,
     name: 'Climber',
-    description: 'Omino che arrampica — posa dinamica',
+    description: 'Climber figure — dynamic pose',
     holds: [
       // Body (asymmetric reaching pose, white)
       ...[
@@ -375,7 +375,7 @@ export const PRESETS: Preset[] = [
   {
     id: 8,
     name: 'Heart',
-    description: 'Cuore rosso e magenta',
+    description: 'Red and magenta heart',
     holds: [
       // Red outline
       ...[
@@ -398,7 +398,7 @@ export const PRESETS: Preset[] = [
   {
     id: 9,
     name: 'Lightning',
-    description: 'Fulmine giallo a tutta altezza',
+    description: 'Full-height yellow bolt',
     holds: [
       ...[
         // Top segment — top-right corner diagonal going down-left (rows 17→13)
@@ -426,7 +426,7 @@ export const PRESETS: Preset[] = [
   {
     id: 10,
     name: 'Smile',
-    description: 'Faccione sorridente',
+    description: 'Big smiling face',
     holds: [
       ...[
         // Face outline — 11×11 circle (cols 3-13, rows 4-14)
@@ -454,7 +454,7 @@ export const PRESETS: Preset[] = [
   {
     id: 11,
     name: 'All LEDs Diagnostic',
-    description: 'Stress test — tutte le LED, strisce arcobaleno dal basso',
+    description: 'Stress test — all LEDs, rainbow stripes from the bottom',
     holds: buildAllLedsStressTest(),
   },
 ];
