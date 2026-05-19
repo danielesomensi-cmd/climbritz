@@ -310,6 +310,26 @@ Three levels of coaching intelligence (Coach tier):
 
 **Phase 0 audit reference:** see commit `docs: log A019 ship status + B-iOS-oauth-prod backlog entry`. Full source citations + 3-fix-path comparison are in the Claude Code session that produced this entry. Decision was Fix C (defer A, plan B for launch).
 
+### Post-audit UX polish — D017 deferred findings
+
+Three brief candidates surfaced by the D017 audit (`docs/audit-2026-05-19/AUDIT_REPORT.md`) but deferred from Sprint #1 (B022-B027). Sprint #1 covered the 4 P0 fixes + 2 high-impact P1 fixes; these three are larger/more-strategic and benefit from beta feedback before implementation.
+
+**B028 — Coming Soon component + FilterPanel idiom sweep (M)**
+- Unify "Coming Soon" treatment across the app (homepage Video Analysis badge from B021, FilterPanel GRIP TYPE inline-orange text, any other surface that needs a "not yet available" signal).
+- Sweep the FilterPanel for idiom inconsistency — the panel currently mixes chip rows (DONE / PROJECT / MOVES / MIN ASCENTS / MIN STARS / SORT BY) with dropdowns (GRADE RANGE Min/Max) and disabled-checkbox group (GRIP TYPE). Pick one or two idioms, apply consistently.
+- Trigger: after first round of beta feedback identifies which Coming-Soon features get the most "when?" questions.
+
+**B029 — Design system pass (M)**
+- Catch-all for D017 P2 findings: status color tokens, CTA shape inconsistency, page-title sizing, BottomNav rationale, homepage orphan tile structure.
+- Goal: codify the existing implicit design language into explicit Tailwind tokens + a small component library (Card, Chip, Button, PageHeader, EmptyState) that the rest of the app reuses.
+- Trigger: before App Store submission. Without this, every future feature risks adding more drift.
+
+**B030 — Typography lift (M, post-beta)**
+- Replace generic system font with a curated typeface (Geist Sans / Inter / similar). Define type scale tokens (display, h1, h2, body, caption).
+- Trigger: post-beta, when the rest of the visual language is stable. Doing this earlier risks redoing it once design system pass (B029) lands.
+
+Source: `docs/audit-2026-05-19/AUDIT_REPORT.md` commit af247c6.
+
 ---
 
 ## Phase 4 — Visual Problem Recognition (Enhancement)

@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.30 (B021 — Coach COMING SOON UX patch: BottomNav 5 → 4 slots removing Coach, brand-orange COMING SOON pill on Video Analysis homepage tile, "Analyze with Coach" CTA removed from /discover/detail; frontend-only, no backend / auth / BLE changes — 2026-05-19)
+**Version:** 2.31 (Sprint #1 post-audit — B022 dev banner deleted, B023 Italian strings translated, B024 BLE Connect blue → orange, B025 active chips outline, B026 /history bundle (back arrow + heatmap contrast + zero stats), B027 Project label + destructive modal; B028-B030 deferred to ROADMAP_ACTIVE — 2026-05-19)
 **Owner:** Daniele Somensi + Claude Code
