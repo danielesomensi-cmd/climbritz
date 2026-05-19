@@ -268,11 +268,6 @@ function DiscoverPageInner() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-nav">
-      {/* DEBUG banner — remove after fixing Capacitor fetch issue */}
-      <div className="bg-yellow-900/80 text-yellow-200 text-xs px-3 py-1.5 font-mono break-all">
-        API: {API_BASE}
-      </div>
-
       {/* Header */}
       <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 space-y-3">
