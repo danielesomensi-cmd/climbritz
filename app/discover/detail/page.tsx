@@ -265,7 +265,9 @@ function ClimbDetailPageInner() {
                   2. Next/Prev row — moved here in B-A021-fix-1.1.2 so the
                      LogSection on this page doesn't push it out of reach
                      on mid-height phone screens.
-                  3. Analyze with Coach
+                B021 (2026-05-19): "Analyze with Coach" CTA removed pending
+                Coach tier production readiness. Future revert re-adds the
+                Link to /upload below the Next/Prev row.
                 "Light up" already lives in ClimbBleControls above. */}
             <div className="flex gap-2 pt-2">
               <button
@@ -312,12 +314,6 @@ function ClimbDetailPageInner() {
               </div>
             )}
 
-            <Link
-              href="/upload"
-              className="block w-full py-3 rounded-lg bg-orange-500 text-white text-sm font-semibold text-center hover:bg-orange-600 transition-colors"
-            >
-              🎬 Analyze with Coach
-            </Link>
           </>
         )}
       </main>
