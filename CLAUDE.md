@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.31 (Sprint #1 post-audit — B022 dev banner deleted, B023 Italian strings translated, B024 BLE Connect blue → orange, B025 active chips outline, B026 /history bundle (back arrow + heatmap contrast + zero stats), B027 Project label + destructive modal; B028-B030 deferred to ROADMAP_ACTIVE — 2026-05-19)
+**Version:** 2.32 (TestFlight build 2 — Sprint #1 + B021 bundled, Delivery UUID `8cd98dc0…`; deploy_climbritz.sh now takes positional build-number arg + MARKETING_VERSION hardcoded; ITSAppUsesNonExemptEncryption=false in Info.plist so build 3+ skips the export-compliance prompt — 2026-05-19)
 **Owner:** Daniele Somensi + Claude Code
