@@ -53,11 +53,18 @@ describe('Home Page', () => {
     expect(screen.getByText('Debug')).toBeInTheDocument();
   });
 
-  it('shows lock icon on Video Analysis tile', () => {
+  // B021 (2026-05-19): Coach tier not production-ready; the Video Analysis
+  // tile carries a COMING SOON pill instead of the previous 🔒 lock. Tile
+  // stays clickable so /upload remains URL-reachable for power users.
+  it('shows COMING SOON badge on Video Analysis tile', () => {
     render(<Home />);
-    // A019.16: page is AuthGuard-wrapped, so the tile target points at the
-    // actual upload page. The 🔒 icon now signals "Coach paid tier" — Stripe
-    // paywall (future) will swap this href for /paywall.
+    const badge = screen.getByTestId('tile-video-analysis-coming-soon');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent(/coming soon/i);
+  });
+
+  it('Video Analysis tile remains clickable and points at /upload', () => {
+    render(<Home />);
     const videoLink = screen.getByText('Video Analysis').closest('a');
     expect(videoLink).toHaveAttribute('href', '/upload');
   });

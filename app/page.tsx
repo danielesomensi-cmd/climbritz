@@ -39,9 +39,11 @@ const TILES: Tile[] = [
     icon: '🏷️',
   },
   {
-    // A019.16: user is signed in by the time they see this tile (page is
-    // AuthGuard-wrapped). The 🔒 lock now signals "Coach paid tier" — when
-    // Stripe paywall lands, this href flips to /paywall.
+    // B021 (2026-05-19): Coach tier not production-ready (prompt tuning
+    // incomplete, no Stripe paywall). `locked: true` now renders a
+    // COMING SOON pill instead of the 🔒 lock so testers don't expect
+    // working analysis. Tile stays clickable → /upload remains URL-
+    // reachable for power users / debugging.
     href: '/upload',
     label: 'Video Analysis',
     subtitle: 'AI technique coaching',
@@ -159,15 +161,23 @@ function HomeContent() {
             </span>
             {tile.locked && (
               <span
+                data-testid="tile-video-analysis-coming-soon"
                 style={{
                   position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  fontSize: '14px',
-                  color: '#94a3b8',
+                  top: '8px',
+                  right: '8px',
+                  display: 'inline-block',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  backgroundColor: '#FF6B35',
+                  color: '#ffffff',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
-                🔒
+                Coming Soon
               </span>
             )}
           </Link>
