@@ -22,6 +22,17 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!--
+	  Export-compliance auto-declaration: the app only uses standard
+	  HTTPS (Clerk auth, FastAPI backend, Gemini API) + standard
+	  system Bluetooth encryption (BLE to Kilter Board). None of this
+	  counts as "non-exempt encryption" under US export rules, so
+	  declaring `false` here makes App Store Connect skip the
+	  "Missing Compliance" prompt on every new TestFlight build.
+	  Revisit only if the app ever ships custom crypto.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
