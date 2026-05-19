@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.29 (iOS TestFlight first upload — Climbritz 1.0.0 build 1 to App Store Connect, AppIcon swap committed, deploy script patched for new repo path + xcodeproj + xcconfig-aware version refs + modern altool flags — 2026-05-19)
+**Version:** 2.30 (B021 — Coach COMING SOON UX patch: BottomNav 5 → 4 slots removing Coach, brand-orange COMING SOON pill on Video Analysis homepage tile, "Analyze with Coach" CTA removed from /discover/detail; frontend-only, no backend / auth / BLE changes — 2026-05-19)
 **Owner:** Daniele Somensi + Claude Code

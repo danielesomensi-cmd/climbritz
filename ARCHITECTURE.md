@@ -101,14 +101,14 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 | Page | Path | What it does |
 |------|------|-------------|
-| Homepage | `page.tsx` | Tile hub (Demo LED, Discover, Classify, Video Analysis, History, Debug). Debug tile is hidden in production builds so end users only see the 5 product tiles. |
+| Homepage | `page.tsx` | Tile hub (Demo LED, Discover, Classify, Video Analysis, History, Debug). Debug tile is hidden in production builds so end users only see the 5 product tiles. **B021 (2026-05-19):** Video Analysis tile carries a COMING SOON pill (brand-orange `#FF6B35`) instead of the previous 🔒 lock — Coach tier not production-ready. Tile remains clickable; `/upload` stays URL-reachable. |
 | Sign in | `app/sign-in/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Sign up | `app/sign-up/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Login | `login/page.tsx` | Redirect alias to `/sign-in` (backward compat) |
 | Upload | `upload/page.tsx` | Drag-drop video upload, progress bar |
 | Dashboard | `dashboard/page.tsx` | User overview |
 | Discover | `discover/page.tsx` | Climb search + filter panel (A011). B020: renders the full result set (no internal slice) up to the backend's 500-result cap; an orange overflow banner appears at the top when `total_count > climbs.length` |
-| Climb detail | `discover/detail/page.tsx` | Board visualization + BLE control bar (A015) + Next/Prev row through the filtered list (A014, sessionStorage-backed). Reuses `/ble-test` BLE stack via `ClimbBleControls` + `climb-to-leds.ts`. **A021.3:** mounts `<LogSection>` (5-col grid Flash / Send / Attempt / Project / Remove, project-removal modal w/ Android back-button via `@capacitor/app`) + `<RecentLogs>` mini-list. Board capped at `max-w-[280px]` to fit a mid-height phone viewport (B-A021-fix-1 Round 2). |
+| Climb detail | `discover/detail/page.tsx` | Board visualization + BLE control bar (A015) + Next/Prev row through the filtered list (A014, sessionStorage-backed). Reuses `/ble-test` BLE stack via `ClimbBleControls` + `climb-to-leds.ts`. **A021.3:** mounts `<LogSection>` (5-col grid Flash / Send / Attempt / Project / Remove, project-removal modal w/ Android back-button via `@capacitor/app`) + `<RecentLogs>` mini-list. Board capped at `max-w-[280px]` to fit a mid-height phone viewport (B-A021-fix-1 Round 2). **B021 (2026-05-19):** "🎬 Analyze with Coach" CTA removed pending Coach tier production readiness. |
 | Classify | `classify/page.tsx` | Hold classification UI (HC-5) |
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
 | BLE test | `ble-test/page.tsx` | 10 pixel-art LED presets + #11 all-LEDs stress test, auto-apply on tap with 200ms debounce (A006/B009/B012/B014/B014-iter-2) |
