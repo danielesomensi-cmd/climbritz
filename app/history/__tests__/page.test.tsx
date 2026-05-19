@@ -103,6 +103,36 @@ beforeEach(() => {
   getTrendMock.mockResolvedValue([]);
 });
 
+describe('HistoryPage — B026 header + stats polish', () => {
+  it('does not render a back-link on the header (top-level route)', async () => {
+    render(<HistoryPage />);
+    await waitFor(() =>
+      expect(screen.queryByTestId('history-loading')).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId('back-link')).not.toBeInTheDocument();
+  });
+
+  it('dims zero-value stat cards (Sends = 0 in this fixture)', async () => {
+    // Session fixture: 1 climb, 1 flash, 0 sends, 0 attempts.
+    getSessionsMock.mockResolvedValue([
+      mkSession('2026-05-19', {
+        total_climbs: 1,
+        sends: 0,
+        flashes: 1,
+        attempts: 0,
+      }),
+    ]);
+    render(<HistoryPage />);
+    await waitFor(() =>
+      expect(screen.queryByTestId('history-loading')).not.toBeInTheDocument(),
+    );
+    const sendsCard = screen.getByTestId('stat-card-sends');
+    expect(sendsCard.className).toMatch(/opacity-50/);
+    const flashesCard = screen.getByTestId('stat-card-flashes');
+    expect(flashesCard.className).not.toMatch(/opacity-50/);
+  });
+});
+
 describe('HistoryPage — loading + empty state', () => {
   it('shows a loading indicator before data resolves', async () => {
     // Never-resolving promise to keep us in the loading state.

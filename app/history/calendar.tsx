@@ -176,10 +176,13 @@ export default function HistoryCalendar({
   );
 }
 
+// B026: bumped the intensity floor (was 20% / 40% / 70% / 100%) so a single-
+// climb day is visible in bright gym light. 4 tiers instead of 5 — count=1
+// and count=2-3 collapse into a clearer low/mid/high gradient.
 function intensityClass(count: number): string {
   if (count === 0) return 'bg-zinc-900 text-zinc-600';
-  if (count === 1) return 'bg-orange-500/20 text-orange-200';
-  if (count <= 3) return 'bg-orange-500/40 text-orange-100';
-  if (count <= 6) return 'bg-orange-500/70 text-white';
+  if (count === 1) return 'bg-orange-500/35 text-orange-100';
+  if (count <= 3) return 'bg-orange-500/60 text-white';
+  if (count <= 6) return 'bg-orange-500/80 text-white';
   return 'bg-orange-500 text-white';
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
 import {
   ApiError,
   getPyramid,
@@ -130,17 +129,8 @@ function HistoryInner() {
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
       <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 space-y-3">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              data-testid="back-link"
-              className="text-zinc-400 hover:text-orange-400 text-2xl leading-none"
-              aria-label="Back to home"
-            >
-              ←
-            </Link>
-            <h1 className="text-xl font-bold">History</h1>
-          </div>
+          {/* B026: no back arrow — /history is a top-level BottomNav route. */}
+          <h1 className="text-xl font-bold">History</h1>
 
           {/* Date range picker — preset buttons */}
           <div className="flex gap-1" data-testid="range-picker">
@@ -247,9 +237,21 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, icon }: StatCardProps) {
+  // B026: dim zero-value tiles so the stats strip celebrates wins instead of
+  // visually flagging gaps. Non-zero stays full-saturation.
+  const isZero = typeof value === 'number' && value === 0;
   return (
-    <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-2 py-3 text-center">
-      <div className="text-xl font-bold text-white tabular-nums">
+    <div
+      data-testid={`stat-card-${label.toLowerCase()}`}
+      className={`rounded-lg bg-zinc-900 border border-zinc-800 px-2 py-3 text-center ${
+        isZero ? 'opacity-50' : ''
+      }`}
+    >
+      <div
+        className={`text-xl font-bold tabular-nums ${
+          isZero ? 'text-zinc-500' : 'text-white'
+        }`}
+      >
         {icon && <span className="mr-1">{icon}</span>}
         {value}
       </div>
