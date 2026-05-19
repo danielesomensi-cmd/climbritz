@@ -148,7 +148,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 onClick={() => onChange({ ...value, minAscents: p.value })}
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                   active
-                    ? 'bg-orange-500 border-orange-500 text-white'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                 }`}
               >
@@ -177,7 +177,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 }
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                   active
-                    ? 'bg-orange-500 border-orange-500 text-white'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                 }`}
               >
@@ -210,7 +210,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 }
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
                   active
-                    ? 'bg-orange-500 border-orange-500 text-white'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                 }`}
               >
@@ -237,7 +237,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 onClick={() => onChange({ ...value, sort: o.value })}
                 className={`px-3 py-2 rounded text-sm border transition-colors ${
                   active
-                    ? 'bg-orange-500 border-orange-500 text-white'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
                 }`}
               >

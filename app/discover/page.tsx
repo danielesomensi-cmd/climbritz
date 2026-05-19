@@ -55,7 +55,7 @@ function ChipRow({ label, testidPrefix, value, onChange }: ChipRowProps) {
               aria-pressed={active}
               className={`flex-1 px-2 py-1.5 rounded-full text-xs border transition-colors ${
                 active
-                  ? 'bg-orange-500 border-orange-500 text-white font-semibold'
+                  ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                   : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
               }`}
             >
@@ -283,7 +283,7 @@ function DiscoverPageInner() {
                 onClick={() => setAngle(a)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-sm border transition-colors ${
                   angle === a
-                    ? 'bg-orange-500 border-orange-500 text-white font-semibold'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
                 }`}
               >
