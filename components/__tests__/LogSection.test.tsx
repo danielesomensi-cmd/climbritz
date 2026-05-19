@@ -447,3 +447,48 @@ describe('LogSection — remove today log', () => {
     expect(screen.queryByTestId('log-btn-remove')).not.toBeInTheDocument();
   });
 });
+
+describe('LogSection — B027 Project label + destructive modal', () => {
+  it('Project button label flips between "Project" (inactive) and "Active"', () => {
+    const { rerender } = render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ state: mkState({ is_project: false }) })}
+        onMutated={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('log-btn-project')).toHaveTextContent('Project');
+    expect(screen.getByTestId('log-btn-project')).not.toHaveTextContent('Active');
+
+    rerender(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ state: mkState({ is_project: true }) })}
+        onMutated={jest.fn()}
+      />,
+    );
+    expect(screen.getByTestId('log-btn-project')).toHaveTextContent('Active');
+  });
+
+  it('Modal "Yes, remove" CTA renders with destructive (red) styling', async () => {
+    // Force the project-removal modal: is_project=true + tap Send.
+    const detail = mkDetail({ state: mkState({ is_project: true }) });
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={detail}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    const removeBtn = await screen.findByTestId('modal-confirm-remove');
+    expect(removeBtn.className).toMatch(/bg-red-/);
+    expect(removeBtn.className).not.toMatch(/bg-orange-/);
+    // "No, keep it" is now the primary brand-orange option.
+    const keepBtn = screen.getByTestId('modal-keep-project');
+    expect(keepBtn.className).toMatch(/bg-orange-/);
+  });
+});

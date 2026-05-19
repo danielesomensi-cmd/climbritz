@@ -268,8 +268,15 @@ export default function LogSection({
           ].join(' ')}
         >
           <span className="text-xl leading-none">{isProject ? '★' : '☆'}</span>
+          {/* B027: dynamic label so the button is unambiguous — when the
+              climb is already a project, tapping toggles it off, so we
+              reflect that in the label instead of always saying "Project". */}
           <span className="text-[10px] leading-tight">
-            {pending === 'project' ? '…' : 'Project'}
+            {pending === 'project'
+              ? '…'
+              : isProject
+                ? 'Active'
+                : 'Project'}
           </span>
         </button>
 
@@ -347,11 +354,14 @@ function ProjectRemovalModal({
         </div>
 
         <div className="flex flex-col gap-2">
+          {/* B027: destructive action gets the red destructive-style; the
+              safer "keep it" option is promoted to brand-orange primary so
+              taps on muscle memory don't accidentally drop the project. */}
           <button
             type="button"
             data-testid="modal-confirm-remove"
             onClick={onConfirmRemove}
-            className="min-h-14 px-4 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-bold border-2 border-orange-600"
+            className="min-h-14 px-4 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold border-2 border-red-700"
           >
             Yes, remove
           </button>
@@ -359,7 +369,7 @@ function ProjectRemovalModal({
             type="button"
             data-testid="modal-keep-project"
             onClick={onKeep}
-            className="min-h-14 px-4 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold border-2 border-zinc-700"
+            className="min-h-14 px-4 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-bold border-2 border-orange-600"
           >
             No, keep it
           </button>
