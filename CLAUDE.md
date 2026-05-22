@@ -384,5 +384,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.32 (TestFlight build 2 — Sprint #1 + B021 bundled, Delivery UUID `8cd98dc0…`; deploy_climbritz.sh now takes positional build-number arg + MARKETING_VERSION hardcoded; ITSAppUsesNonExemptEncryption=false in Info.plist so build 3+ skips the export-compliance prompt — 2026-05-19)
+**Version:** 2.33 (B031 — Android 1.0.0 versionCode 4 built + signed for Play Console Internal Testing, AAB published as GitHub Release asset on tag `android-v1.0.0-build4` for download from any device; signing keystore is the legacy `~/kilter-up-release.keystore` referenced by gitignored `android/keystore.properties`; cap sync committed `@capacitor/app` plugin into `android/app/capacitor.build.gradle` + `android/capacitor.settings.gradle` for CI reproducibility — Play Console upload still manual, pending Daniele's emulator verification at home — 2026-05-22)
 **Owner:** Daniele Somensi + Claude Code
