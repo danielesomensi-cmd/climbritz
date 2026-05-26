@@ -103,6 +103,15 @@ async def search(
         default=None,
         description="Move-count bucket: any | le5 | 6-7 | 8-10 | gt10",
     ),
+    benchmark: bool = Query(
+        default=False,
+        description=(
+            "A022 — when true, return only climbs flagged as a benchmark "
+            "at the selected angle (benchmark_difficulty IS NOT NULL on the "
+            "climb_stats row for this angle). Benchmark status is "
+            "angle-specific by DB design."
+        ),
+    ),
     done_filter: DoneFilter = Query(
         default="all",
         description=(
@@ -164,6 +173,7 @@ async def search(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        benchmark=benchmark,
         sort=sort,
         limit=limit,
         include_uuids=include_uuids,
@@ -177,6 +187,7 @@ async def search(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        benchmark=benchmark,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids or None,
     )

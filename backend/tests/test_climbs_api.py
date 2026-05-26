@@ -200,6 +200,38 @@ class TestSearchEndpoint:
         resp = client.get("/api/climbs/search?moves=bogus")
         assert resp.status_code == 422
 
+    # ── A022: benchmark filter ───────────────────────────────────────────────
+
+    def test_search_benchmark_at_angle_40(self):
+        resp = client.get("/api/climbs/search?benchmark=true&angle=40")
+        assert resp.status_code == 200
+        names = {r["name"] for r in resp.json()["climbs"]}
+        assert names == {"Benchmark Alpha", "The Crimp Test"}
+
+    def test_search_benchmark_is_angle_specific(self):
+        """Alpha is a benchmark at 40° but not 45° — filter respects angle."""
+        resp = client.get("/api/climbs/search?benchmark=true&angle=45")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["climbs"] == []
+        assert body["total_count"] == 0
+
+    def test_search_benchmark_false_does_not_filter(self):
+        resp_off = client.get("/api/climbs/search?benchmark=false")
+        resp_no = client.get("/api/climbs/search")
+        assert {r["uuid"] for r in resp_off.json()["climbs"]} == {
+            r["uuid"] for r in resp_no.json()["climbs"]
+        }
+
+    def test_search_benchmark_total_count_matches(self):
+        resp = client.get("/api/climbs/search?benchmark=true&angle=40")
+        body = resp.json()
+        assert body["total_count"] == len(body["climbs"]) == 2
+
+    def test_search_benchmark_invalid_value_returns_422(self):
+        resp = client.get("/api/climbs/search?benchmark=notabool")
+        assert resp.status_code == 422
+
     # ── B020: envelope + 500-cap ────────────────────────────────────────────
 
     def test_search_response_has_envelope(self):

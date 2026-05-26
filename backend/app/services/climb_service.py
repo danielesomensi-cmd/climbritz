@@ -42,6 +42,7 @@ def _build_search_filters(
     min_ascents: int | None,
     min_quality: float | None,
     moves: str | None,
+    benchmark: bool = False,
     include_uuids: list[str] | None = None,
     exclude_uuids: list[str] | None = None,
 ) -> tuple[str, list]:
@@ -58,6 +59,14 @@ def _build_search_filters(
     project flags live in the app DB (different SQLite file from
     BoardLib), so the API layer pre-fetches matching uuids and passes
     them in for inclusion/exclusion at the SQL level.
+
+    A022: ``benchmark=True`` restricts results to climbs flagged as a
+    benchmark *at the joined angle* — ``benchmark_difficulty`` lives on
+    ``climb_stats`` keyed by (climb_uuid, angle), so the flag is
+    angle-specific by DB design (Phase 0.5 verified: 93% of benchmark
+    climbs are validated at ≤3 angles, and a climb's grade itself varies
+    per angle). Since Discovery always sends ``angle``, this naturally
+    means "benchmark at the currently selected angle".
     """
     where_sql = """
         WHERE c.layout_id = 1
@@ -90,6 +99,11 @@ def _build_search_filters(
     if min_quality is not None:
         where_sql += " AND cs.quality_average >= ?"
         params.append(min_quality)
+
+    # A022 — benchmark filter. The cs join is already constrained to the
+    # selected angle (when provided), so the NULL check is angle-specific.
+    if benchmark:
+        where_sql += " AND cs.benchmark_difficulty IS NOT NULL"
 
     # A019 — moves filter. Counts cyan/middle holds (role 13) by counting
     # 'r13' substrings in the frames blob: each occurrence is 3 chars, so
@@ -134,6 +148,7 @@ def search_climbs(
     min_ascents: int | None = None,
     min_quality: float | None = None,
     moves: str | None = None,
+    benchmark: bool = False,
     sort: str = "popularity",
     limit: int = 500,
     include_uuids: list[str] | None = None,
@@ -156,6 +171,9 @@ def search_climbs(
         min_quality: Minimum quality average (0–5 scale).
         moves: Optional move-count bucket (A019). One of "le5", "6-7",
                "8-10", "gt10". "any" or None means no move filter.
+        benchmark: When True, only climbs flagged as a benchmark at the
+               joined angle (A022). False (default) applies no benchmark
+               filter.
         sort: One of "popularity", "quality", "grade_asc", "grade_desc".
               Defaults to "popularity". Unknown values fall back to popularity.
         limit: Max results to return. Default 500 (B020). The API endpoint
@@ -173,6 +191,7 @@ def search_climbs(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        benchmark=benchmark,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids,
     )
@@ -219,6 +238,7 @@ def count_matching_climbs(
     min_ascents: int | None = None,
     min_quality: float | None = None,
     moves: str | None = None,
+    benchmark: bool = False,
     include_uuids: list[str] | None = None,
     exclude_uuids: list[str] | None = None,
 ) -> int:
@@ -238,6 +258,7 @@ def count_matching_climbs(
         min_ascents=min_ascents,
         min_quality=min_quality,
         moves=moves,
+        benchmark=benchmark,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids,
     )

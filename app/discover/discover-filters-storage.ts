@@ -96,6 +96,8 @@ function isDiscoverFilters(x: unknown): x is DiscoverFilters {
   // A021.4 — doneFilter / projectFilter optional, default 'all' on read.
   if (f.doneFilter !== undefined && !DONE_VALUES.includes(f.doneFilter as string)) return false;
   if (f.projectFilter !== undefined && !PROJECT_VALUES.includes(f.projectFilter as string)) return false;
+  // A022 — benchmark optional boolean; absent on pre-A022 entries.
+  if (f.benchmark !== undefined && typeof f.benchmark !== 'boolean') return false;
   for (const k of ['gradeMin', 'gradeMax', 'minAscents', 'minQuality']) {
     if (f[k] !== undefined && typeof f[k] !== 'number') return false;
   }

@@ -252,6 +252,8 @@ export interface ClimbSearchParams {
   min_ascents?: number;
   min_quality?: number;
   moves?: MovesFilter;
+  // A022 — when true, restrict to benchmark climbs at the selected angle.
+  benchmark?: boolean;
   sort?: SortField;
   limit?: number;
   // A021.4 — chip filter params. Omit or pass 'all' to skip the filter
@@ -272,6 +274,7 @@ export async function searchClimbs(
   if (params.min_ascents !== undefined) qs.set('min_ascents', String(params.min_ascents));
   if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
   if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
+  if (params.benchmark) qs.set('benchmark', 'true');
   if (params.sort) qs.set('sort', params.sort);
   if (params.done_filter && params.done_filter !== 'all') qs.set('done_filter', params.done_filter);
   if (params.project_filter && params.project_filter !== 'all') qs.set('project_filter', params.project_filter);

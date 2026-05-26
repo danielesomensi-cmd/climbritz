@@ -9,6 +9,11 @@ export interface Filters {
   minAscents?: number;
   minQuality?: number;
   moves?: MovesFilter;
+  /** A022 — when true, show only benchmark climbs at the selected angle.
+   *  Benchmark status is angle-specific by DB design (climb_stats keyed by
+   *  (climb_uuid, angle)). A simple boolean: "exclude benchmarks" isn't a
+   *  real user need, so no tri-state. */
+  benchmark?: boolean;
   sort: SortField;
   /** A021.4 — tri-state chip filters surfaced ABOVE this panel on
    *  /discover, not inside it. The panel doesn't render UI for them
@@ -59,6 +64,7 @@ export function countActiveFilters(value: Filters): number {
     (value.minAscents !== undefined ? 1 : 0) +
     (value.minQuality !== undefined ? 1 : 0) +
     (value.moves !== undefined && value.moves !== 'any' ? 1 : 0) +
+    (value.benchmark ? 1 : 0) +
     (value.sort !== 'popularity' ? 1 : 0) +
     (value.doneFilter !== undefined && value.doneFilter !== 'all' ? 1 : 0) +
     (value.projectFilter !== undefined && value.projectFilter !== 'all' ? 1 : 0)
@@ -76,6 +82,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       minAscents: undefined,
       minQuality: undefined,
       moves: 'any',
+      benchmark: false,
       doneFilter: 'all',
       projectFilter: 'all',
     });
@@ -87,6 +94,27 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       data-testid="filter-panel"
       className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 space-y-5"
     >
+      {/* Benchmarks (A022) — single boolean toggle. Angle-specific:
+          shows only climbs benchmarked at the currently selected angle. */}
+      <div>
+        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+          Benchmarks
+        </label>
+        <button
+          type="button"
+          data-testid="filter-benchmark"
+          aria-pressed={!!value.benchmark}
+          onClick={() => onChange({ ...value, benchmark: !value.benchmark })}
+          className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+            value.benchmark
+              ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
+              : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
+          }`}
+        >
+          Benchmarks only
+        </button>
+      </div>
+
       {/* Grade range */}
       <div>
         <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">

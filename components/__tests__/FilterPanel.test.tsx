@@ -84,10 +84,58 @@ describe('FilterPanel', () => {
       minAscents: undefined,
       minQuality: undefined,
       moves: 'any',
+      // A022 — reset clears the benchmark toggle.
+      benchmark: false,
       // A021.4 — reset also clears the new chip filters back to 'all'.
       doneFilter: 'all',
       projectFilter: 'all',
     });
+  });
+
+  // ── A022: benchmark toggle ───────────────────────────────────────────────
+
+  it('renders the Benchmarks toggle', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-benchmark')).toHaveTextContent('Benchmarks only');
+  });
+
+  it('toggle is inactive by default (no benchmark on the value object)', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-benchmark').className).not.toMatch(/bg-orange-500/);
+    expect(screen.getByTestId('filter-benchmark')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('clicking the toggle emits benchmark: true', () => {
+    const onChange = jest.fn();
+    render(<FilterPanel value={DEFAULT} onChange={onChange} expanded={true} />);
+    fireEvent.click(screen.getByTestId('filter-benchmark'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ benchmark: true }));
+  });
+
+  it('clicking the toggle when active emits benchmark: false', () => {
+    const onChange = jest.fn();
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, benchmark: true }}
+        onChange={onChange}
+        expanded={true}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('filter-benchmark'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ benchmark: false }));
+  });
+
+  it('highlights the toggle when benchmark is active', () => {
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, benchmark: true }}
+        onChange={() => {}}
+        expanded={true}
+      />,
+    );
+    const btn = screen.getByTestId('filter-benchmark');
+    expect(btn.className).toMatch(/bg-orange-500/);
+    expect(btn).toHaveAttribute('aria-pressed', 'true');
   });
 
   // ── A019: moves filter ──────────────────────────────────────────────────
@@ -183,6 +231,21 @@ describe('countActiveFilters', () => {
         gradeMin: 18,
         moves: 'gt10',
       }),
+    ).toBe(3);
+  });
+
+  it('counts an active benchmark toggle as one active filter', () => {
+    expect(countActiveFilters({ sort: 'popularity', benchmark: true })).toBe(1);
+  });
+
+  it('does not count benchmark when false or absent', () => {
+    expect(countActiveFilters({ sort: 'popularity', benchmark: false })).toBe(0);
+    expect(countActiveFilters({ sort: 'popularity' })).toBe(0);
+  });
+
+  it('counts benchmark alongside other filters', () => {
+    expect(
+      countActiveFilters({ sort: 'quality', gradeMin: 18, benchmark: true }),
     ).toBe(3);
   });
 });

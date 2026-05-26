@@ -93,6 +93,7 @@ function parseInitialFilters(params: URLSearchParams): Filters {
     minAscents: params.get('min_ascents') ? Number(params.get('min_ascents')) : undefined,
     minQuality: params.get('min_quality') ? Number(params.get('min_quality')) : undefined,
     moves: (MOVES_VALUES.includes(moves as MovesFilter) ? moves : 'any') as MovesFilter,
+    benchmark: params.get('benchmark') === 'true',
     sort: (SORT_VALUES.includes(sort as SortField) ? sort : 'popularity') as SortField,
     doneFilter: (DONE_VALUES.includes(doneFilter as DoneFilter)
       ? doneFilter
@@ -111,6 +112,7 @@ const URL_FILTER_KEYS = [
   'min_ascents',
   'min_quality',
   'moves',
+  'benchmark',
   'sort',
   'done_filter',
   'project_filter',
@@ -139,6 +141,7 @@ function resolveInitialState(
     filters: {
       sort: 'popularity',
       moves: 'any',
+      benchmark: false,
       doneFilter: 'all',
       projectFilter: 'all',
     },
@@ -186,6 +189,7 @@ function DiscoverPageInner() {
     if (filters.minAscents !== undefined) qs.set('min_ascents', String(filters.minAscents));
     if (filters.minQuality !== undefined) qs.set('min_quality', String(filters.minQuality));
     if (filters.moves && filters.moves !== 'any') qs.set('moves', filters.moves);
+    if (filters.benchmark) qs.set('benchmark', 'true');
     if (filters.sort !== 'popularity') qs.set('sort', filters.sort);
     if (filters.doneFilter && filters.doneFilter !== 'all') {
       qs.set('done_filter', filters.doneFilter);
@@ -222,6 +226,7 @@ function DiscoverPageInner() {
         min_ascents: filters.minAscents,
         min_quality: filters.minQuality,
         moves: filters.moves,
+        benchmark: filters.benchmark,
         sort: filters.sort,
         done_filter: filters.doneFilter,
         project_filter: filters.projectFilter,

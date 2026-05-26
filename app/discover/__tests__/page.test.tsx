@@ -392,6 +392,59 @@ describe('DiscoverPage', () => {
     });
   });
 
+  describe('benchmark filter (A022)', () => {
+    it('toggling Benchmarks only passes benchmark: true to the API', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      searchClimbsMock.mockClear();
+
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-benchmark'));
+
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ benchmark: true }),
+        );
+      });
+    });
+
+    it('enabling the toggle increments the active-filter badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-benchmark'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+    });
+
+    it('toggling off clears benchmark and removes the badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-benchmark'));
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+
+      fireEvent.click(screen.getByTestId('filter-benchmark'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('filter-count-badge')).not.toBeInTheDocument();
+      });
+    });
+
+    it('initialises benchmark from a URL param', async () => {
+      searchParamsString = 'benchmark=true';
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      expect(screen.getByTestId('filter-benchmark').className).toMatch(/bg-orange-500/);
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ benchmark: true }),
+        );
+      });
+    });
+  });
+
   describe('search cap + overflow banner (B020)', () => {
     function fakeClimb(i: number) {
       return {

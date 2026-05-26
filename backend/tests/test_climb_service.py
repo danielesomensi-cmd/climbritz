@@ -263,6 +263,65 @@ class TestSearchClimbs:
         assert none_uuids == no_uuids
 
 
+class TestBenchmarkFilter:
+    """A022: benchmark filter. Fixture benchmark flags (seeded by
+    seed_a022_test_fixtures.py):
+        Alpha@40 → benchmark   Alpha@45 → NULL
+        Crimp@40 → benchmark   Beta@40  → NULL
+    The Alpha@40-yes / Alpha@45-no split is the angle-specificity proof."""
+
+    def test_benchmark_at_angle_40(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(angle=40, benchmark=True)
+        names = {r["name"] for r in results}
+        # Alpha@40 and Crimp@40 are benchmarks; Beta@40 is not.
+        assert names == {"Benchmark Alpha", "The Crimp Test"}
+
+    def test_benchmark_is_angle_specific(self):
+        """Alpha is a benchmark at 40° but NOT at 45° — the filter must
+        respect the selected angle (the core A022 Phase 0.5 finding)."""
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(angle=45, benchmark=True)
+        # Alpha@45 has benchmark_difficulty NULL → nothing benchmarked at 45°.
+        assert results == []
+
+    def test_benchmark_without_angle_spans_all_angles(self):
+        """No angle filter → every (climb, angle) row that is itself a
+        benchmark. Both fixture benchmarks live at 40°, so we get 2 rows."""
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(benchmark=True)
+        assert len(results) == 2
+        assert all(r["angle"] == 40 for r in results)
+
+    def test_benchmark_false_is_no_filter(self):
+        from app.services.climb_service import search_climbs
+
+        on = {r["uuid"] for r in search_climbs(benchmark=False)}
+        off = {r["uuid"] for r in search_climbs()}
+        assert on == off
+
+    def test_benchmark_combined_with_grade(self):
+        from app.services.climb_service import search_climbs
+
+        # angle=40 benchmarks are Alpha(16) + Crimp(22); grade_min=20 drops Alpha.
+        results = search_climbs(angle=40, benchmark=True, grade_min=20)
+        assert len(results) == 1
+        assert results[0]["name"] == "The Crimp Test"
+
+    def test_count_respects_benchmark(self):
+        from app.services.climb_service import (
+            count_matching_climbs,
+            search_climbs,
+        )
+
+        kwargs = dict(angle=40, benchmark=True)
+        assert count_matching_climbs(**kwargs) == len(search_climbs(**kwargs)) == 2
+        assert count_matching_climbs(angle=45, benchmark=True) == 0
+
+
 class TestCountMatchingClimbs:
     """B020: count_matching_climbs shares the same WHERE-clause builder as
     search_climbs, so the count must equal len(search_climbs(...)) when the
