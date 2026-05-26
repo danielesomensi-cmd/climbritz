@@ -6,7 +6,7 @@
 
 ---
 
-## 🗓️ Ultimo Aggiornamento: 22 Maggio 2026 (B031 — Android 1.0.0 versionCode 4 AAB built + signed for Play Console Internal Testing, published as GitHub Release asset on tag `android-v1.0.0-build4`; signing via legacy `~/kilter-up-release.keystore`; Play Console upload + on-device verification pending Daniele's emulator session)
+## 🗓️ Ultimo Aggiornamento: 26 Maggio 2026 (A022 — Benchmark filter on `/discover`: boolean "Benchmarks only" toggle in FilterPanel + angle-specific `benchmark` query param on `GET /api/climbs/search`. Preceded by a Phase 0.5 read-only audit (STOP gate) that empirically confirmed benchmark status is angle-specific on the live BoardLib DB. Backend 229 + frontend 302 green; web + mobile builds clean) — prev: 22 Maggio 2026 (B031 — Android 1.0.0 versionCode 4 AAB built + signed for Play Console Internal Testing, pending Daniele's emulator session)
 
 ---
 
@@ -14,6 +14,7 @@
 
 | Componente | Status | Note |
 |------------|--------|------|
+| A022 Benchmark filter | ✅ Done — 2026-05-26 | Boolean "Benchmarks only" toggle at the top of `FilterPanel` on `/discover`. Backend: optional `benchmark` query param on `GET /api/climbs/search` → `AND cs.benchmark_difficulty IS NOT NULL` on the shared `_build_search_filters()` (so `search_climbs` + `count_matching_climbs` both respect it). **Angle-specific by DB design** — `benchmark_difficulty` is on `climb_stats` keyed by `(climb_uuid, angle)`, and Discovery always sends `angle`, so the filter = "benchmark at the selected angle". A **Phase 0.5 read-only audit** ran first (STOP gate) to validate the model against the live DB: 93.4% of 412 benchmark climbs are benchmark at ≤3 angles (max 5; none at all 11), and grades vary per angle (*swooped*: 5b/V1 at 5° → 7a+/V7 at 50°). Single boolean, not tri-state — "exclude benchmarks" isn't a real need. `countActiveFilters()` counts it; URL param + sessionStorage forward-compat. Fixtures seeded by `backend/scripts/seed_a022_test_fixtures.py` (idempotent). 11 new tests (6 service + 5 endpoint + frontend FilterPanel/page coverage). Backend 229, frontend 302 — all green; web + mobile builds clean. |
 | Backend FastAPI | ✅ Done | Clerk auth + video pipeline, SQLite, Python 3.11 |
 | Auth (Clerk) | ✅ Done | Clerk hosted sign-in/sign-up. Backend verifies via JWKS. Local users table is a Clerk shadow row (id, clerk_id). Production guard refuses to boot without CLERK_JWKS_URL. |
 | VideoUpload model | ✅ Done | Consolidated — form_analysis JSON, processing_status |

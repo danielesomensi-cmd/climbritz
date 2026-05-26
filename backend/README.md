@@ -29,7 +29,7 @@ Auth is handled by Clerk (hosted /sign-in and /sign-up pages). Backend verifies 
 - `DELETE /api/videos/{id}` — Delete video
 
 ### Climbs (BoardLib)
-- `GET /api/climbs/search?q={name}&angle={angle}&limit={n}` — Search climbs by name
+- `GET /api/climbs/search?q={name}&angle={angle}&moves={bucket}&benchmark={bool}&limit={n}` — Search climbs by name + filters (`benchmark=true` → benchmark climbs at the selected angle, A022)
 - `GET /api/climbs/{climb_uuid}?angle={angle}` — Full climb detail with holds
 - `GET /api/climbs/stats` — Database stats
 
