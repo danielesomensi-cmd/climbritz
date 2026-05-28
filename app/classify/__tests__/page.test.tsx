@@ -1,16 +1,35 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // A019.16: ClassifyPage is AuthGuard-wrapped — mock signed-in.
+// A023: page also reads useUser() for the Send-my-export email.
 jest.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ isLoaded: true, isSignedIn: true }),
+  useUser: () => ({
+    user: { primaryEmailAddress: { emailAddress: 'climber@example.com' } },
+  }),
 }));
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
   usePathname: () => '/classify',
 }));
 
+// A023: /classify now syncs through the backend. Mock the API client so the
+// mount-time listClassifications() call (and tap-time writes) don't hit the
+// network. Default: empty backend → the localStorage cache stands in, which
+// keeps the pre-A023 localStorage tests valid.
+jest.mock('@/app/lib/api', () => ({
+  listClassifications: jest.fn(() => Promise.resolve([])),
+  upsertClassification: jest.fn(() => Promise.resolve({})),
+  deleteClassification: jest.fn(() => Promise.resolve()),
+  bulkImportClassifications: jest.fn(() => Promise.resolve({ total: 0 })),
+}));
+
 import ClassifyPage from '../page';
+import {
+  listClassifications,
+  bulkImportClassifications,
+} from '@/app/lib/api';
 import {
   buildExportData,
   firstUnclassified,
@@ -45,6 +64,7 @@ Object.assign(navigator, { canShare: jest.fn(() => false) });
 
 beforeEach(() => {
   localStorageMock.clear();
+  jest.clearAllMocks();
 });
 
 function makeState(overrides: Partial<ClassifyState> = {}): ClassifyState {
@@ -323,5 +343,99 @@ describe('Classification flow integration', () => {
 
     render(<ClassifyPage />);
     expect(screen.getByTestId('progress-text').textContent).toBe('1 / 3');
+  });
+});
+
+// ─── A023: cloud sync + growth ─────────────────────────────────────────────
+
+describe('A023 — growth messages, Send/Import, backend hydration', () => {
+  it('renders both growth messages with the exact English copy', () => {
+    render(<ClassifyPage />);
+    expect(
+      screen.getByText('Propose your classification of the holds'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Help us build the world's first hold-type database for the Kilter Board/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /The first 10 climbers to complete a full board classification will receive a prize\./,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('"Send my export" copies JSON to clipboard and opens a mailto to Daniele', async () => {
+    const writeText = jest.fn((_text: string) => Promise.resolve());
+    Object.assign(navigator, { clipboard: { writeText } });
+    const originalLocation = window.location;
+    delete (window as { location?: Location }).location;
+    (window as unknown as { location: { href: string } }).location = { href: '' };
+
+    render(<ClassifyPage />);
+    fireEvent.click(screen.getByTestId('btn-send-export'));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    expect(window.location.href).toMatch(/^mailto:daniele\.somensi@gmail\.com/);
+    // The copied payload is valid JSON with the classifier email baked in.
+    const copied = JSON.parse(writeText.mock.calls[0][0] as string);
+    expect(copied.classifier).toBe('climber@example.com');
+
+    (window as unknown as { location: Location }).location = originalLocation;
+  });
+
+  it('"Import JSON" accepts a valid file and calls bulkImportClassifications', async () => {
+    render(<ClassifyPage />);
+    const json = JSON.stringify({
+      version: 2,
+      classifications: [
+        { placement_id: 1001, category: 'jug', x: 0, y: 152 },
+        { placement_id: 1002, category: 'crimp', x: 8, y: 144 },
+      ],
+    });
+    const file = new File([json], 'classify.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: () => Promise.resolve(json) });
+
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(bulkImportClassifications).toHaveBeenCalledTimes(1));
+    expect(bulkImportClassifications).toHaveBeenCalledWith([
+      { placement_id: 1001, category: 'jug' },
+      { placement_id: 1002, category: 'crimp' },
+    ]);
+  });
+
+  it('"Import JSON" rejects malformed JSON with a toast and makes no API call', async () => {
+    render(<ClassifyPage />);
+    const bad = 'not json {';
+    const file = new File([bad], 'bad.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: () => Promise.resolve(bad) });
+
+    fireEvent.change(screen.getByTestId('import-file-input'), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('toast')).toHaveTextContent('Invalid JSON file.'),
+    );
+    expect(bulkImportClassifications).not.toHaveBeenCalled();
+  });
+
+  it('hydrates from listClassifications() on mount', async () => {
+    (listClassifications as jest.Mock).mockResolvedValueOnce([
+      { placement_id: 1001, category: 'jug', id: 'a', created_at: '', updated_at: '' },
+      { placement_id: 1002, category: 'crimp', id: 'b', created_at: '', updated_at: '' },
+      { placement_id: 1003, category: 'sloper', id: 'c', created_at: '', updated_at: '' },
+    ]);
+
+    render(<ClassifyPage />);
+
+    expect(listClassifications).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByTestId('progress-text').textContent).toBe('3 / 3'),
+    );
   });
 });
