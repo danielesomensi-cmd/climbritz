@@ -1,9 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import BoardMap, { type Placement, getHoldImageUrl } from '@/components/BoardMap';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import {
+  bulkImportClassifications,
+  deleteClassification,
+  listClassifications,
+  upsertClassification,
+} from '@/app/lib/api';
 import {
   ALL_HOLDS,
   CATEGORIES,
@@ -19,12 +26,38 @@ import {
   type ClassifyState,
 } from './state';
 
+const VALID_CATEGORIES = new Set<string>(CATEGORIES.map((c) => c.value));
+
+/** Build a ClassifyState from the backend rows. The backend has no concept
+ *  of "skipped" (client-side only), so skipped always comes back empty. */
+function stateFromRows(
+  rows: { placement_id: number; category: string }[],
+): ClassifyState {
+  const classifications: Record<number, Category> = {};
+  for (const r of rows) {
+    if (VALID_CATEGORIES.has(r.category)) {
+      classifications[r.placement_id] = r.category as Category;
+    }
+  }
+  return { version: 2, classifications, skipped: [] };
+}
+
 function ClassifyContent() {
+  const { user } = useUser();
   const [state, dispatch] = useReducer(reducer, null, () => initialState());
   const [selected, setSelected] = useState<Placement | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Restore from localStorage on mount
+  // Auto-dismiss the toast.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Restore from localStorage on mount (instant paint / offline cache).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -37,7 +70,26 @@ function ClassifyContent() {
     }
   }, []);
 
-  // Persist on every state change
+  // Hydrate from the backend (source of truth). When the backend has data
+  // it overwrites the local cache; when it's empty we keep whatever the
+  // localStorage restore loaded (no auto-migration — local-only work is
+  // not destroyed, but it's never pushed up automatically either).
+  useEffect(() => {
+    let cancelled = false;
+    listClassifications()
+      .then((rows) => {
+        if (cancelled || rows.length === 0) return;
+        dispatch({ type: 'RESTORE', state: stateFromRows(rows) });
+      })
+      .catch(() => {
+        // Not signed in yet / offline — the localStorage cache stands in.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist on every state change (write-through cache).
   useEffect(() => {
     localStorage.setItem(LS_KEY, JSON.stringify(state));
   }, [state]);
@@ -71,21 +123,125 @@ function ClassifyContent() {
     if (next) setSelected(next);
   };
 
-  const handleClassify = (category: Category) => {
+  const handleClassify = async (category: Category) => {
     if (!selected) return;
-    dispatch({ type: 'CLASSIFY', placementId: selected.placement_id, category });
+    const placementId = selected.placement_id;
+    const prev = state;
+    dispatch({ type: 'CLASSIFY', placementId, category });
+    try {
+      await upsertClassification(placementId, category);
+    } catch {
+      dispatch({ type: 'RESTORE', state: prev });
+      setToast('Could not save — please retry.');
+    }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     if (!selected) return;
-    dispatch({ type: 'SKIP', placementId: selected.placement_id });
+    const placementId = selected.placement_id;
+    const wasClassified = state.classifications[placementId] !== undefined;
+    const prev = state;
+    dispatch({ type: 'SKIP', placementId });
+    if (wasClassified) {
+      try {
+        await deleteClassification(placementId);
+      } catch {
+        dispatch({ type: 'RESTORE', state: prev });
+        setToast('Could not save — please retry.');
+      }
+    }
+  };
+
+  const handleReset = async () => {
+    const prev = state;
+    const classifiedIds = Object.keys(state.classifications).map(Number);
+    dispatch({ type: 'RESET' });
+    setSelected(null);
+    setConfirmReset(false);
+    try {
+      await Promise.all(classifiedIds.map((id) => deleteClassification(id)));
+    } catch {
+      dispatch({ type: 'RESTORE', state: prev });
+      setToast('Could not reset — please retry.');
+    }
   };
 
   const handleExport = () => shareOrDownload(buildExportData(state));
 
+  const handleSendExport = async () => {
+    const email = user?.primaryEmailAddress?.emailAddress ?? 'anonymous';
+    const data = { ...buildExportData(state), classifier: email };
+    const json = JSON.stringify(data, null, 2);
+    try {
+      await navigator.clipboard?.writeText(json);
+    } catch {
+      // clipboard unavailable — the mailto still opens, user can paste manually
+    }
+    const subject = encodeURIComponent(`Climbritz hold classification — ${email}`);
+    const body = encodeURIComponent(
+      'Your classification JSON is on your clipboard. Please paste it below and send.',
+    );
+    window.location.href = `mailto:daniele.somensi@gmail.com?subject=${subject}&body=${body}`;
+    setToast('Export copied to clipboard — paste it in your email and send.');
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-importing the same file
+    if (!file) return;
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await file.text());
+    } catch {
+      setToast('Invalid JSON file.');
+      return;
+    }
+
+    const items = (parsed as { classifications?: unknown })?.classifications;
+    const valid =
+      Array.isArray(items) &&
+      items.every(
+        (it) =>
+          it &&
+          typeof it.placement_id === 'number' &&
+          VALID_CATEGORIES.has(it.category),
+      );
+    if (!valid) {
+      setToast('Invalid JSON file.');
+      return;
+    }
+
+    try {
+      const { total } = await bulkImportClassifications(
+        (items as { placement_id: number; category: Category }[]).map((it) => ({
+          placement_id: it.placement_id,
+          category: it.category,
+        })),
+      );
+      const rows = await listClassifications();
+      dispatch({ type: 'RESTORE', state: stateFromRows(rows) });
+      setToast(`Imported ${total} classifications.`);
+    } catch {
+      setToast('Import failed — please retry.');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-safe px-4 pb-nav">
       <div className="max-w-6xl mx-auto space-y-4">
+
+        {/* A023: growth banner — invite to contribute */}
+        <div
+          data-testid="growth-banner"
+          className="rounded-xl border border-[#FF6B35]/50 bg-[#FF6B35]/10 p-4"
+        >
+          <p className="font-bold text-[#FF6B35]">Propose your classification of the holds</p>
+          <p className="text-sm text-zinc-300 mt-1">
+            Help us build the world&apos;s first hold-type database for the Kilter Board. Tap each
+            hold and tell us what it feels like to climb on.
+          </p>
+        </div>
 
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -93,7 +249,7 @@ function ClassifyContent() {
             <h1 className="text-2xl font-bold">Hold Classification</h1>
             <p className="text-xs text-zinc-400">Click any hold to classify or reclassify it.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               data-testid="btn-next"
               onClick={jumpToNext}
@@ -103,12 +259,34 @@ function ClassifyContent() {
               Prossima non classificata →
             </button>
             <button
+              data-testid="btn-send-export"
+              onClick={handleSendExport}
+              className="px-3 py-1.5 rounded-lg bg-[#FF6B35] text-sm font-semibold text-white hover:bg-[#ff7d4d] transition-colors"
+            >
+              Send my export
+            </button>
+            <button
               data-testid="btn-export"
               onClick={handleExport}
               className="px-3 py-1.5 rounded-lg border border-emerald-600 text-sm text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10 transition-colors"
             >
               Export JSON
             </button>
+            <button
+              data-testid="btn-import"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-3 py-1.5 rounded-lg border border-zinc-600 text-sm text-zinc-300 hover:border-zinc-400 transition-colors"
+            >
+              Import JSON
+            </button>
+            <input
+              ref={fileInputRef}
+              data-testid="import-file-input"
+              type="file"
+              accept=".json,application/json"
+              onChange={handleImportFile}
+              className="hidden"
+            />
             <button
               onClick={() => setConfirmReset(true)}
               className="px-3 py-1.5 rounded-lg border border-zinc-700 text-sm text-zinc-400 hover:border-red-500 hover:text-red-400 transition-colors"
@@ -117,6 +295,14 @@ function ClassifyContent() {
             </button>
           </div>
         </div>
+
+        {/* A023: prize message */}
+        <p data-testid="prize-message" className="text-xs text-zinc-500">
+          <strong className="text-zinc-400">
+            The first 10 climbers to complete a full board classification will receive a prize.
+          </strong>{' '}
+          Send your export when you&apos;re done.
+        </p>
 
         {/* Progress */}
         <div className="space-y-1">
@@ -290,17 +476,23 @@ function ClassifyContent() {
                 </button>
                 <button
                   data-testid="btn-confirm-reset"
-                  onClick={() => {
-                    dispatch({ type: 'RESET' });
-                    setSelected(null);
-                    setConfirmReset(false);
-                  }}
+                  onClick={handleReset}
                   className="flex-1 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-sm font-semibold transition-colors"
                 >
                   Reset
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Toast */}
+        {toast && (
+          <div
+            data-testid="toast"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-zinc-800 border border-zinc-600 px-4 py-2 text-sm text-zinc-100 shadow-lg"
+          >
+            {toast}
           </div>
         )}
       </div>
