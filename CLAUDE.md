@@ -111,6 +111,12 @@ Every hold on the Kilter Board tagged by grip type: Jug / Good Crimp / Crimp / S
 
 **Search overlay (A021 Phase 2 + Phase 4):** `GET /api/climbs/search` now accepts optional `done_filter` and `project_filter` query params (`all | only | exclude`) and, when the request is authenticated, enriches each returned climb with a `user_state` object `{is_project, best_result, last_logged_at}`. The chip filters pre-fetch matching uuids from `user_climbs` and pass them as include/exclude lists to the underlying search — both chips on `only` are intersected (climbs that are done AND flagged project).
 
+**Classifications API surface (A023):** per-user hold classification, cloud-synced so `/classify` survives across devices under the same Clerk identity. All endpoints require a Clerk JWT (`get_current_user_id`). Per-user only — cross-user aggregation into a canonical map is the future HC-7 brief; this table is the crowdsource collection layer.
+- `GET /api/classifications` → `[{id, placement_id, category, created_at, updated_at}]` for the current user (empty list if none).
+- `PUT /api/classifications/{placement_id}` body `{category}` → upsert one (keyed on `(user_id, placement_id)`).
+- `DELETE /api/classifications/{placement_id}` → 204, idempotent.
+- `POST /api/classifications/import` body `{classifications: [{placement_id, category}, …]}` → `{total}`. Merge upsert (rows not in the payload are preserved, never deleted); cap 1000 entries/call (board has 514). Extra fields like `x`/`y` from the export shape are tolerated and ignored. `category` ∈ `jug | good_crimp | crimp | sloper | undercling | pinch`. No `x`/`y` stored — the frontend joins coordinates from `placements_12x12.json` at export time.
+
 **Deploy:** Backend live on Railway (SQLite). Frontend on Vercel. Health check at `/health`. B013: kilter.db auto-downloads via boardlib on first boot when `$BOARDLIB_DB_PATH` is missing (persistent volume at `/data/climbritz`). D014: startup scripts also probe `SELECT 1 FROM climbs` and re-download if an empty file was left behind; `_validate_boardlib_db()` crashes the container in production if the DB is still invalid.
 
 **Next:** B017 gym re-validation (Prev/Next tap-target on iPhone/Android, page titles clear of the notch/clock, filters restore on return from detail), B018 repo-hygiene pre/post-task checks (queued — triggered by a stale git-status snapshot at the start of B017), B014-iter-2 gym validation (art presets + #11 stress test), then HC-3 taxonomy validation (Daniele + Christie), HC-6 manual classification, HC-7 DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 Enhanced Analysis, Phase 3e remaining items (illuminate by grip type, light generated problems, background connection management)
@@ -171,6 +177,7 @@ climbritz/
 │   │   │   ├── logs.py             ✅ A021 — POST/GET/PATCH/DELETE /api/logs + /api/logs/sessions (X-User-Timezone resolves local_date)
 │   │   │   ├── user_climbs.py      ✅ A021 — GET/PATCH /api/user-climbs/{uuid}
 │   │   │   ├── stats.py            ✅ A021 — /pyramid + /trend (uses memoised BoardLib grade resolver)
+│   │   │   ├── classifications.py  ✅ A023 — GET/PUT/DELETE/POST-import /api/classifications (Clerk-gated)
 │   │   │   └── circuits.py         ✅ Stub (legacy)
 │   │   ├── core/
 │   │   │   ├── config.py           ✅ (A020: production guard on CLERK_JWKS_URL, extra="ignore")
@@ -181,16 +188,19 @@ climbritz/
 │   │   │   ├── user.py             ✅ (A020: id + clerk_id + created_at + updated_at — Clerk shadow row)
 │   │   │   ├── video.py            ✅
 │   │   │   ├── climb_log.py        ✅ A021 — append-mostly source of truth (one row per user/climb/angle/local_date)
-│   │   │   └── user_climb.py       ✅ A021 — derived state cache (is_project + best_result + last_logged_at)
+│   │   │   ├── user_climb.py       ✅ A021 — derived state cache (is_project + best_result + last_logged_at)
+│   │   │   └── user_hold_classification.py ✅ A023 — per-user hold grip-type verdict (uniq user_id+placement_id)
 │   │   ├── schemas/
 │   │   │   ├── user.py             ✅
 │   │   │   ├── video.py            ✅ VideoResponse, FormFeedbackResponse
 │   │   │   ├── climb.py            ✅ ClimbSearchResult (+ user_state, A021.4), ClimbDetail
-│   │   │   └── logs.py             ✅ A021 — LogCreate / LogResponse / UserClimbState / SessionResponse / PyramidEntry / TrendEntry
+│   │   │   ├── logs.py             ✅ A021 — LogCreate / LogResponse / UserClimbState / SessionResponse / PyramidEntry / TrendEntry
+│   │   │   └── classifications.py  ✅ A023 — ClassificationIn/Out/Upsert + BulkImport (extra="ignore" tolerates x/y)
 │   │   ├── services/
 │   │   │   ├── gemini_service.py   ✅ File API (lazy init, Kilter Board prompt)
 │   │   │   ├── climb_service.py    ✅ Read-only BoardLib DB queries (+ A021: get_climb_meta + include/exclude uuids on _build_search_filters; + A022: benchmark flag on _build_search_filters)
 │   │   │   ├── log_service.py      ✅ A021 — resolve_local_date / create_or_upgrade_log / list_sessions / compute_pyramid / compute_trend
+│   │   │   ├── classification_service.py ✅ A023 — list / upsert / delete / bulk_import (merge, preserves unsent)
 │   │   │   ├── video_service.py    ✅ ffmpeg utils
 │   │   │   └── storage_service.py  ✅ Local filesystem
 │   │   ├── utils/
@@ -200,7 +210,8 @@ climbritz/
 │   │   ├── 001_initial_migration.py ✅
 │   │   ├── 002_video_form_analysis.py ✅
 │   │   ├── 003_clerk_auth.py       ✅ A020 — drop legacy users columns, recreate as Clerk shadow row
-│   │   └── 004_a021_climb_logging.py ✅ A021 — climb_logs + user_climbs tables (FK to users, ON DELETE CASCADE)
+│   │   ├── 004_a021_climb_logging.py ✅ A021 — climb_logs + user_climbs tables (FK to users, ON DELETE CASCADE)
+│   │   └── 005_user_hold_classifications.py ✅ A023 — user_hold_classifications table (FK to users, CASCADE)
 │   ├── tests/
 │   │   ├── test_videos.py          ✅ video + gemini tests
 │   │   ├── test_climb_service.py   ✅ climb service tests
@@ -211,6 +222,7 @@ climbritz/
 │   │   ├── test_clerk_auth.py      ✅ A020 — Clerk verification + shadow-row upsert + dep gating
 │   │   ├── test_logs.py            ✅ A021 — sync rules, tz resolution (Europe/Rome / LA / UTC fallback), session enrichment
 │   │   ├── test_stats.py           ✅ A021 — pyramid grade-band grouping + trend ISO-week bucketing
+│   │   ├── test_classifications.py ✅ A023 — CRUD + merge-import + user isolation + JWT gating
 │   │   ├── test_startup_validation.py ✅ D014 boardlib DB checks
 │   │   ├── test_kilter_parser.py   ✅
 │   │   └── fixtures/test_kilter.db ✅ test fixture DB
@@ -229,7 +241,7 @@ climbritz/
 │   ├── dashboard/page.tsx          ✅ (A020: header uses Clerk <UserButton afterSignOutUrl="/sign-in" />)
 │   ├── videos/detail/page.tsx       ✅ Video detail ?id= (query-param route for Capacitor)
 │   ├── videos/[id]/page.tsx        ✅ Legacy redirect → /videos/detail?id=
-│   ├── classify/page.tsx           ✅ Hold classification UI (HC-5)
+│   ├── classify/page.tsx           ✅ Hold classification UI (HC-5; A023: backend hydration + write-through cache, growth banners, Send my export, Import JSON)
 │   ├── classify/state.ts           ✅ Classification state management
 │   ├── classify/__tests__/         ✅ Classification tests
 │   ├── board-map/page.tsx          ✅ Annotated 12x12 board map (HC-2)
@@ -255,7 +267,7 @@ climbritz/
 │   ├── privacy/page.tsx            ✅ Privacy policy (Play Store requirement, B010)
 │   ├── debug/page.tsx              ✅ Network diagnostics (dev tool, B010)
 │   ├── data/                       ✅ Frontend data files (placements_12x12.json + leds_12x12.json — both generated by backend/scripts/regenerate_board_assets.py)
-│   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video APIs (A020: pulls fresh JWT via window.Clerk.session.getToken() per call, 401-retry-once-then-redirect-to-/sign-in)
+│   ├── lib/api.ts                  ✅ Fetch wrapper + climb/video APIs (A020: pulls fresh JWT via window.Clerk.session.getToken() per call, 401-retry-once-then-redirect-to-/sign-in; A023: list/upsert/delete/bulkImport classifications)
 │   ├── lib/clerk.d.ts              ✅ A020 — ambient typing for window.Clerk
 │   ├── lib/grades.ts               ✅ Difficulty → Font/V grade mapping (A011)
 │   ├── lib/ble/kilter-protocol.ts  ✅ Pure packet encoder — API level 3 (B012)
@@ -387,5 +399,5 @@ For these files: read first, print analysis, wait for OK, then implement.
 
 ---
 
-**Version:** 2.34 (A022 — Benchmark filter on `/discover`: boolean "Benchmarks only" toggle in `FilterPanel`, backed by an angle-specific `benchmark` query param on `GET /api/climbs/search` (`AND cs.benchmark_difficulty IS NOT NULL` on `_build_search_filters`). Angle-specificity verified by a Phase 0.5 read-only audit of the live BoardLib DB before any code: 93.4% of 412 benchmark climbs are benchmark at ≤3 angles, grades vary per angle. Fixture seeded by idempotent `seed_a022_test_fixtures.py`. Backend 229 + frontend 302 green; web + mobile builds clean — 2026-05-26)
+**Version:** 2.35 (A023 — Hold Classification Cloud Sync + Crowdsource Growth: `/classify` moved off localStorage-only onto a per-user backend table (`user_hold_classifications`, alembic 005) so verdicts sync across devices under the same Clerk identity. New `/api/classifications` surface (GET list, PUT upsert, DELETE idempotent, POST import merge-upsert), all Clerk-gated. No x/y columns — coords joined frontend-side from `placements_12x12.json` at export, same as before. `/classify` gains backend hydration (write-through localStorage cache, no auto-migration), optimistic upsert/delete with rollback toast, two growth banners, a "Send my export" button (clipboard + mailto to daniele.somensi@gmail.com) and an "Import JSON" button (Daniele's bootstrap path — same path every user uses). Per-user only; cross-user aggregation into a canonical map stays the future HC-7 brief. Backend 231 + frontend 307 green; tsc + web + mobile builds clean — 2026-05-28)
 **Owner:** Daniele Somensi + Claude Code

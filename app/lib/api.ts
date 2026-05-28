@@ -464,3 +464,59 @@ export async function getTrend(
     `/api/stats/trend${buildDateRangeQs(dateFrom, dateTo)}`,
   );
 }
+
+// --- A023: Hold classification cloud sync ---
+
+export type HoldCategory =
+  | 'jug'
+  | 'good_crimp'
+  | 'crimp'
+  | 'sloper'
+  | 'undercling'
+  | 'pinch';
+
+export interface Classification {
+  id: string;
+  placement_id: number;
+  category: HoldCategory;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClassificationIn {
+  placement_id: number;
+  category: HoldCategory;
+}
+
+export async function listClassifications(): Promise<Classification[]> {
+  return apiFetch<Classification[]>('/api/classifications');
+}
+
+export async function upsertClassification(
+  placementId: number,
+  category: HoldCategory,
+): Promise<Classification> {
+  return apiFetch<Classification>(`/api/classifications/${placementId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ category }),
+  });
+}
+
+export async function deleteClassification(
+  placementId: number,
+): Promise<void> {
+  return apiFetch<void>(`/api/classifications/${placementId}`, {
+    method: 'DELETE',
+  });
+}
+
+/** Bulk merge-upsert. Rows for placement_ids not in `items` are preserved
+ *  server-side. Returns the user's total classification count after merge. */
+export async function bulkImportClassifications(
+  items: ClassificationIn[],
+): Promise<{ total: number }> {
+  return apiFetch<{ total: number }>('/api/classifications/import', {
+    method: 'POST',
+    body: JSON.stringify({ classifications: items }),
+  });
+}
