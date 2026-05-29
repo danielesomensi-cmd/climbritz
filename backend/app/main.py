@@ -102,14 +102,18 @@ app = FastAPI(
 )
 
 # CORS — read from ALLOWED_ORIGINS env var, fallback to localhost for dev.
-# Capacitor Android WebView sends Origin: https://localhost (not http://).
-# iOS uses capacitor://localhost. B021: the mobile build now serves the WebView
-# from https://app.climbritz.app (capacitor server.hostname) so Clerk's
-# SameSite=Lax session cookie is same-site — that origin must be allowed too.
-# All variants kept for backward-compat with older installed builds.
+# B021: the mobile build serves the WebView from app.climbritz.app
+# (capacitor server.hostname) so Clerk's SameSite=Lax session cookie is
+# same-site. The WebView ORIGIN differs per platform, though:
+#   - Android honors androidScheme=https  → Origin: https://app.climbritz.app
+#   - iOS reserves the https scheme, so iosScheme=https is ignored and WKWebView
+#     stays on the capacitor scheme → Origin: capacitor://app.climbritz.app
+# Both must be allowed. Older builds (+ Android dev) also send the localhost
+# variants, kept for backward-compat.
 origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 for cap_origin in (
     "https://app.climbritz.app",
+    "capacitor://app.climbritz.app",
     "capacitor://localhost",
     "http://localhost",
     "https://localhost",
