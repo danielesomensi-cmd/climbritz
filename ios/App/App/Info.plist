@@ -22,13 +22,6 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<!--
-	  Export-compliance auto-declaration: the app only uses standard HTTPS
-	  (Clerk auth, FastAPI backend, Gemini API) + standard system Bluetooth
-	  encryption (BLE to Kilter Board). None of this is "non-exempt encryption"
-	  under US export rules, so `false` makes App Store Connect skip the
-	  "Missing Compliance" prompt on every TestFlight build.
-	-->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -58,20 +51,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<!--
-	  WKAppBoundDomains restricts which non-bundle origins may use cookies/
-	  storage + interact with the WebView session (max 10 entries, no wildcards).
-	  B021: the mobile WebView now runs on the app.climbritz.app origin
-	  (capacitor server.hostname) so Clerk's SameSite=Lax production cookie is
-	  same-site. List climbritz.app (covers app./clerk./accounts. subdomains) so
-	  WKWebView allows that cookie + the Clerk Frontend API in-WebView. Replaces
-	  the old dev domain (sound-cub-94.clerk.accounts.dev) from the pk_test era.
-	-->
-	<key>WKAppBoundDomains</key>
-	<array>
-		<string>climbritz.app</string>
-		<string>clerk.climbritz.app</string>
-		<string>accounts.climbritz.app</string>
-	</array>
 </dict>
 </plist>
