@@ -7,10 +7,12 @@ const config: CapacitorConfig = {
   server: {
     allowNavigation: [
       'web-production-cea9.up.railway.app',
-      // A019: Clerk's hosted widget assets and OAuth handshake URLs.
-      // Wildcard covers any Clerk subdomain on the dev instance.
-      // Replace/append on production-Clerk promotion.
-      '*.clerk.accounts.dev',
+      // B021: Clerk Production instance on the custom domain clerk.climbritz.app.
+      // Email-code-only login → no OAuth redirect in the WebView, so this list is
+      // hygiene (widget/asset hosts), not a hard auth dependency. The dev shared
+      // domain (*.clerk.accounts.dev) is gone now that we're on pk_live.
+      'clerk.climbritz.app',
+      'accounts.climbritz.app',
       '*.clerk.com',
     ],
   },
