@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Climbritz</string>
+	<string>Climbritz</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,18 +23,18 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<!--
-	  Export-compliance auto-declaration: the app only uses standard
-	  HTTPS (Clerk auth, FastAPI backend, Gemini API) + standard
-	  system Bluetooth encryption (BLE to Kilter Board). None of this
-	  counts as "non-exempt encryption" under US export rules, so
-	  declaring `false` here makes App Store Connect skip the
-	  "Missing Compliance" prompt on every new TestFlight build.
-	  Revisit only if the app ever ships custom crypto.
+	  Export-compliance auto-declaration: the app only uses standard HTTPS
+	  (Clerk auth, FastAPI backend, Gemini API) + standard system Bluetooth
+	  encryption (BLE to Kilter Board). None of this is "non-exempt encryption"
+	  under US export rules, so `false` makes App Store Connect skip the
+	  "Missing Compliance" prompt on every TestFlight build.
 	-->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Climbritz uses Bluetooth to connect to your Kilter Board and control the LED lighting.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -58,19 +58,20 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Climbritz uses Bluetooth to connect to your Kilter Board and control the LED lighting.</string>
 	<!--
-	  A019: WKAppBoundDomains restricts which non-bundle origins are allowed
-	  to load script + interact with the WebView's session. iOS WKWebView
-	  in production builds otherwise redirects Clerk handshake URLs out to
-	  Safari, breaking the auth context. List the Clerk Frontend API host
-	  here so the widget loads in-WebView. Update this list (max 10 entries,
-	  no wildcards allowed) when promoting to a production Clerk instance.
+	  WKAppBoundDomains restricts which non-bundle origins may use cookies/
+	  storage + interact with the WebView session (max 10 entries, no wildcards).
+	  B021: the mobile WebView now runs on the app.climbritz.app origin
+	  (capacitor server.hostname) so Clerk's SameSite=Lax production cookie is
+	  same-site. List climbritz.app (covers app./clerk./accounts. subdomains) so
+	  WKWebView allows that cookie + the Clerk Frontend API in-WebView. Replaces
+	  the old dev domain (sound-cub-94.clerk.accounts.dev) from the pk_test era.
 	-->
 	<key>WKAppBoundDomains</key>
 	<array>
-		<string>sound-cub-94.clerk.accounts.dev</string>
+		<string>climbritz.app</string>
+		<string>clerk.climbritz.app</string>
+		<string>accounts.climbritz.app</string>
 	</array>
 </dict>
 </plist>
