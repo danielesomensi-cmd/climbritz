@@ -1,4 +1,4 @@
-package com.kilterup.app;
+package app.climbritz;
 
 import com.getcapacitor.BridgeActivity;
 
