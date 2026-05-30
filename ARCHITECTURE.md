@@ -1,6 +1,6 @@
 # Climbritz — Architecture
 
-> Last updated: 11 May 2026 (A021 climb logging + training history added)
+> Last updated: 30 May 2026 (through A023 hold-classification cloud sync + B021 Clerk production auth)
 
 ---
 
@@ -288,7 +288,8 @@ Structured response stored as JSON in video_uploads.form_analysis
 ## Authentication Flow (A020)
 
 Sign-in / sign-up: Clerk-hosted widget at /sign-in (and /sign-up).
-  → email + verification code (no magic links — they break iOS WebView).
+  → email + password, with a 6-digit email code only at sign-up (B021). Google OAuth + magic links disabled — they break the iOS WebView.
+  → Production Clerk on custom domain clerk.climbritz.app (pk_live). The Capacitor WebView is served on app.climbritz.app so the SameSite=Lax session cookie stays same-site. Per-platform origin gotchas: docs/CLERK_CAPACITOR_AUTH.md.
   → after sign-in, ClerkProvider establishes a session and redirects to /dashboard.
 
 Each frontend API call:
@@ -382,4 +383,4 @@ See `backend/app/core/config.py` for the full Pydantic Settings model.
 For the complete API endpoint list and project structure tree, see `CLAUDE.md`.
 For strategy, pricing, and phase plan, see `ROADMAP_ACTIVE.md`.
 
-*Architecture doc created: March 2026 (B002) — Last updated: 11 May 2026 (B020)*
+*Architecture doc created: March 2026 (B002) — Last updated: 30 May 2026 (A023 + B021)*

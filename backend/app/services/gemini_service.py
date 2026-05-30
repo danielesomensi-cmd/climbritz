@@ -231,10 +231,35 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
                 temperature=0.3,
                 max_output_tokens=8192,
                 response_mime_type="application/json",
+                # gemini-2.5-flash does "dynamic thinking" by default, and those
+                # thinking tokens are billed against max_output_tokens. On a real
+                # climbing video the visual reasoning is heavy enough to consume
+                # the whole budget, leaving the JSON answer truncated or empty
+                # (finish_reason=MAX_TOKENS) — which is why analysis silently
+                # started failing. The prompt was authored/validated (B007/B008)
+                # without thinking, so we disable it: the full budget goes to the
+                # structured answer and output is deterministic.
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
             ),
         )
     except Exception as exc:
         raise RuntimeError(f"Gemini generation failed: {exc}") from exc
+
+    # Guard against an empty/blocked response: response.text is None when the
+    # model returns no text part (safety block, or budget exhausted before any
+    # answer token). Surface a clear error instead of an opaque AttributeError
+    # on .strip(), and log the finish_reason so the failure is diagnosable.
+    if response.text is None:
+        finish_reason = None
+        try:
+            finish_reason = response.candidates[0].finish_reason
+        except (AttributeError, IndexError):
+            pass
+        raise RuntimeError(
+            f"Gemini returned no text for file {gemini_file_id} "
+            f"(finish_reason={finish_reason}). Likely a safety block or token "
+            f"budget exhausted before any answer token was produced."
+        )
 
     raw_text = response.text.strip()
     logger.debug("Raw Gemini response: %s", raw_text[:500])
