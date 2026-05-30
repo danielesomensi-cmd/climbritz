@@ -3,7 +3,7 @@
 > **Fonte di verità del progetto.** Aggiornata da Claude Code ad ogni decisione importante.
 > Leggi questo PRIMA di lavorare. Per il piano forward → `ROADMAP_ACTIVE.md`. Per il "come funziona" → `CLAUDE.md` / `ARCHITECTURE.md`.
 
-> **Ultimo aggiornamento: 30 Maggio 2026** — B021 Clerk Production + email/password auth completata su Android **e** iOS. Dettagli sotto.
+> **Ultimo aggiornamento: 30 Maggio 2026** — B021 Clerk Production + email/password auth completata su Android **e** iOS. + Fix analisi video: disabilitato il thinking di Gemini (saturava il budget token → JSON troncato). Dettagli sotto.
 
 ---
 
@@ -27,7 +27,7 @@ Milestone recenti (più recente in alto). Una riga per voce — il racconto este
 | **A019** Move count filter | ✅ | Chip Moves (Any/≤5/6–7/8–10/>10). `moves` param → SQL su `(cyan_holds + 2)`. Sequenze animate (`frames_count > 1`) escluse globalmente. |
 | **A020** Clerk auth | ✅ web + Android + iOS | Sostituisce custom-JWT. JWKS verify backend, `users` = shadow row. AuthGuard client-side (no middleware, Clerk issue #4647). A019.16: tutte le pagine richiedono login eccetto `/sign-in`, `/sign-up`, `/privacy`, `/debug`. |
 | **Sprint #1** (B022–B027) + B021 Coach Coming Soon | ✅ 2026-05-19 | 6 fix dall'audit D017 (dev banner, traduzioni IT→EN, blue→orange, chip outline, /history polish, Project/Active label). BottomNav 5→4 slot, Coach tile con pill COMING SOON, CTA Coach rimossa da detail. `/upload` resta URL-reachable. |
-| Backend / Auth / Video / Gemini | ✅ | FastAPI + Clerk JWKS + pipeline video. SQLite. `google.genai`, gemini-2.5-flash, prompt Kilter-specific (B007+B008). |
+| Backend / Auth / Video / Gemini | ✅ | FastAPI + Clerk JWKS + pipeline video. SQLite. `google.genai`, gemini-2.5-flash, prompt Kilter-specific (B007+B008). **Fix 2026-05-30:** `thinking_budget=0` — il thinking dinamico di 2.5-flash saturava `max_output_tokens` su video reali → JSON troncato/vuoto → analisi `failed`. Vedi PROBLEMI RISOLTI #5. |
 | BoardLib DB / Climb endpoints | ✅ Phase 3a+3b | search/detail/stats, fixture DB di test. |
 | Deploy | ✅ Partial | Backend live su Railway (SQLite + kilter.db auto-download). Frontend su Vercel. PostgreSQL + S3 ancora TODO (Phase 7). |
 | Training logs (Phase 6) | ⏳ Da fare | — |
@@ -83,6 +83,7 @@ Dettagli: `RESEARCH.md` (ecosystem), `ROADMAP_ACTIVE.md` (piano), `CLAUDE.md` (s
 2. **PostgreSQL UUID su macOS dev** (Feb 2026) → SQLite per dev (`String(36)`), Postgres per prod.
 3. **Capacitor "Failed to fetch" — CORS origin mismatch** (Apr 2026) → la WebView Android manda `Origin: https://localhost`; servono **tutti e tre** gli origin Capacitor nel CORS (`capacitor://localhost` iOS, `http://localhost` dev, `https://localhost` Android). File: `backend/app/main.py`. Diagnosticato via `/debug`.
 4. **Clerk prod "You are signed out" su WebView** (Mag 2026) → cookie `SameSite=Lax` cross-site con `https://localhost`; fix servendo la WebView su `app.climbritz.app`. Per-platform origin gotcha iOS. Vedi B021 sopra + `docs/CLERK_CAPACITOR_AUTH.md`.
+5. **Analisi video falliva silenziosamente** (Mag 2026) → `gemini-2.5-flash` fa "dynamic thinking" di default e quei token contano dentro `max_output_tokens` (8192); su un video reale il ragionamento visivo saturava il budget → JSON troncato/vuoto (`finish_reason=MAX_TOKENS`) → `_background_analyze` metteva `processing_status="failed"`. Sintomo: upload OK, analisi no. **Fix:** `thinking_config=ThinkingConfig(thinking_budget=0)` (tutto il budget al JSON) + guard su `response.text is None`. Validato su 2 video Kilter reali (`finish_reason=STOP`, JSON completo). File: `backend/app/services/gemini_service.py`. Memoria: `project_gemini_thinking_budget`. Se in futuro si passa a Gemini 3.x flash, ri-verificare il comportamento del thinking-disable su quella famiglia.
 
 ---
 

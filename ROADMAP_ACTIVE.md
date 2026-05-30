@@ -259,7 +259,7 @@ Source: `docs/audit-2026-05-19/AUDIT_REPORT.md`. Deferred from Sprint #1 pending
 ## Backlog — Technical Debt
 - [ ] Recreate API_SPECIFICATION.md / DATABASE_SCHEMA.sql (after Phase 3 stabilizes; old versions in `docs/archive/`)
 - [ ] Retry with backoff on Gemini 503/429
-- [ ] Evaluate gemini-2.5-pro when availability improves
+- [ ] Evaluate a newer model for video analysis. May-2026 scan: **gemini-3.5-flash** (fastest + best video reasoning of the flash tier in an on-video test) and **gemini-3-flash-preview** are the upgrade candidates; **gemini-3.1-pro** leads multimodal overall. All are thinking models — re-verify `thinking_budget=0` behavior on the 3.x family before shipping (current pipeline pins `gemini-2.5-flash`).
 - [ ] Update Railway source repo (OpenClawDani → danielesomensi-cmd)
 - [ ] Set up Vercel–GitHub auto-deploy
 - [ ] B018 — pre/post-task repo-hygiene checks (re-verify `git status` + branch at task start)

@@ -269,9 +269,15 @@ Gemini 2.5 Flash: client.models.generate_content(
     config=GenerateContentConfig(
         response_mime_type="application/json",
         max_output_tokens=8192,
+        thinking_config=ThinkingConfig(thinking_budget=0),  # see note
     )
   )
   │  → ONE API call per video (not frame-by-frame)
+  │  → thinking DISABLED: 2.5-flash dynamic-thinking tokens count against
+  │     max_output_tokens; on real videos they ate the whole budget →
+  │     truncated/empty JSON → analysis silently failed. budget=0 gives the
+  │     full 8192 to the structured answer (the B007/B008 prompt was
+  │     validated without thinking).
   │  → Kilter Board-specific prompt (B007): board detection, 5 scores,
   │     max 3 improvements with drills, overall impression
   │  → JSON repair fallback if response is malformed
