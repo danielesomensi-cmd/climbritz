@@ -64,10 +64,9 @@ Three levels of coaching intelligence (Coach tier):
 
 > Run alongside Claude Code dev work. Completed deploy items are one-liners; see `PROJECT_STATUS.md` for detail.
 
-**Done:** Apple Developer account ✅ · Clerk dashboard (prod, email+password) ✅ · iOS TestFlight builds 1–3 ✅ · Android AAB builds 4–8 ✅ · B021 Clerk prod auth (Android shipped to Play Console Internal Testing; iOS verified on Xcode debug build) ✅
+**Done:** Apple Developer account ✅ · Clerk dashboard (prod, email+password) ✅ · iOS TestFlight builds 1–5 ✅ · Android AAB builds 4–9 ✅ · B021 Clerk prod auth (Android shipped to Play Console Internal Testing; iOS verified on Xcode debug build) ✅ · **iOS TestFlight build 5** (2026-05-31) — carries the `WKAppBoundDomains` removal (`f435516`) + the Gemini video-analysis `thinking_budget=0` fix; uploaded to App Store Connect (delivery UUID `5034ddc5-…`) ✅
 
 **Open:**
-- [ ] **iOS TestFlight build 5** — cut a fresh build carrying the `WKAppBoundDomains` removal (`f435516`): run `bash ~/deploy_climbritz.sh 5` from Terminal.app. Build 4 was archived before the removal, so TestFlight testers still hit the spinner. (Server-side `allowed_origins` + CORS fixes already live.)
 - [ ] **Play Console** — finish Internal Testing setup (App content / Data safety / Content rating, Store listing assets: 512×512 icon + feature graphic + screenshots).
 - [ ] **Write pro climber list** — names + Instagram/YouTube handles of strong Kilter climbers.
 - [ ] **Validate hold taxonomy** with Christie — show 20 random hold images, check the 6 categories make sense.
