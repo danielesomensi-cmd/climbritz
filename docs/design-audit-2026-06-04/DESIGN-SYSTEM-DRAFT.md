@@ -1,6 +1,13 @@
-# Climbritz Mini Design-System — DRAFT spec (D018)
+# Climbritz Mini Design-System — spec (D018)
 
-> **Status: PROPOSAL ON PAPER. Nothing here is implemented.** This is the B029 (+B028, +B030) deliverable as a spec for Daniele to approve. Implementation becomes a separate A/B brief and — because it touches every page — a **STOP-gate refactor** (§4.3).
+> **Status: ✅ IMPLEMENTED in B033 (2026-06-04).** Shipped to `main` across 5 phases
+> (tokens → quick wins → primitives + page adoption → homepage → typography). The
+> autonomous STOP-gate was waived by Daniele (no active users); each phase shipped
+> independently test-green. **`ComingSoonBadge` was dropped** (per Daniele — 3
+> occurrences, not worth the component; the 3 existing treatments stand). Phase A
+> (one orange `#ff6b35`) had already shipped in B032 and was the foundation. The
+> token layer is defined in `app/globals.css` (`@theme static`, building on the
+> B032 `:root`-override mechanism) and the primitives live in `components/ui/`.
 >
 > Light-first is NOT the right call here: Climbritz is a **dark-themed** app (zinc-950 surfaces) and should stay dark. The token values below are **dark-first**; a light theme is out of scope. (The brief said "light-first values" but the entire product is dark — flagging the deviation deliberately rather than inverting a working aesthetic.)
 

@@ -101,7 +101,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 
 | Page | Path | What it does |
 |------|------|-------------|
-| Homepage | `page.tsx` | Tile hub (Demo LED, Discover, Classify, Video Analysis, History, Debug). Debug tile is hidden in production builds so end users only see the 5 product tiles. **B021 (2026-05-19):** Video Analysis tile carries a COMING SOON pill (brand-orange) instead of the previous 🔒 lock — Coach tier not production-ready. Tile remains clickable; `/upload` stays URL-reachable. **B032 (2026-06-04):** Clerk `<UserButton>` account/sign-out control added top-right (the only homepage account entry point; homepage stays a launcher with no BottomNav). |
+| Homepage | `page.tsx` | Tile hub (Demo LED, Discover, Classify, Video Analysis, History, Debug). Debug tile is hidden in production builds so end users only see the 5 product tiles. **B021 (2026-05-19):** Video Analysis tile carries a COMING SOON pill (brand-orange) instead of the previous 🔒 lock — Coach tier not production-ready. Tile remains clickable; `/upload` stays URL-reachable. **B032 (2026-06-04):** Clerk `<UserButton>` account/sign-out control added top-right (the only homepage account entry point; homepage stays a launcher with no BottomNav). **B033:** ported off 100% inline styles → Tailwind classes + design tokens (D18-12); odd tile count now spans the last tile full-width to kill the orphan; wordmark uses the Space Grotesk display face. |
 | Sign in | `app/sign-in/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Sign up | `app/sign-up/page.tsx` | Clerk widget (hash routing, SPA mode) |
 | Login | `login/page.tsx` | Redirect alias to `/sign-in` (backward compat) |
@@ -118,6 +118,13 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Debug | `debug/page.tsx` | Network diagnostics (dev tool — hidden from homepage in prod builds) |
 
 Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the query-param routes above for Capacitor compatibility.
+
+### Design system (B033, 2026-06-04 — implements D018)
+
+- **Token layer** — `app/globals.css`. Brand orange `#ff6b35` is a `:root`-override of Tailwind's built-in `orange-*` ramp (B032; required because `@theme` overrides of built-in ramps don't take in this v4 setup without `@config`). All *other* tokens are new namespaces declared in `@theme static` (forces every var to emit to `:root` so author-CSS / inline `var()` consumers don't get tree-shaken; utilities stay on-demand): `surface-base/raised/overlay`, `border-default/strong`, `text-primary/secondary/tertiary/muted`, `state-*` (flash/send/attempt/project), `feedback-*` (success/warn/error/info), `category-*` (data palette — crimp moved off-brand to teal), `radius-pill/card/control`, `shadow-elev-raised/overlay`, the `text-*` type scale, and the `--hero-gradient` / `--brand-orange` plain-`:root` vars for inline consumers. Mirrored (documentary) in `tailwind.config.ts`.
+- **Primitive library** — `components/ui/`: `Button` (primary brand-500/near-black `zinc-950` for AA contrast, secondary, destructive, ghost), `Chip` (one soft-outline selected style, 44px target), `Card` (default + interactive hover), `PageHeader` (top-level + nested-with-back variants, sticky/blur), `EmptyState`, `LoadingState` ("Loading…"), `StatusDot`. **No `ComingSoonBadge`** (dropped). Adopted on ble-test, classify, history, discover (+`FilterPanel`), discover/detail.
+- **BLE status** — `lib/ble/status.ts` is the single source for `STATUS_COLORS`/`STATUS_LABELS`/`BUSY_STATUSES`, consumed by `StatusDot`, `/ble-test`, and `ClimbBleControls` (was duplicated in the latter two).
+- **Typography** — Space Grotesk (display, `.font-display`) + Inter Tight (body) self-hosted via `next/font` in `app/layout.tsx` (build-time download, no runtime fetch, metric-matched fallback). Body face set in `globals.css`; display applied to the wordmark + every page title.
 
 **Auth gating (A019.16):** ALL frontend pages above require login except `Sign in`, `Sign up`, `Privacy`, and `Debug`. The `<AuthGuard>` component (using Clerk's `useAuth()`) wraps every protected page and redirects to `/sign-in` when the user isn't authenticated. Discovery is still the free tier (no payment), but the app has no anonymous mode — per-user logging features (send/project, A021) need a guaranteed `user_id` and a guest mode would dead-end the UX.
 
