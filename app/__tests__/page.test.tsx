@@ -42,7 +42,7 @@ describe('Home Page', () => {
   it('renders tile subtitles', () => {
     render(<Home />);
     expect(screen.getByText('Test BLE connection')).toBeInTheDocument();
-    expect(screen.getByText('Search 160k+ climbs')).toBeInTheDocument();
+    expect(screen.getByText('Search & light up climbs')).toBeInTheDocument();
     expect(screen.getByText('Tag hold grip types')).toBeInTheDocument();
     expect(screen.getByText('AI technique coaching')).toBeInTheDocument();
     expect(screen.getByText('Sessions, pyramid, trend')).toBeInTheDocument();

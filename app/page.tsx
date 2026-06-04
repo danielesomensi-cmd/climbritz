@@ -22,22 +22,32 @@ const IS_PRODUCTION_BUILD =
 
 const TILES: Tile[] = [
   {
-    href: '/ble-test',
-    label: 'Demo LED Light',
-    subtitle: 'Test BLE connection',
-    icon: '💡',
-  },
-  {
+    // B033: Discover is the hero — the core find → light → climb loop, and the
+    // differentiator vs Climbdex (board light-up). Promoted to top-left.
     href: '/discover',
     label: 'Discover',
-    subtitle: 'Search 160k+ climbs',
+    subtitle: 'Search & light up climbs',
     icon: '🔍',
+  },
+  {
+    href: '/history',
+    label: 'History',
+    subtitle: 'Sessions, pyramid, trend',
+    icon: '📊',
   },
   {
     href: '/classify',
     label: 'Classify',
     subtitle: 'Tag hold grip types',
     icon: '🏷️',
+  },
+  {
+    // B033: demoted from top-left — it's a BLE connection test, not the core
+    // loop.
+    href: '/ble-test',
+    label: 'Demo LED Light',
+    subtitle: 'Test BLE connection',
+    icon: '💡',
   },
   {
     // B021 (2026-05-19): Coach tier not production-ready (prompt tuning
@@ -50,12 +60,6 @@ const TILES: Tile[] = [
     subtitle: 'AI technique coaching',
     icon: '🎬',
     locked: true,
-  },
-  {
-    href: '/history',
-    label: 'History',
-    subtitle: 'Sessions, pyramid, trend',
-    icon: '📊',
   },
   ...(IS_PRODUCTION_BUILD
     ? []
