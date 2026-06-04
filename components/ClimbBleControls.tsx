@@ -2,36 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { useKilterBle, type BleStatus } from '@/app/ble-test/use-kilter-ble';
+import { useKilterBle } from '@/app/ble-test/use-kilter-ble';
 import type { EncoderHold } from '@/lib/ble/kilter-protocol';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import StatusDot from '@/components/ui/StatusDot';
+import { STATUS_LABELS, BUSY_STATUSES } from '@/lib/ble/status';
 
 // A014 — delay between a climbKey change and the auto-send, so rapid
 // Next/Prev taps coalesce into a single BLE packet on the last climb.
 const AUTO_SEND_DEBOUNCE_MS = 300;
-
-const STATUS_COLORS: Record<BleStatus, string> = {
-  idle: 'bg-zinc-500',
-  requesting: 'bg-yellow-400 animate-pulse',
-  scanning: 'bg-yellow-400 animate-pulse',
-  connecting: 'bg-yellow-400 animate-pulse',
-  connected: 'bg-green-500',
-  disconnecting: 'bg-yellow-400 animate-pulse',
-  sending: 'bg-blue-400 animate-pulse',
-  error: 'bg-red-500',
-};
-
-const STATUS_LABELS: Record<BleStatus, string> = {
-  idle: 'Disconnected',
-  requesting: 'Requesting…',
-  scanning: 'Scanning…',
-  connecting: 'Connecting…',
-  connected: 'Connected',
-  disconnecting: 'Disconnecting…',
-  sending: 'Sending…',
-  error: 'Error',
-};
-
-const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
 
 interface ClimbBleControlsProps {
   ledCommands: EncoderHold[];
@@ -122,12 +102,12 @@ export default function ClimbBleControls({
   return (
     <div className="mb-4 space-y-2" data-testid="climb-ble-controls">
       {/* Status bar */}
-      <div className="flex items-center gap-3 p-2.5 bg-zinc-900 rounded-lg border border-zinc-800">
-        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${STATUS_COLORS[status]}`} />
+      <Card className="flex items-center gap-3 p-2.5">
+        <StatusDot status={status} />
         <div className="flex-1 min-w-0 text-sm">
-          <div className="font-medium text-zinc-200">{STATUS_LABELS[status]}</div>
+          <div className="font-medium text-text-primary">{STATUS_LABELS[status]}</div>
           {connectedDevice && (
-            <div className="text-xs text-zinc-500 truncate">
+            <div className="text-xs text-text-muted truncate">
               {connectedDevice.name}
               {connectedDevice.apiLevel != null && (
                 <span className="ml-1 text-zinc-600">API v{connectedDevice.apiLevel}</span>
@@ -135,7 +115,7 @@ export default function ClimbBleControls({
             </div>
           )}
         </div>
-      </div>
+      </Card>
 
       {errorMessage && (
         <div className="p-2.5 bg-red-900/40 border border-red-700 rounded text-sm text-red-300">
@@ -158,55 +138,34 @@ export default function ClimbBleControls({
 
       {/* Connect / Disconnect */}
       {isConnected ? (
-        <button
-          onClick={disconnect}
-          disabled={isSending}
-          className="w-full py-2.5 rounded-lg font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          data-testid="ble-disconnect-btn"
-        >
+        <Button variant="secondary" className="w-full" onClick={disconnect} disabled={isSending} data-testid="ble-disconnect-btn">
           Disconnect
-        </button>
+        </Button>
       ) : busy ? (
-        <button
-          disabled
-          className="w-full py-2.5 rounded-lg font-semibold text-sm bg-zinc-800 cursor-not-allowed opacity-75"
-        >
+        <Button variant="secondary" className="w-full" disabled data-testid="ble-busy-btn">
           {STATUS_LABELS[status]}
-        </button>
+        </Button>
       ) : (
-        <button
-          onClick={connect}
-          className="w-full py-2.5 rounded-lg font-semibold text-sm bg-orange-500 hover:bg-orange-400 text-zinc-950 transition-colors"
-          data-testid="ble-connect-btn"
-        >
+        <Button variant="primary" className="w-full" onClick={connect} data-testid="ble-connect-btn">
           Connect to board
-        </button>
+        </Button>
       )}
 
       {/* Illumina + Reset — only shown while connected */}
       {isConnected && (
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="primary"
+            className="flex-1"
             onClick={handleIlluminate}
             disabled={!canIlluminate || isSending}
-            className={[
-              'flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors',
-              canIlluminate && !isSending
-                ? 'bg-orange-500 hover:bg-orange-400 text-zinc-950'
-                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed',
-            ].join(' ')}
             data-testid="ble-illuminate-btn"
           >
             {isSending ? 'Sending…' : '💡 Light up board'}
-          </button>
-          <button
-            onClick={handleReset}
-            disabled={isSending}
-            className="flex-1 py-2.5 rounded-lg font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            data-testid="ble-reset-btn"
-          >
+          </Button>
+          <Button variant="secondary" className="flex-1" onClick={handleReset} disabled={isSending} data-testid="ble-reset-btn">
             Reset
-          </button>
+          </Button>
         </div>
       )}
     </div>

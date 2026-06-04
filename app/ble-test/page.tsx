@@ -6,36 +6,16 @@ import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
-import type { BleStatus } from './use-kilter-ble';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import PageHeader from '@/components/ui/PageHeader';
+import StatusDot from '@/components/ui/StatusDot';
+import { STATUS_LABELS, BUSY_STATUSES } from '@/lib/ble/status';
 import type { LedHold } from './presets';
 
 // Debounce window for auto-applying a preset to the board after a tap.
 // Preview updates instantly; only the BLE send is debounced.
 const AUTO_APPLY_DEBOUNCE_MS = 200;
-
-const STATUS_COLORS: Record<BleStatus, string> = {
-  idle: 'bg-zinc-500',
-  requesting: 'bg-yellow-400 animate-pulse',
-  scanning: 'bg-yellow-400 animate-pulse',
-  connecting: 'bg-yellow-400 animate-pulse',
-  connected: 'bg-green-500',
-  disconnecting: 'bg-yellow-400 animate-pulse',
-  sending: 'bg-blue-400 animate-pulse',
-  error: 'bg-red-500',
-};
-
-const STATUS_LABELS: Record<BleStatus, string> = {
-  idle: 'Disconnected',
-  requesting: 'Requesting…',
-  scanning: 'Scanning…',
-  connecting: 'Connecting…',
-  connected: 'Connected',
-  disconnecting: 'Disconnecting…',
-  sending: 'Sending…',
-  error: 'Error',
-};
-
-const BUSY_STATUSES: BleStatus[] = ['requesting', 'scanning', 'connecting', 'disconnecting'];
 
 function BleTestContent() {
   const {
@@ -108,54 +88,45 @@ function BleTestContent() {
   const canSend = status === 'connected' && activePreset !== null;
 
   return (
-    <main className="min-h-screen bg-zinc-900 text-white pt-safe px-4 pb-nav">
-      <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-1">BLE LED Test</h1>
-        <p className="text-zinc-400 text-sm mb-6">
+    <main className="min-h-screen bg-surface-base text-white pb-nav">
+      <PageHeader title="BLE LED Test" widthClass="max-w-lg">
+        <p className="text-text-tertiary text-sm mt-1">
           Kilter Board Original 12x12 — layout_id=1
         </p>
+      </PageHeader>
+      <div className="max-w-lg mx-auto px-4 pt-4">
 
         {/* Connection status bar */}
-        <div className="flex items-center gap-3 mb-3 p-3 bg-zinc-800 rounded-lg">
-          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${STATUS_COLORS[status]}`} />
+        <Card className="flex items-center gap-3 mb-3 p-3">
+          <StatusDot status={status} />
           <div className="flex-1 min-w-0">
             <div className="font-medium">{STATUS_LABELS[status]}</div>
             {connectedDevice && (
-              <div className="text-xs text-zinc-400 truncate">
+              <div className="text-xs text-text-tertiary truncate">
                 {connectedDevice.name}
                 {connectedDevice.apiLevel && (
-                  <span className="ml-1 text-zinc-500">API v{connectedDevice.apiLevel}</span>
+                  <span className="ml-1 text-text-muted">API v{connectedDevice.apiLevel}</span>
                 )}
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Connect / Disconnect — card-sized action button */}
         {isCapacitorNative && (
           <div className="mb-4">
             {isConnected ? (
-              <button
-                onClick={disconnect}
-                disabled={isSending}
-                className="w-full p-3 rounded-lg font-semibold text-base bg-zinc-700 hover:bg-zinc-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <Button variant="secondary" size="lg" className="w-full" onClick={disconnect} disabled={isSending}>
                 Disconnect
-              </button>
+              </Button>
             ) : busy ? (
-              <button
-                disabled
-                className="w-full p-3 rounded-lg font-semibold text-base bg-zinc-700 cursor-not-allowed opacity-75"
-              >
+              <Button variant="secondary" size="lg" className="w-full" disabled>
                 {STATUS_LABELS[status]}
-              </button>
+              </Button>
             ) : (
-              <button
-                onClick={connect}
-                className="w-full p-3 rounded-lg font-semibold text-base bg-orange-500 hover:bg-orange-400 text-zinc-950 transition-all"
-              >
+              <Button variant="primary" size="lg" className="w-full" onClick={connect}>
                 Connect
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -188,28 +159,27 @@ function BleTestContent() {
 
         {/* Illumina board button */}
         {isConnected && (
-          <button
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full mb-4 tracking-wide"
             onClick={handleIllumina}
             disabled={!canSend || isSending}
-            className={[
-              'w-full mb-4 py-3 rounded-lg font-semibold text-lg tracking-wide transition-colors',
-              canSend && !isSending
-                ? 'bg-orange-500 hover:bg-orange-400 text-zinc-950'
-                : 'bg-zinc-700 text-zinc-500 cursor-not-allowed',
-            ].join(' ')}
           >
             {isSending ? 'Sending…' : 'Light up board'}
-          </button>
+          </Button>
         )}
 
         {/* Reset preview — clears preview + physical board when connected */}
-        <button
+        <Button
+          variant="secondary"
+          size="lg"
+          className="w-full mb-4 tracking-wide"
           onClick={handleResetPreview}
           disabled={isSending}
-          className="w-full mb-4 py-3 bg-zinc-700 hover:bg-zinc-600 rounded-lg font-semibold text-lg tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSending ? 'Sending…' : 'Reset preview'}
-        </button>
+        </Button>
 
         {/* Preset grid */}
         <div className="grid grid-cols-2 gap-3 mb-6">
