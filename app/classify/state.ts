@@ -39,7 +39,9 @@ export const CATEGORIES: {
 }[] = [
   { value: 'jug',        label: 'Jug',        color: 'bg-green-600 hover:bg-green-500',                       fill: '#16a34a' },
   { value: 'good_crimp', label: 'Good Crimp', color: 'bg-blue-600 hover:bg-blue-500',                         fill: '#2563eb' },
-  { value: 'crimp',      label: 'Crimp',      color: 'bg-orange-500 hover:bg-orange-400',                     fill: '#f97316' },
+  // B033 Phase 2.4 — moved OFF brand-orange to teal so the data palette never
+  // competes with the UI accent (the orange-* utilities now render brand #ff6b35).
+  { value: 'crimp',      label: 'Crimp',      color: 'bg-teal-600 hover:bg-teal-500',                         fill: '#0d9488' },
   { value: 'sloper',     label: 'Sloper',     color: 'bg-purple-600 hover:bg-purple-500',                     fill: '#9333ea' },
   { value: 'undercling', label: 'Undercling', color: 'bg-red-600 hover:bg-red-500',                           fill: '#dc2626' },
   { value: 'pinch',      label: 'Pinch',      color: 'bg-yellow-500 hover:bg-yellow-400 text-zinc-900',       fill: '#eab308' },
