@@ -234,9 +234,9 @@ function ClassifyContent() {
         {/* A023: growth banner — invite to contribute */}
         <div
           data-testid="growth-banner"
-          className="rounded-xl border border-[#FF6B35]/50 bg-[#FF6B35]/10 p-4"
+          className="rounded-xl border border-orange-500/50 bg-orange-500/10 p-4"
         >
-          <p className="font-bold text-[#FF6B35]">Propose your classification of the holds</p>
+          <p className="font-bold text-orange-500">Propose your classification of the holds</p>
           <p className="text-sm text-zinc-300 mt-1">
             Help us build the world&apos;s first hold-type database for the Kilter Board. Tap each
             hold and tell us what it feels like to climb on.
@@ -256,12 +256,12 @@ function ClassifyContent() {
               disabled={isDone}
               className="px-3 py-1.5 rounded-lg border border-blue-600 text-sm text-blue-300 hover:border-blue-400 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
             >
-              Prossima non classificata →
+              Next unclassified →
             </button>
             <button
               data-testid="btn-send-export"
               onClick={handleSendExport}
-              className="px-3 py-1.5 rounded-lg bg-[#FF6B35] text-sm font-semibold text-white hover:bg-[#ff7d4d] transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-orange-500 text-sm font-semibold text-white hover:bg-orange-400 transition-colors"
             >
               Send my export
             </button>
@@ -371,7 +371,7 @@ function ClassifyContent() {
                 ) : (
                   <span>
                     Click a hold on the board to classify it, or tap{' '}
-                    <strong>Prossima non classificata</strong> to jump to the first untouched hold.
+                    <strong>Next unclassified</strong> to jump to the first untouched hold.
                   </span>
                 )}
               </div>

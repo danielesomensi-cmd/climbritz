@@ -225,7 +225,7 @@ describe('ClassifyPage', () => {
     expect(screen.getByText(/Currently:/)).toBeInTheDocument();
   });
 
-  it('"Prossima non classificata" jumps to the first unclassified hold', () => {
+  it('"Next unclassified" jumps to the first unclassified hold', () => {
     render(<ClassifyPage />);
     fireEvent.click(screen.getByTestId('hold-1001'));
     fireEvent.click(screen.getByTestId('btn-jug'));
