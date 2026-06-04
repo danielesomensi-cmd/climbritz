@@ -24,7 +24,7 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
     <Link
       href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
       data-testid={`climb-card-${climb.uuid}`}
-      className="flex items-center gap-4 p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
+      className="flex items-center gap-4 p-4 rounded-card bg-surface-raised border border-border-default hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
     >
       <GradeDisplay grade={climb.grade} size="lg" />
 

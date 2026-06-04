@@ -2,6 +2,8 @@
 
 import type { DoneFilter, MovesFilter, ProjectFilter, SortField } from '@/app/lib/api';
 import { GRADES } from '@/app/lib/grades';
+import Chip from '@/components/ui/Chip';
+import Card from '@/components/ui/Card';
 
 export interface Filters {
   gradeMin?: number;
@@ -90,9 +92,9 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
   if (!expanded) return null;
 
   return (
-    <div
+    <Card
       data-testid="filter-panel"
-      className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 space-y-5"
+      className="p-4 space-y-5"
     >
       {/* Benchmarks (A022) — single boolean toggle. Angle-specific:
           shows only climbs benchmarked at the currently selected angle. */}
@@ -100,19 +102,13 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
         <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
           Benchmarks
         </label>
-        <button
-          type="button"
+        <Chip
           data-testid="filter-benchmark"
-          aria-pressed={!!value.benchmark}
+          selected={!!value.benchmark}
           onClick={() => onChange({ ...value, benchmark: !value.benchmark })}
-          className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-            value.benchmark
-              ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-              : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-          }`}
         >
           Benchmarks only
-        </button>
+        </Chip>
       </div>
 
       {/* Grade range */}
@@ -166,24 +162,16 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           Min ascents
         </label>
         <div className="flex flex-wrap gap-2">
-          {ASCENT_PRESETS.map((p) => {
-            const active = value.minAscents === p.value;
-            return (
-              <button
-                key={p.label}
-                type="button"
-                data-testid={`filter-ascents-${p.label}`}
-                onClick={() => onChange({ ...value, minAscents: p.value })}
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  active
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-                }`}
-              >
-                {p.label}
-              </button>
-            );
-          })}
+          {ASCENT_PRESETS.map((p) => (
+            <Chip
+              key={p.label}
+              data-testid={`filter-ascents-${p.label}`}
+              selected={value.minAscents === p.value}
+              onClick={() => onChange({ ...value, minAscents: p.value })}
+            >
+              {p.label}
+            </Chip>
+          ))}
         </div>
       </div>
 
@@ -196,21 +184,14 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           {[1, 2, 3, 4, 5].map((n) => {
             const active = value.minQuality === n;
             return (
-              <button
+              <Chip
                 key={n}
-                type="button"
                 data-testid={`filter-quality-${n}`}
-                onClick={() =>
-                  onChange({ ...value, minQuality: active ? undefined : n })
-                }
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  active
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-                }`}
+                selected={active}
+                onClick={() => onChange({ ...value, minQuality: active ? undefined : n })}
               >
                 {n}★+
-              </button>
+              </Chip>
             );
           })}
         </div>
@@ -224,26 +205,17 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
         <div className="flex flex-wrap gap-2">
           {MOVES_OPTIONS.map((opt) => {
             const current = value.moves ?? 'any';
-            const active = current === opt.value;
             return (
-              <button
+              <Chip
                 key={opt.value}
-                type="button"
                 data-testid={`filter-moves-${opt.value}`}
+                selected={current === opt.value}
                 onClick={() =>
-                  onChange({
-                    ...value,
-                    moves: opt.value === 'any' ? 'any' : opt.value,
-                  })
+                  onChange({ ...value, moves: opt.value === 'any' ? 'any' : opt.value })
                 }
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  active
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-                }`}
               >
                 {opt.label}
-              </button>
+              </Chip>
             );
           })}
         </div>
@@ -255,24 +227,16 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           Sort by
         </label>
         <div className="grid grid-cols-2 gap-2">
-          {SORT_OPTIONS.map((o) => {
-            const active = value.sort === o.value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                data-testid={`filter-sort-${o.value}`}
-                onClick={() => onChange({ ...value, sort: o.value })}
-                className={`px-3 py-2 rounded text-sm border transition-colors ${
-                  active
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:border-zinc-500'
-                }`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
+          {SORT_OPTIONS.map((o) => (
+            <Chip
+              key={o.value}
+              data-testid={`filter-sort-${o.value}`}
+              selected={value.sort === o.value}
+              onClick={() => onChange({ ...value, sort: o.value })}
+            >
+              {o.label}
+            </Chip>
+          ))}
         </div>
       </div>
 
@@ -286,16 +250,14 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
         </label>
         <div className="flex flex-wrap gap-2">
           {GRIP_TYPES.map((g) => (
-            <button
+            <Chip
               key={g}
-              type="button"
               disabled
               data-testid={`filter-grip-${g}`}
               title="Grip type classification is in progress — coming soon"
-              className="px-3 py-1.5 rounded-full text-sm border border-zinc-800 bg-zinc-900 text-zinc-600 cursor-not-allowed"
             >
               {g}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
@@ -310,6 +272,6 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           Clear filters
         </button>
       )}
-    </div>
+    </Card>
   );
 }

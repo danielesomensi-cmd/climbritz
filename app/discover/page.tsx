@@ -15,6 +15,10 @@ import ClimbCard from '@/components/ClimbCard';
 import FilterPanel, { countActiveFilters, type Filters } from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import PageHeader from '@/components/ui/PageHeader';
+import Chip from '@/components/ui/Chip';
+import LoadingState from '@/components/ui/LoadingState';
+import EmptyState from '@/components/ui/EmptyState';
 import { saveFilteredList } from './filtered-list-storage';
 import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-storage';
 
@@ -44,25 +48,17 @@ function ChipRow({ label, testidPrefix, value, onChange }: ChipRowProps) {
         {label}
       </span>
       <div className="flex gap-1 flex-1">
-        {CHIP_OPTIONS.map((opt) => {
-          const active = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              data-testid={`${testidPrefix}-${opt.value}`}
-              onClick={() => onChange(opt.value)}
-              aria-pressed={active}
-              className={`flex-1 px-2 py-1.5 rounded-full text-xs border transition-colors ${
-                active
-                  ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
-              }`}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
+        {CHIP_OPTIONS.map((opt) => (
+          <Chip
+            key={opt.value}
+            data-testid={`${testidPrefix}-${opt.value}`}
+            selected={value === opt.value}
+            onClick={() => onChange(opt.value)}
+            className="flex-1 px-2"
+          >
+            {opt.label}
+          </Chip>
+        ))}
       </div>
     </div>
   );
@@ -274,26 +270,20 @@ function DiscoverPageInner() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-nav">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 space-y-3">
-          <h1 className="text-2xl font-bold">Discover</h1>
-
+      <PageHeader title="Discover">
+        <div className="space-y-3 mt-3">
           {/* Angle selector */}
           <div className="flex gap-1 overflow-x-auto pb-1" data-testid="angle-selector">
             {ANGLES.map((a) => (
-              <button
+              <Chip
                 key={a}
-                type="button"
                 data-testid={`angle-${a}`}
+                selected={angle === a}
                 onClick={() => setAngle(a)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  angle === a
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
-                }`}
+                className="shrink-0"
               >
                 {a}°
-              </button>
+              </Chip>
             ))}
           </div>
 
@@ -385,7 +375,7 @@ function DiscoverPageInner() {
             </svg>
           </button>
         </div>
-      </header>
+      </PageHeader>
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         <div id="discover-filter-panel">
@@ -395,8 +385,8 @@ function DiscoverPageInner() {
         {/* Results */}
         <div data-testid="results-list" className="space-y-2">
           {loading && (
-            <div className="text-center py-8 text-zinc-500 text-sm" data-testid="results-loading">
-              Searching…
+            <div data-testid="results-loading">
+              <LoadingState />
             </div>
           )}
 
@@ -407,8 +397,8 @@ function DiscoverPageInner() {
           )}
 
           {emptyState && !error && (
-            <div className="text-center py-12 text-zinc-500 text-sm" data-testid="results-empty">
-              {emptyState}
+            <div data-testid="results-empty">
+              <EmptyState icon="🔍" title={emptyState} />
             </div>
           )}
 
