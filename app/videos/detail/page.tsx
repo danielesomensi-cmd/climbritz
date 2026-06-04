@@ -70,7 +70,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
       {!isNewFormat && analysis.overall_grade_estimate && (
         <div className="bg-zinc-900 border border-orange-500/40 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-400 mb-2">Grado stimato</p>
-          <span className="inline-block px-6 py-3 bg-orange-500 text-white text-3xl font-black rounded-xl">
+          <span className="inline-block px-6 py-3 bg-orange-500 text-zinc-950 text-3xl font-black rounded-xl">
             {analysis.overall_grade_estimate}
           </span>
         </div>
@@ -264,7 +264,7 @@ function VideoContent() {
             <div className="text-5xl mb-4">&#10060;</div>
             <h2 className="text-lg font-semibold text-white mb-2">Analysis failed</h2>
             <p className="text-zinc-400 mb-6">An error occurred while analyzing the video.</p>
-            <Link href="/upload" className="px-8 py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors inline-block">
+            <Link href="/upload" className="px-8 py-3 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl transition-colors inline-block">
               Upload a new video
             </Link>
           </div>

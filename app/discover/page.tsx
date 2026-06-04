@@ -336,7 +336,7 @@ function DiscoverPageInner() {
             onClick={() => setIsFilterPanelOpen((x) => !x)}
             className={`w-full min-h-[56px] px-4 py-4 rounded-xl flex items-center justify-between transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
               activeFilterCount > 0
-                ? 'bg-orange-500 text-white'
+                ? 'bg-orange-500 text-zinc-950'
                 : 'bg-zinc-800 text-white'
             } ${isFilterPanelOpen ? '' : 'shadow-lg'}`}
           >

@@ -174,7 +174,7 @@ function UploadContent() {
         {file && !uploading && (
           <button
             onClick={handleUpload}
-            className="mt-6 w-full py-3.5 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors text-lg"
+            className="mt-6 w-full py-3.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl transition-colors text-lg"
           >
             Upload and analyze
           </button>

@@ -56,7 +56,7 @@ function DashboardContent() {
           <h1 className="text-2xl font-bold text-white">Your videos</h1>
           <Link
             href="/upload"
-            className="px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl transition-colors text-sm"
+            className="px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-semibold rounded-xl transition-colors text-sm"
           >
             + Upload video
           </Link>
@@ -75,7 +75,7 @@ function DashboardContent() {
             </p>
             <Link
               href="/upload"
-              className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors"
+              className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold rounded-xl transition-colors"
             >
               Upload your first video
             </Link>

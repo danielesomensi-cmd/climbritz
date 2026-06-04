@@ -263,7 +263,7 @@ export default function LogSection({
             'flex flex-col items-center justify-center gap-0 transition-all',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             isProject
-              ? 'bg-orange-500 border-orange-600 text-white hover:bg-orange-400'
+              ? 'bg-orange-500 border-orange-600 text-zinc-950 hover:bg-orange-400'
               : 'bg-zinc-900 border-zinc-700 text-zinc-300 hover:border-zinc-500',
           ].join(' ')}
         >
@@ -369,7 +369,7 @@ function ProjectRemovalModal({
             type="button"
             data-testid="modal-keep-project"
             onClick={onKeep}
-            className="min-h-14 px-4 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-bold border-2 border-orange-600"
+            className="min-h-14 px-4 rounded-lg bg-orange-500 hover:bg-orange-400 text-zinc-950 font-bold border-2 border-orange-600"
           >
             No, keep it
           </button>

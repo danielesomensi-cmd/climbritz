@@ -152,7 +152,7 @@ function BleTestContent() {
             ) : (
               <button
                 onClick={connect}
-                className="w-full p-3 rounded-lg font-semibold text-base bg-orange-500 hover:bg-orange-400 text-white transition-all"
+                className="w-full p-3 rounded-lg font-semibold text-base bg-orange-500 hover:bg-orange-400 text-zinc-950 transition-all"
               >
                 Connect
               </button>

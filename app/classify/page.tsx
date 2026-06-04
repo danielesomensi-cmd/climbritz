@@ -261,7 +261,7 @@ function ClassifyContent() {
             <button
               data-testid="btn-send-export"
               onClick={handleSendExport}
-              className="px-3 py-1.5 rounded-lg bg-orange-500 text-sm font-semibold text-white hover:bg-orange-400 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-orange-500 text-sm font-semibold text-zinc-950 hover:bg-orange-400 transition-colors"
             >
               Send my export
             </button>
