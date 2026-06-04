@@ -8,9 +8,11 @@ import { type ReactNode } from 'react';
 // — /discover/detail). One page-title size for every <h1>. Sticky, blurred,
 // safe-area aware.
 export interface PageHeaderProps {
-  title: ReactNode;
-  /** Nested variant: renders a back link above the title. */
-  back?: { href: string; label?: string };
+  /** Page title. Optional for the nested variant where the parent label in
+   *  `back` is the only header text (e.g. /discover/detail). */
+  title?: ReactNode;
+  /** Nested variant: renders a back link above (or as) the header text. */
+  back?: { href: string; label?: string; testid?: string };
   /** Optional controls rendered to the right of the title row. */
   right?: ReactNode;
   /** Extra content below the title row (e.g. a range picker). */
@@ -32,16 +34,20 @@ export default function PageHeader({
         {back && (
           <Link
             href={back.href}
-            className="inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-text-primary mb-1"
+            data-testid={back.testid}
+            aria-label={back.label ? `Back to ${back.label}` : 'Back'}
+            className={`inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-orange-400 ${title ? 'mb-1' : ''}`}
           >
-            <span aria-hidden>←</span>
-            {back.label ?? 'Back'}
+            <span aria-hidden className="text-2xl leading-none">←</span>
+            {back.label}
           </Link>
         )}
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold leading-tight">{title}</h1>
-          {right}
-        </div>
+        {(title || right) && (
+          <div className="flex items-center justify-between gap-3">
+            {title ? <h1 className="text-2xl font-bold leading-tight">{title}</h1> : <span />}
+            {right}
+          </div>
+        )}
         {children}
       </div>
     </header>

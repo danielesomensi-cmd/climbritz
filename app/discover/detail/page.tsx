@@ -15,6 +15,8 @@ import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import PageHeader from '@/components/ui/PageHeader';
+import LoadingState from '@/components/ui/LoadingState';
 import LogSection from '@/components/LogSection';
 import RecentLogs from '@/components/RecentLogs';
 import { climbToLedCommands } from './climb-to-leds';
@@ -139,24 +141,12 @@ function ClimbDetailPageInner() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
-      <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 flex items-center gap-3">
-          <Link
-            href="/discover"
-            data-testid="back-link"
-            className="text-zinc-400 hover:text-orange-400 text-2xl leading-none"
-            aria-label="Back to Discover"
-          >
-            ←
-          </Link>
-          <div className="text-sm text-zinc-400">Discover</div>
-        </div>
-      </header>
+      <PageHeader back={{ href: '/discover', label: 'Discover', testid: 'back-link' }} />
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-5">
         {loading && (
-          <div data-testid="detail-loading" className="text-center py-12 text-zinc-500">
-            Loading climb…
+          <div data-testid="detail-loading">
+            <LoadingState />
           </div>
         )}
 
@@ -260,25 +250,15 @@ function ClimbDetailPageInner() {
               <RecentLogs logs={userClimb.recent_logs} limit={10} />
             )}
 
-            {/* Actions — order (top-to-bottom):
-                  1. Favorite (placeholder)
-                  2. Next/Prev row — moved here in B-A021-fix-1.1.2 so the
-                     LogSection on this page doesn't push it out of reach
-                     on mid-height phone screens.
+            {/* Actions:
+                B033 (2026-06-04): the lone disabled "❤️ Favorite" row was
+                removed — a single greyed-out control with no enabled sibling
+                reads as "broken" rather than "coming soon" (D018). It returns
+                when Favorite actually works.
                 B021 (2026-05-19): "Analyze with Coach" CTA removed pending
                 Coach tier production readiness. Future revert re-adds the
                 Link to /upload below the Next/Prev row.
                 "Light up" already lives in ClimbBleControls above. */}
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                disabled
-                title="Coming soon"
-                className="flex-1 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-500 text-sm cursor-not-allowed"
-              >
-                ❤️ Favorite
-              </button>
-            </div>
 
             {/* A014: Next/Prev through the saved filtered list. Hidden on
                 deep links (no saved list OR current uuid not in it). */}

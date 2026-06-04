@@ -1,6 +1,7 @@
 'use client';
 
 import type { ClimbLogResponse, LogResultType } from '@/app/lib/api';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface RecentLogsProps {
   logs: ClimbLogResponse[];
@@ -46,11 +47,8 @@ export default function RecentLogs({ logs, limit = 10 }: RecentLogsProps) {
         <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
           History on this climb
         </div>
-        <div
-          data-testid="recent-logs-empty"
-          className="text-sm text-zinc-500 italic"
-        >
-          No attempts yet. Log your first one above.
+        <div data-testid="recent-logs-empty">
+          <EmptyState title="No attempts yet. Log your first one above." />
         </div>
       </div>
     );
