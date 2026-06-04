@@ -189,12 +189,14 @@ Three levels of coaching intelligence (Coach tier):
 ### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026)
 Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. Remaining: iOS TestFlight build 5 (see Action Items).
 
-### Post-audit UX polish — D017 deferred (B028–B030)
-Source: `docs/audit-2026-05-19/AUDIT_REPORT.md`. Deferred from Sprint #1 pending beta feedback.
+### Post-audit UX polish — D017 deferred (B028–B030) → folded into D018 + shipped in B033 ✅
+Source: `docs/audit-2026-05-19/AUDIT_REPORT.md` → re-scoped by the D018 audit (`docs/design-audit-2026-06-04/`). The design-system spec (`DESIGN-SYSTEM-DRAFT.md`) was implemented in **B033 (2026-06-04, 5 phases, → `main`)**. See `PROJECT_STATUS.md` B033.
 
-- [ ] **B028 — Coming Soon component + FilterPanel idiom sweep (M)** — unify "Coming Soon" treatment; sweep FilterPanel idiom inconsistency (chips vs dropdowns vs disabled-checkbox). Trigger: after first beta feedback on which Coming-Soon features get the most "when?" questions.
-- [ ] **B029 — Design system pass (M)** — codify implicit design language into Tailwind tokens + small component library (Card, Chip, Button, PageHeader, EmptyState). Trigger: before App Store submission.
-- [ ] **B030 — Typography lift (M, post-beta)** — curated typeface + type scale tokens. Trigger: post-beta, after B029.
+- [x] **B028 — Coming Soon component + FilterPanel idiom sweep** — FilterPanel idiom unified (all options → the `Chip` primitive, B033 Phase 3). **`ComingSoonBadge` dropped** (per Daniele — 3 occurrences, not worth a component; the 3 existing treatments stand). So D18-4 is closed-by-decision, not by a shared badge.
+- [x] **B029 — Design system pass** — token layer (`globals.css @theme static`) + `components/ui/` primitives (Button/Chip/Card/PageHeader/EmptyState/LoadingState/StatusDot) + `lib/ble/status.ts`, adopted page-by-page. B033 Phases 1–4.
+- [x] **B030 — Typography lift** — Space Grotesk (display) + Inter Tight (body) self-hosted via `next/font` + `text-*` scale tokens. B033 Phase 5.
+
+**Residual (deferred, non-blocking):** D18-10 residual raw state-colour literals in the LogSection result grid / RecentLogs / session-row icons (semantic tokens defined, those icons not migrated); Recharts axis legibility on a 360px viewport (on-device check, no mobile round this brief); BLE preset LED-art thumbnails (D017-P2-4, optional delight).
 
 ---
 
