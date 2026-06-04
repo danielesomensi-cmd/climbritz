@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
       }}
     >
       <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-        <h1 style={{ color: '#FF6B35', fontSize: '32px', fontWeight: 800, marginBottom: '8px' }}>
+        <h1 style={{ color: 'var(--brand-orange)', fontSize: '32px', fontWeight: 800, marginBottom: '8px' }}>
           Privacy Policy
         </h1>
         <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
@@ -76,7 +76,7 @@ export default function PrivacyPolicy() {
           </h2>
           <p style={{ lineHeight: 1.8 }}>
             For privacy-related inquiries, contact us at{' '}
-            <a href="mailto:daniele.somensi@gmail.com" style={{ color: '#FF6B35' }}>
+            <a href="mailto:daniele.somensi@gmail.com" style={{ color: 'var(--brand-orange)' }}>
               daniele.somensi@gmail.com
             </a>
             .

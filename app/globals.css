@@ -1,7 +1,24 @@
 @import "tailwindcss";
 
-@theme {
-  --color-kilter-orange: #ff6b35;
+/* B032 — single canonical brand orange.
+   The default Tailwind `orange` ramp (orange-500 = #f97316) is a yellower hue
+   than the brand #ff6b35 used in inline styles, so the app shipped two visibly
+   different oranges. Tailwind v4 compiles every orange utility to
+   `var(--color-orange-*)` (and opacity variants to color-mix on the same var),
+   so redefining those custom properties on :root AFTER the framework import
+   wins by plain CSS cascade and retints all 58 orange-* call-sites at once —
+   no per-call-site churn. (A `@theme` override did not take effect in this
+   project's setup; the cascade override is deterministic.) `--brand-orange` is
+   the same value for the few inline-styled surfaces (homepage, /privacy) that
+   can't use Tailwind utilities. Ramp anchored on #ff6b35. */
+:root {
+  --color-orange-100: #ffe4d6;
+  --color-orange-200: #ffc9af;
+  --color-orange-300: #ffab85;
+  --color-orange-400: #ff8a5c;
+  --color-orange-500: #ff6b35;
+  --color-orange-600: #e85620;
+  --brand-orange: #ff6b35;
 }
 
 * {
