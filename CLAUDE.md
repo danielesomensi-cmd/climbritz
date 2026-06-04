@@ -71,6 +71,9 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 - `GET /api/stats/pyramid?from=&to=&result_filter=` (`flash`|`send_or_better`|`all`) → `[{grade_band, count}]`
 - `GET /api/stats/trend?from=&to=` → `[{week_start, flash_count, send_count, attempt_count}]` (ISO-week)
 
+**Coach** (A025 — free-tier AI progress comment, text-only Gemini, on-tap)
+- `POST /api/coach/summary?from=&to=` (JWT) → `{summary}`. Assembles the user's real range stats (sessions/volume/flashes/sends/peak/grade-dist/trend) via `log_service` and asks `gemini-2.5-flash` (text-only, `thinking_budget=0`) for a 2–3 sentence factual note. Ephemeral (no persistence/table). 0 sessions → fixed fallback (no Gemini call); Gemini failure → 502 (retryable).
+
 **Classifications** (per-user hold grip-type, cloud-synced, Clerk-gated)
 - `GET /api/classifications` · `PUT /api/classifications/{placement_id}` body `{category}` upsert · `DELETE /api/classifications/{placement_id}` → 204 idempotent
 - `POST /api/classifications/import` body `{classifications: [{placement_id, category}, …]}` → `{total}`. Merge upsert (preserves unsent rows), cap 1000, tolerates+ignores `x`/`y`. `category` ∈ `jug | good_crimp | crimp | sloper | undercling | pinch`.
@@ -117,11 +120,11 @@ When a change touches a fact shared across docs (model version, deploy status, r
 ```
 climbritz/
 ├── backend/app/
-│   ├── api/            videos · climbs · holds · admin · logs · user_climbs · stats · classifications · circuits(stub)
+│   ├── api/            videos · climbs · holds · admin · logs · user_climbs · stats · coach · classifications · circuits(stub)
 │   ├── core/           config (prod guard on CLERK_JWKS_URL) · database · clerk (JWKS verify + shadow-row + cache) · deps (get_current_user_id / get_optional_user_id)
 │   ├── models/         user (Clerk shadow row) · video · climb_log · user_climb · user_hold_classification
 │   ├── schemas/        user · video · climb · logs · classifications
-│   ├── services/       gemini_service · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
+│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
 │   ├── utils/          kilter_parser
 │   └── main.py
 ├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications
@@ -130,7 +133,7 @@ climbritz/
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
 │   ├── discover/       page (search+filters) · detail/page (board + BLE + Next/Prev) · detail/climb-to-leds · filtered-list-storage · discover-filters-storage
-│   ├── history/        page · sessions-list · grade-pyramid · trend-chart
+│   ├── history/        page · coach-comment (A025) · sessions-list · grade-pyramid · trend-chart
 │   ├── classify/       page (cloud-synced) · state · ble-test/ (presets · board-preview · use-kilter-ble)
 │   ├── board-map · videos/detail · privacy · debug
 │   ├── lib/            api.ts (Clerk JWT per call, 401-retry-once) · clerk.d.ts · grades.ts · ble/(kilter-protocol · kilter-board-service · transport · status)

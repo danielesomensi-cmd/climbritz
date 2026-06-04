@@ -104,7 +104,7 @@ Three levels of coaching intelligence (Coach tier):
 ## Phase 3 — Discovery + Coach Build (~8 weeks)
 
 ### 3b — Climb Search API + Advanced Filters ✅ (core done)
-**Done:** name autocomplete · grade range · angle · min ascents · min stars · sort · **moves** chip (A019) · **benchmark** toggle (A022) · 500-cap + `total_count` envelope (B020) · climb detail with holds · dual Font/V grade · A021 logging overlay (`user_state`, done/project chips) · A023 hold-classification cloud sync · tests.
+**Done:** name autocomplete · grade range · angle · min ascents · min stars · sort · **moves** chip (A019) · **benchmark** toggle (A022) · 500-cap + `total_count` envelope (B020) · climb detail with holds · dual Font/V grade · A021 logging overlay (`user_state`, done/project chips) · A023 hold-classification cloud sync · A024 History redesign (drop calendar, richer stats header) · A025 free-tier AI progress comment in History (on-tap, text-only Gemini) · tests.
 
 **Pending:**
 - [ ] Difficulty accuracy filter (deferred) · board size/layout (12x12 only at launch) · setter name (deferred)
