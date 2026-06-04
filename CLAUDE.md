@@ -34,7 +34,7 @@ Detailed per-brief history lives in `PROJECT_STATUS.md` (decisions log) and `ROA
 
 - **Phase 1–2 ✅** — FastAPI backend, Clerk auth, video upload + Gemini File API analysis (Coach Level 1 working).
 - **Phase 3a/3b ✅** — BoardLib DB integration; climb search + detail API with grade/ascents/quality/sort/moves/benchmark filters, 500-result cap + `total_count` envelope.
-- **Discovery frontend ✅** — `/discover` search + filter panel, `/discover/detail` board visualization, climb logging + `/history` (calendar, pyramid, trend), per-user hold classification (`/classify`, cloud-synced).
+- **Discovery frontend ✅** — `/discover` search + filter panel, `/discover/detail` board visualization, climb logging + `/history` (stats header, sessions, pyramid, trend), per-user hold classification (`/classify`, cloud-synced).
 - **BLE ✅** — `/ble-test` (LED presets) + climb illumination on `/discover/detail` (connect → illuminate, Next/Prev auto-send).
 - **Mobile ✅** — Capacitor iOS + Android; Clerk **production** auth working on both platforms (custom domain `clerk.climbritz.app`, email+password). Android shipped to Play Console Internal Testing; iOS on TestFlight.
 - **Coach tier** — gated behind a "Coming Soon" pill pending production readiness; `/upload` stays URL-reachable.
@@ -130,7 +130,7 @@ climbritz/
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
 │   ├── discover/       page (search+filters) · detail/page (board + BLE + Next/Prev) · detail/climb-to-leds · filtered-list-storage · discover-filters-storage
-│   ├── history/        page · calendar · sessions-list · grade-pyramid · trend-chart
+│   ├── history/        page · sessions-list · grade-pyramid · trend-chart
 │   ├── classify/       page (cloud-synced) · state · ble-test/ (presets · board-preview · use-kilter-ble)
 │   ├── board-map · videos/detail · privacy · debug
 │   ├── lib/            api.ts (Clerk JWT per call, 401-retry-once) · clerk.d.ts · grades.ts · ble/(kilter-protocol · kilter-board-service · transport · status)

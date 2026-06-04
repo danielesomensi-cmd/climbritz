@@ -113,7 +113,7 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 | Board map | `board-map/page.tsx` | Annotated 12x12 board map (HC-2) |
 | BLE test | `ble-test/page.tsx` | 10 pixel-art LED presets + #11 all-LEDs stress test, auto-apply on tap with 200ms debounce (A006/B009/B012/B014/B014-iter-2) |
 | Video detail | `videos/detail/page.tsx` | Analysis results display (query-param route). **B032:** mounts universal `BottomNav`. |
-| **History** | `history/page.tsx` | A021.5 — single-scroll page: stats header (sessions/flashes/sends/peak grade) + sticky date range picker (7d/30d/90d/1y/All, default 90d) + hand-rolled CSS-grid calendar heatmap + sessions list (cards desc, climb rows link to `/discover/detail`) + Recharts horizontal-bar grade pyramid (flash/send_or_better/all filter) + Recharts line trend chart (per-series toggle for flash/send/attempt). Recharts 3.8.1 pulled in for the two chart sections. |
+| **History** | `history/page.tsx` | A021.5 + A024 — single-scroll page: sticky date range picker (7d/30d/90d/1y/All, default 90d) + stats header (A024: hero row Climbs volume / Sessions over secondary Flashes / Sends / Peak grade; Climbs summed from the sessions payload, no extra endpoint) + sessions list (cards desc, climb rows link to `/discover/detail`) + Recharts horizontal-bar grade pyramid (flash/send_or_better/all filter) + Recharts line trend chart (per-series toggle for flash/send/attempt). A024 dropped the hand-rolled calendar heatmap; a layout slot above the stats is reserved for the A025 Gemini comment card. Recharts 3.8.1 pulled in for the two chart sections. |
 | Privacy | `privacy/page.tsx` | Privacy policy (Play Store requirement) |
 | Debug | `debug/page.tsx` | Network diagnostics (dev tool — hidden from homepage in prod builds) |
 
@@ -185,12 +185,9 @@ dismisses the modal cleanly without navigating away from the page.
 ┌──────────────────────────────────────────────────────────┐
 │  Sticky header: back link + date range picker            │
 ├──────────────────────────────────────────────────────────┤
-│  Stats strip: Sessions / Flashes / Sends / Peak grade    │
-│                                                          │
-│  ── Activity ──                                          │
-│  Hand-rolled CSS-grid calendar heatmap                    │
-│  (month-by-month, intensity by climb count)               │
-│  Tap day → scrollIntoView the matching session card       │
+│  Stats header (A024): hero row Climbs/Sessions           │
+│   over secondary row Flashes / Sends / Peak grade        │
+│  (A025 slot reserved above the stats)                    │
 │                                                          │
 │  ── Sessions ──                                          │
 │  <SessionCard> per local_date (desc)                      │
