@@ -1,7 +1,27 @@
 import type { Metadata, Viewport } from "next";
+import { Space_Grotesk, Inter_Tight } from "next/font/google";
 import ClerkSpaProvider from "@/components/ClerkSpaProvider";
 import "./globals.css";
 import "./safe-area.css";
+
+// B033 Phase 5 (D18-9 / B030). next/font self-hosts both faces at BUILD time
+// (downloaded once, served from the static export) — no runtime web-font fetch,
+// so the Capacitor build stays offline-friendly. `adjustFontFallback` (default)
+// emits a metric-matched fallback so there's no layout shift while the face
+// loads. Space Grotesk = display (wordmark + page titles); Inter Tight = body.
+const fontDisplay = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const fontBody = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Climbritz - AI Training for Climbing",
@@ -24,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fontDisplay.variable} ${fontBody.variable}`}>
       <body>
         <ClerkSpaProvider>{children}</ClerkSpaProvider>
       </body>

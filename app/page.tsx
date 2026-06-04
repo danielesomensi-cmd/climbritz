@@ -82,7 +82,7 @@ function HomeContent() {
       </div>
 
       {/* Wordmark */}
-      <h1 className="m-0 text-center font-black tracking-[-2px] text-[length:clamp(40px,10vw,72px)] text-[color:var(--brand-orange)] [text-shadow:0_0_40px_rgba(255,107,53,0.6)]">
+      <h1 className="font-display text-display m-0 text-center tracking-[-2px] text-[color:var(--brand-orange)] [text-shadow:0_0_40px_rgba(255,107,53,0.6)]">
         CLIMBRITZ
       </h1>
       <p className="mt-2 mb-12 text-center text-base font-medium text-zinc-400">

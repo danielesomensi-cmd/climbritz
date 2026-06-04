@@ -28,7 +28,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center pt-safe pb-4 px-4">
       <div className="mb-6 text-center">
         <h1
-          className="font-black"
+          className="font-display font-black"
           style={{
             fontSize: 'clamp(32px, 9vw, 56px)',
             color: 'var(--brand-orange)',

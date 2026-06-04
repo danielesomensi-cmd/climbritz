@@ -44,7 +44,7 @@ export default function PageHeader({
         )}
         {(title || right) && (
           <div className="flex items-center justify-between gap-3">
-            {title ? <h1 className="text-2xl font-bold leading-tight">{title}</h1> : <span />}
+            {title ? <h1 className="text-page-title font-display">{title}</h1> : <span />}
             {right}
           </div>
         )}
