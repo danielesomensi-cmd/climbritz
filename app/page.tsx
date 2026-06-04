@@ -71,134 +71,56 @@ const TILES: Tile[] = [
 
 function HomeContent() {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--hero-gradient)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: 'max(env(safe-area-inset-top), 48px)',
-        paddingLeft: '16px',
-        paddingRight: '16px',
-        paddingBottom: '32px',
-        position: 'relative',
-      }}
-    >
+    // B033 Phase 4 (D18-12): ported off inline styles to Tailwind classes +
+    // design tokens. Hero gradient is the named --hero-gradient token (2.1).
+    <div className="relative min-h-screen flex flex-col items-center px-4 pb-8 pt-[max(env(safe-area-inset-top),48px)] bg-[image:var(--hero-gradient)]">
       {/* B032 — account / sign-out entry point. Clerk's hosted menu owns
           profile management + sign-out (afterSignOutUrl → /sign-in), purely
-          client-side. Anchored top-right (safe-area aware) so it never
-          crowds the wordmark or the tile grid. */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 'max(env(safe-area-inset-top), 16px)',
-          right: '16px',
-          zIndex: 10,
-        }}
-      >
+          client-side. Anchored top-right (safe-area aware). */}
+      <div className="absolute right-4 top-[max(env(safe-area-inset-top),16px)] z-10">
         <UserButton afterSignOutUrl="/sign-in" />
       </div>
 
-      {/* Header */}
-      <h1
-        style={{
-          fontSize: 'clamp(40px, 10vw, 72px)',
-          fontWeight: 900,
-          color: 'var(--brand-orange)',
-          textShadow: '0 0 40px rgba(255, 107, 53, 0.6)',
-          letterSpacing: '-2px',
-          margin: 0,
-          textAlign: 'center',
-        }}
-      >
+      {/* Wordmark */}
+      <h1 className="m-0 text-center font-black tracking-[-2px] text-[length:clamp(40px,10vw,72px)] text-[color:var(--brand-orange)] [text-shadow:0_0_40px_rgba(255,107,53,0.6)]">
         CLIMBRITZ
       </h1>
-      <p
-        style={{
-          fontSize: '16px',
-          color: '#94a3b8',
-          margin: '8px 0 48px',
-          textAlign: 'center',
-          fontWeight: 500,
-        }}
-      >
+      <p className="mt-2 mb-12 text-center text-base font-medium text-zinc-400">
         AI Climbing Companion
       </p>
 
       {/* Tile Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '16px',
-          width: '100%',
-          maxWidth: '420px',
-        }}
-      >
-        {TILES.map((tile) => (
-          <Link
-            key={tile.href}
-            href={tile.href}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '140px',
-              padding: '24px 16px',
-              borderRadius: '16px',
-              background: 'rgba(255, 107, 53, 0.06)',
-              border: '1px solid rgba(255, 107, 53, 0.2)',
-              textDecoration: 'none',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-          >
-            <span style={{ fontSize: '40px', marginBottom: '12px' }}>{tile.icon}</span>
-            <span
-              style={{
-                fontSize: '15px',
-                fontWeight: 700,
-                color: '#e2e8f0',
-                textAlign: 'center',
-              }}
+      <div className="grid grid-cols-2 gap-4 w-full max-w-[420px]">
+        {TILES.map((tile, i) => {
+          // Odd tile count leaves a gap in the 2-col grid — let the last tile
+          // span both columns so the grid reads as deliberate, not orphaned.
+          const fullWidth = i === TILES.length - 1 && TILES.length % 2 === 1;
+          return (
+            <Link
+              key={tile.href}
+              href={tile.href}
+              className={`relative flex flex-col items-center justify-center min-h-[140px] px-4 py-6 rounded-card bg-orange-500/[0.06] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/40 transition-colors ${
+                fullWidth ? 'col-span-2' : ''
+              }`}
             >
-              {tile.label}
-            </span>
-            <span
-              style={{
-                fontSize: '12px',
-                color: '#94a3b8',
-                marginTop: '4px',
-                textAlign: 'center',
-              }}
-            >
-              {tile.subtitle}
-            </span>
-            {tile.locked && (
-              <span
-                data-testid="tile-video-analysis-coming-soon"
-                style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  display: 'inline-block',
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  backgroundColor: 'var(--brand-orange)',
-                  color: '#ffffff',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Coming Soon
+              <span className="text-[40px] mb-3">{tile.icon}</span>
+              <span className="text-[15px] font-bold text-center text-zinc-200">
+                {tile.label}
               </span>
-            )}
-          </Link>
-        ))}
+              <span className="mt-1 text-xs text-center text-zinc-400">
+                {tile.subtitle}
+              </span>
+              {tile.locked && (
+                <span
+                  data-testid="tile-video-analysis-coming-soon"
+                  className="absolute right-2 top-2 inline-block px-2 py-0.5 rounded-pill bg-orange-500 text-zinc-950 text-[10px] font-bold uppercase tracking-wider"
+                >
+                  Coming Soon
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
