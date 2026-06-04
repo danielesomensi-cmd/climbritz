@@ -129,7 +129,10 @@ def assemble_stats(
         "sessions_count": len(sessions),
         "total_climbs": sum(s["total_climbs"] for s in sessions),
         "flashes": sum(s["flashes"] for s in sessions),
-        "sends": sum(s["sends"] for s in sessions),
+        # B033: "sends" is send-or-better (a flash IS a send) — sum plain sends
+        # AND flashes. ``flashes`` above is the flash-only subset. This matches
+        # the History SENDS card so the narrative can't contradict the UI.
+        "sends": sum(s["sends"] + s["flashes"] for s in sessions),
         "attempts": sum(s["attempts"] for s in sessions),
         "peak_grade": peak_grade,
         "grade_distribution": {
@@ -160,12 +163,18 @@ def _build_prompt(stats: dict) -> str:
         f"Training data for {stats['range_label']}:\n"
         f"- Sessions: {stats['sessions_count']}\n"
         f"- Total climbs logged: {stats['total_climbs']}\n"
-        f"- Flashes: {stats['flashes']}\n"
-        f"- Sends: {stats['sends']}\n"
-        f"- Attempts (not yet sent): {stats['attempts']}\n"
-        f"- Hardest grade sent (peak): {peak}\n"
-        f"- Grade distribution (send-or-better): {dist_str}\n"
+        f"- Sends (send-or-better total — flashes ARE sends and are included "
+        f"in this number): {stats['sends']}\n"
+        f"- Flashes (a subset of the sends above — sent first try): "
+        f"{stats['flashes']}\n"
+        f"- Attempts (tried but not yet sent): {stats['attempts']}\n"
+        f"- Peak grade (hardest send in this range): {peak}\n"
+        f"- Grade distribution of sends (send-or-better): {dist_str}\n"
         f"- Recent trend: {stats['trend_direction']}\n\n"
+        "IMPORTANT: a flash counts as a send, so flashes are already part of "
+        "the sends total. NEVER say the climber has 0 sends if they have any "
+        "flashes. Refer to the hardest grade as the 'peak grade' or 'hardest "
+        "send'.\n\n"
         "Write 2-3 sentences, plain text only (no markdown, no bullet points, "
         "no headings). Be warm and motivating, reference concrete numbers from "
         "the data (e.g. the flash count or the peak grade), and if the trend is "

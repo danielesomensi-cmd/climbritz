@@ -109,7 +109,11 @@ function HistoryInner() {
     let flashes = 0;
     for (const s of sessions) {
       climbs += s.total_climbs;
-      sends += s.sends;
+      // B033: SENDS is "send-or-better" — a flash IS a send. The backend
+      // session payload splits them (s.sends = plain sends, s.flashes =
+      // flashes), so the top SENDS card sums both. FLASHES below stays the
+      // flash-only subset. (Per-session badges + the pyramid are unchanged.)
+      sends += s.sends + s.flashes;
       flashes += s.flashes;
     }
     // Peak = the last grade_band in the pyramid array (backend sorts
@@ -142,28 +146,19 @@ function HistoryInner() {
             slot A024 reserved: under the range picker, above the stats. */}
         <CoachComment dateFrom={dateRange.from} dateTo={dateRange.to} />
 
-        {/* A024 stats header — a hero row (Climbs + Sessions) over a secondary
-            row (Flashes / Sends / Peak), all derived from the already-fetched
-            sessions + pyramid payloads. Replaces the old flat 4-stat strip. */}
+        {/* A024 stats header (B033 uniform polish) — a 2+3 grid of
+            equal-size, equally-treated tiles, all derived from the
+            already-fetched sessions + pyramid payloads. Climbs carries a
+            subtle orange accent as the headline volume metric but is the same
+            size as the rest. */}
         <section data-testid="history-stats" className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <StatTile
-              label="Climbs"
-              value={stats.climbs}
-              icon="🧗"
-              size="lg"
-              accent
-            />
-            <StatTile
-              label="Sessions"
-              value={stats.sessionsCount}
-              icon="📅"
-              size="lg"
-            />
+            <StatTile label="Climbs" value={stats.climbs} icon="🧗" accent />
+            <StatTile label="Sessions" value={stats.sessionsCount} icon="📅" />
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <StatTile label="Flashes" value={stats.flashes} icon="⚡" />
             <StatTile label="Sends" value={stats.sends} icon="✓" />
+            <StatTile label="Flashes" value={stats.flashes} icon="⚡" />
             <StatTile label="Peak" value={stats.peak ?? '—'} icon="🏆" />
           </div>
         </section>
@@ -215,50 +210,43 @@ interface StatTileProps {
   label: string;
   value: number | string;
   icon?: string;
-  /** `lg` = hero tile (bigger number + padding). Defaults to the compact tile. */
-  size?: 'lg' | 'sm';
-  /** Orange-tinted hero treatment — used for the headline volume metric. */
+  /** Subtle orange accent for the headline volume metric. Same size as the
+   *  rest — accent is colour only, not dimensions. */
   accent?: boolean;
 }
 
-function StatTile({ label, value, icon, size = 'sm', accent = false }: StatTileProps) {
+// B033: uniform stat tile. Every card is the same size + treatment (fixed
+// min-height, centered icon-over-number-over-label, identical type scale) so
+// the 2+3 grid reads as one cohesive block rather than a hero + leftovers.
+function StatTile({ label, value, icon, accent = false }: StatTileProps) {
   // B026: dim zero-value tiles so the stats block celebrates wins instead of
   // visually flagging gaps. Non-zero stays full-saturation.
   const isZero = typeof value === 'number' && value === 0;
-  const isLg = size === 'lg';
   return (
     <Card
       data-testid={`stat-card-${label.toLowerCase()}`}
       className={[
-        'flex flex-col justify-center',
-        isLg ? 'px-4 py-4' : 'px-3 py-3',
+        'flex flex-col items-center justify-center text-center min-h-[88px] px-2 py-3',
         accent ? 'bg-orange-500/[0.08] border-orange-500/30' : '',
         isZero ? 'opacity-50' : '',
       ].join(' ')}
     >
-      <div className="flex items-baseline gap-1.5">
-        {icon && (
-          <span className={isLg ? 'text-base leading-none' : 'text-sm leading-none'}>
-            {icon}
-          </span>
-        )}
-        <span
-          className={[
-            'font-bold tabular-nums leading-none',
-            isLg ? 'text-3xl' : 'text-xl',
-            isZero
-              ? 'text-zinc-500'
-              : accent
-                ? 'text-[color:var(--brand-orange)]'
-                : 'text-white',
-          ].join(' ')}
-        >
-          {value}
-        </span>
-      </div>
-      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mt-2">
+      {icon && <span className="text-lg leading-none mb-1.5">{icon}</span>}
+      <span
+        className={[
+          'text-2xl font-bold tabular-nums leading-none',
+          isZero
+            ? 'text-zinc-500'
+            : accent
+              ? 'text-[color:var(--brand-orange)]'
+              : 'text-white',
+        ].join(' ')}
+      >
+        {value}
+      </span>
+      <span className="text-[10px] text-zinc-500 uppercase tracking-wide mt-1.5">
         {label}
-      </div>
+      </span>
     </Card>
   );
 }

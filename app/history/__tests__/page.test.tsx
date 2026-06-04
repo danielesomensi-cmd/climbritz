@@ -112,24 +112,28 @@ describe('HistoryPage — B026 header + stats polish', () => {
     expect(screen.queryByTestId('back-link')).not.toBeInTheDocument();
   });
 
-  it('dims zero-value stat cards (Sends = 0 in this fixture)', async () => {
-    // Session fixture: 1 climb, 1 flash, 0 sends, 0 attempts.
+  it('dims zero-value stat cards, keeps non-zero ones full', async () => {
+    // B033: SENDS = send-or-better (sends + flashes). To get a zero SENDS
+    // card the session must have neither a send nor a flash — one attempt.
     getSessionsMock.mockResolvedValue([
       mkSession('2026-05-19', {
         total_climbs: 1,
         sends: 0,
-        flashes: 1,
-        attempts: 0,
+        flashes: 0,
+        attempts: 1,
       }),
     ]);
     render(<HistoryPage />);
     await waitFor(() =>
       expect(screen.queryByTestId('history-loading')).not.toBeInTheDocument(),
     );
-    const sendsCard = screen.getByTestId('stat-card-sends');
-    expect(sendsCard.className).toMatch(/opacity-50/);
-    const flashesCard = screen.getByTestId('stat-card-flashes');
-    expect(flashesCard.className).not.toMatch(/opacity-50/);
+    // 0 sends-or-better → dimmed. 1 climb → full saturation.
+    expect(screen.getByTestId('stat-card-sends').className).toMatch(
+      /opacity-50/,
+    );
+    expect(screen.getByTestId('stat-card-climbs').className).not.toMatch(
+      /opacity-50/,
+    );
   });
 });
 
@@ -173,10 +177,11 @@ describe('HistoryPage — stats header', () => {
     );
 
     // A024: per-tile testids so we can assert each metric unambiguously.
+    // B033: SENDS is send-or-better (plain sends + flashes).
     expect(screen.getByTestId('stat-card-sessions')).toHaveTextContent('2');
     expect(screen.getByTestId('stat-card-climbs')).toHaveTextContent('5'); // 3+2 volume
-    expect(screen.getByTestId('stat-card-flashes')).toHaveTextContent('3'); // 1+2
-    expect(screen.getByTestId('stat-card-sends')).toHaveTextContent('2'); // 2+0
+    expect(screen.getByTestId('stat-card-flashes')).toHaveTextContent('3'); // 1+2 flashes
+    expect(screen.getByTestId('stat-card-sends')).toHaveTextContent('5'); // (2+1)+(0+2) send-or-better
     expect(screen.getByTestId('stat-card-peak')).toHaveTextContent('6b/V4'); // last entry
   });
 });
