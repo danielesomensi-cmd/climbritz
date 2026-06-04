@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { UserButton } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
 
 interface Tile {
@@ -81,14 +82,30 @@ function HomeContent() {
         paddingLeft: '16px',
         paddingRight: '16px',
         paddingBottom: '32px',
+        position: 'relative',
       }}
     >
+      {/* B032 — account / sign-out entry point. Clerk's hosted menu owns
+          profile management + sign-out (afterSignOutUrl → /sign-in), purely
+          client-side. Anchored top-right (safe-area aware) so it never
+          crowds the wordmark or the tile grid. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 'max(env(safe-area-inset-top), 16px)',
+          right: '16px',
+          zIndex: 10,
+        }}
+      >
+        <UserButton afterSignOutUrl="/sign-in" />
+      </div>
+
       {/* Header */}
       <h1
         style={{
           fontSize: 'clamp(40px, 10vw, 72px)',
           fontWeight: 900,
-          color: '#FF6B35',
+          color: 'var(--brand-orange)',
           textShadow: '0 0 40px rgba(255, 107, 53, 0.6)',
           letterSpacing: '-2px',
           margin: 0,
@@ -169,7 +186,7 @@ function HomeContent() {
                   display: 'inline-block',
                   padding: '2px 8px',
                   borderRadius: '9999px',
-                  backgroundColor: '#FF6B35',
+                  backgroundColor: 'var(--brand-orange)',
                   color: '#ffffff',
                   fontSize: '10px',
                   fontWeight: 700,

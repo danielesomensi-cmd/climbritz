@@ -6,6 +6,10 @@ import '@testing-library/jest-dom';
 // components/__tests__/AuthGuard.test.tsx cover the redirect path.
 jest.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ isLoaded: true, isSignedIn: true }),
+  // B032: homepage now renders Clerk's <UserButton> as the account /
+  // sign-out entry point. Stub it so the component tree renders without a
+  // ClerkProvider in jsdom.
+  UserButton: () => <div data-testid="user-button" />,
 }));
 
 jest.mock('next/navigation', () => ({
