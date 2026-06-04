@@ -192,7 +192,7 @@ export default function ClimbBleControls({
             className={[
               'flex-1 py-2.5 rounded-lg font-semibold text-sm transition-colors',
               canIlluminate && !isSending
-                ? 'bg-green-600 hover:bg-green-500 text-white'
+                ? 'bg-orange-500 hover:bg-orange-400 text-zinc-950'
                 : 'bg-zinc-800 text-zinc-500 cursor-not-allowed',
             ].join(' ')}
             data-testid="ble-illuminate-btn"

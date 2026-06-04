@@ -194,7 +194,7 @@ function BleTestContent() {
             className={[
               'w-full mb-4 py-3 rounded-lg font-semibold text-lg tracking-wide transition-colors',
               canSend && !isSending
-                ? 'bg-green-600 hover:bg-green-500 text-white'
+                ? 'bg-orange-500 hover:bg-orange-400 text-zinc-950'
                 : 'bg-zinc-700 text-zinc-500 cursor-not-allowed',
             ].join(' ')}
           >
