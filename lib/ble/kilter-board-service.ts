@@ -14,6 +14,19 @@ export const KILTER_BOARD_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcc
 // Nordic UART TX characteristic — write target for LED packets.
 export const KILTER_BOARD_WRITE_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
+// Pacing delay between consecutive BLE chunk writes (ms).
+// writeWithoutResponse has no flow control: firing all chunks back-to-back
+// overruns the board's UART buffer on large payloads (e.g. the 476-LED
+// diagnostic ≈ 78 chunks) → the board silently drops packets and only half
+// the board lights up, or a congested write trips the plugin's 5s timeout.
+// A short gap lets the board drain between writes. ~6 chunks for a normal
+// climb → imperceptible (~110ms); the full board → ~1.5s.
+const CHUNK_PACING_MS = 18;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export class UnsupportedBoardError extends Error {
   constructor(message: string) {
     super(message);
@@ -52,9 +65,13 @@ export async function disconnectFromKilterBoard(deviceId: string): Promise<void>
   await transport.disconnect(deviceId);
 }
 
-/** Write chunks to the board's UART TX characteristic. */
+/**
+ * Write chunks to the board's UART TX characteristic, pacing consecutive
+ * writes so large payloads don't overrun the board (see CHUNK_PACING_MS).
+ */
 async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void> {
-  for (const chunk of chunks) {
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
     const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
     await transport.writeWithoutResponse(
       deviceId,
@@ -62,6 +79,7 @@ async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void
       KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
       dataView,
     );
+    if (i < chunks.length - 1) await delay(CHUNK_PACING_MS);
   }
 }
 
