@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { forwardRef } from 'react';
+import EmptyState from '@/components/ui/EmptyState';
 import type {
   LogResultType,
   SessionClimb,
@@ -45,11 +46,8 @@ export default function SessionsList({
 }: SessionsListProps) {
   if (sessions.length === 0) {
     return (
-      <div
-        data-testid="sessions-empty"
-        className="text-sm text-zinc-500 italic text-center py-8"
-      >
-        No sessions in this range yet.
+      <div data-testid="sessions-empty">
+        <EmptyState icon="🧗" title="No sessions in this range yet." />
       </div>
     );
   }

@@ -13,6 +13,10 @@ import {
 } from '@/app/lib/api';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/ui/PageHeader';
+import Chip from '@/components/ui/Chip';
+import Card from '@/components/ui/Card';
+import LoadingState from '@/components/ui/LoadingState';
 import HistoryCalendar from './calendar';
 import SessionsList from './sessions-list';
 import GradePyramid from './grade-pyramid';
@@ -127,35 +131,22 @@ function HistoryInner() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
-      <header className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 pt-safe pb-3 space-y-3">
-          {/* B026: no back arrow — /history is a top-level BottomNav route. */}
-          <h1 className="text-xl font-bold">History</h1>
-
-          {/* Date range picker — preset buttons */}
-          <div className="flex gap-1" data-testid="range-picker">
-            {RANGE_PRESETS.map((p) => {
-              const active = range === p.value;
-              return (
-                <button
-                  key={String(p.value)}
-                  type="button"
-                  data-testid={`range-${p.value}`}
-                  onClick={() => setRange(p.value)}
-                  aria-pressed={active}
-                  className={`flex-1 py-2 rounded-full text-xs border transition-colors ${
-                    active
-                      ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
+      {/* B026: no back arrow — /history is a top-level BottomNav route. */}
+      <PageHeader title="History">
+        <div className="flex gap-1 mt-3" data-testid="range-picker">
+          {RANGE_PRESETS.map((p) => (
+            <Chip
+              key={String(p.value)}
+              data-testid={`range-${p.value}`}
+              selected={range === p.value}
+              onClick={() => setRange(p.value)}
+              className="flex-1 px-1"
+            >
+              {p.label}
+            </Chip>
+          ))}
         </div>
-      </header>
+      </PageHeader>
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-6">
         {/* Top stats strip */}
@@ -180,11 +171,8 @@ function HistoryInner() {
         )}
 
         {loading ? (
-          <div
-            data-testid="history-loading"
-            className="text-center py-12 text-zinc-500"
-          >
-            Loading…
+          <div data-testid="history-loading">
+            <LoadingState />
           </div>
         ) : (
           <>
@@ -241,11 +229,9 @@ function StatCard({ label, value, icon }: StatCardProps) {
   // visually flagging gaps. Non-zero stays full-saturation.
   const isZero = typeof value === 'number' && value === 0;
   return (
-    <div
+    <Card
       data-testid={`stat-card-${label.toLowerCase()}`}
-      className={`rounded-lg bg-zinc-900 border border-zinc-800 px-2 py-3 text-center ${
-        isZero ? 'opacity-50' : ''
-      }`}
+      className={`px-2 py-3 text-center ${isZero ? 'opacity-50' : ''}`}
     >
       <div
         className={`text-xl font-bold tabular-nums ${
@@ -258,6 +244,6 @@ function StatCard({ label, value, icon }: StatCardProps) {
       <div className="text-[10px] text-zinc-500 uppercase tracking-wide mt-0.5">
         {label}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { PyramidEntry, PyramidResultFilter } from '@/app/lib/api';
+import Chip from '@/components/ui/Chip';
 
 interface GradePyramidProps {
   entries: PyramidEntry[];
@@ -34,26 +35,18 @@ export default function GradePyramid({
         <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
           Grade pyramid
         </h2>
-        <div className="flex gap-1" data-testid="pyramid-filter">
-          {FILTER_OPTIONS.map((opt) => {
-            const active = resultFilter === opt.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                data-testid={`pyramid-filter-${opt.value}`}
-                onClick={() => onFilterChange(opt.value)}
-                aria-pressed={active}
-                className={`px-2 py-1 rounded-full text-xs border transition-colors ${
-                  active
-                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
-                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        <div className="flex gap-1 flex-wrap justify-end" data-testid="pyramid-filter">
+          {FILTER_OPTIONS.map((opt) => (
+            <Chip
+              key={opt.value}
+              data-testid={`pyramid-filter-${opt.value}`}
+              selected={resultFilter === opt.value}
+              onClick={() => onFilterChange(opt.value)}
+              className="text-xs px-2"
+            >
+              {opt.label}
+            </Chip>
+          ))}
         </div>
       </div>
 
