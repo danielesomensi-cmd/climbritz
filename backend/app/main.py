@@ -18,6 +18,7 @@ from app.api import (
     user_climbs,
     stats,
     classifications,
+    coach,
 )
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,7 @@ app.include_router(
     prefix="/api/classifications",
     tags=["classifications"],
 )
+app.include_router(coach.router, prefix="/api/coach", tags=["coach"])
 
 
 import time

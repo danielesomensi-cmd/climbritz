@@ -17,6 +17,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import Chip from '@/components/ui/Chip';
 import Card from '@/components/ui/Card';
 import LoadingState from '@/components/ui/LoadingState';
+import CoachComment from './coach-comment';
 import SessionsList from './sessions-list';
 import GradePyramid from './grade-pyramid';
 import TrendChart from './trend-chart';
@@ -137,10 +138,9 @@ function HistoryInner() {
       </PageHeader>
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-6">
-        {/* A025 slot — a future "Generate comment" (Gemini) card mounts here,
-            just under the range picker and above the stats. Kept empty for now;
-            the layout stays a vertical stack so inserting one <section> is a
-            no-op for everything below. */}
+        {/* A025 — on-tap AI progress comment (free, ephemeral). Lives in the
+            slot A024 reserved: under the range picker, above the stats. */}
+        <CoachComment dateFrom={dateRange.from} dateTo={dateRange.to} />
 
         {/* A024 stats header — a hero row (Climbs + Sessions) over a secondary
             row (Flashes / Sends / Peak), all derived from the already-fetched

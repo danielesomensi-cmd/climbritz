@@ -465,6 +465,22 @@ export async function getTrend(
   );
 }
 
+export interface CoachSummaryResponse {
+  summary: string;
+}
+
+/** A025: POST /api/coach/summary — on-tap AI progress comment for the current
+ *  date range. Free tier; ephemeral (no persistence). */
+export async function getCoachSummary(
+  dateFrom?: string,
+  dateTo?: string,
+): Promise<CoachSummaryResponse> {
+  return apiFetch<CoachSummaryResponse>(
+    `/api/coach/summary${buildDateRangeQs(dateFrom, dateTo)}`,
+    { method: 'POST' },
+  );
+}
+
 // --- A023: Hold classification cloud sync ---
 
 export type HoldCategory =
