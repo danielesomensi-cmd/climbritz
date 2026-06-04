@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useDropzone } from 'react-dropzone';
 import AuthGuard from '@/components/AuthGuard';
+import BottomNav from '@/components/BottomNav';
 import { uploadVideo, ApiError } from '@/app/lib/api';
 
 const MAX_SIZE = 500 * 1024 * 1024; // 500MB
@@ -74,10 +75,10 @@ function UploadContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 pb-nav">
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-black text-[#FF6B35]">CLIMBRITZ</Link>
+          <Link href="/dashboard" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
           <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white transition-colors">
             &larr; Dashboard
           </Link>
@@ -92,7 +93,7 @@ function UploadContent() {
           {...getRootProps()}
           className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${
             isDragActive
-              ? 'border-[#FF6B35] bg-[#FF6B35]/10'
+              ? 'border-orange-500 bg-orange-500/10'
               : file
               ? 'border-green-500/50 bg-green-500/5'
               : 'border-zinc-700 hover:border-zinc-500 bg-zinc-900'
@@ -141,7 +142,7 @@ function UploadContent() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Slab session V4, Red problem gym"
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-[#FF6B35] transition-colors"
+              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors"
             />
           </div>
         )}
@@ -158,11 +159,11 @@ function UploadContent() {
           <div className="mt-6">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-zinc-400">Uploading…</span>
-              <span className="text-[#FF6B35] font-semibold">{Math.round(progress)}%</span>
+              <span className="text-orange-500 font-semibold">{Math.round(progress)}%</span>
             </div>
             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#FF6B35] rounded-full transition-all duration-300"
+                className="h-full bg-orange-500 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -173,12 +174,14 @@ function UploadContent() {
         {file && !uploading && (
           <button
             onClick={handleUpload}
-            className="mt-6 w-full py-3.5 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors text-lg"
+            className="mt-6 w-full py-3.5 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors text-lg"
           >
             Upload and analyze
           </button>
         )}
       </main>
+
+      <BottomNav />
     </div>
   );
 }

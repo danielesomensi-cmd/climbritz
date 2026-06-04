@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
+import BottomNav from '@/components/BottomNav';
 import { getVideos, Video } from '@/app/lib/api';
 
 const STATUS_BADGE: Record<Video['processing_status'], { bg: string; label: string }> = {
@@ -40,11 +41,11 @@ function DashboardContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 pb-nav">
       {/* Header */}
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-black text-[#FF6B35]">CLIMBRITZ</Link>
+          <Link href="/" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
           {/* A019: Clerk's hosted menu — account management + sign-out. */}
           <UserButton afterSignOutUrl="/sign-in" />
         </div>
@@ -55,7 +56,7 @@ function DashboardContent() {
           <h1 className="text-2xl font-bold text-white">Your videos</h1>
           <Link
             href="/upload"
-            className="px-4 py-2.5 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-semibold rounded-xl transition-colors text-sm"
+            className="px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl transition-colors text-sm"
           >
             + Upload video
           </Link>
@@ -63,7 +64,7 @@ function DashboardContent() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full" />
+            <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />
           </div>
         ) : videos.length === 0 ? (
           <div className="text-center py-20">
@@ -74,7 +75,7 @@ function DashboardContent() {
             </p>
             <Link
               href="/upload"
-              className="inline-block px-6 py-3 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors"
+              className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors"
             >
               Upload your first video
             </Link>
@@ -105,8 +106,8 @@ function DashboardContent() {
                       </div>
                     </div>
                     {(video.form_analysis?.overall_impression || video.form_analysis?.overall_grade_estimate) && (
-                      <div className="ml-4 px-3 py-1.5 bg-[#FF6B35]/20 border border-[#FF6B35]/40 rounded-xl">
-                        <span className="text-[#FF6B35] font-bold text-sm uppercase">
+                      <div className="ml-4 px-3 py-1.5 bg-orange-500/20 border border-orange-500/40 rounded-xl">
+                        <span className="text-orange-500 font-bold text-sm uppercase">
                           {video.form_analysis.overall_impression || video.form_analysis.overall_grade_estimate}
                         </span>
                       </div>
@@ -121,6 +122,8 @@ function DashboardContent() {
           </div>
         )}
       </main>
+
+      <BottomNav />
     </div>
   );
 }

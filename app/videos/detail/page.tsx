@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
+import BottomNav from '@/components/BottomNav';
 import { getVideo, Video, FormAnalysis, ImprovementItem, ApiError } from '@/app/lib/api';
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
@@ -15,7 +16,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
       </div>
       <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className="h-full bg-[#FF6B35] rounded-full transition-all"
+          className="h-full bg-orange-500 rounded-full transition-all"
           style={{ width: `${score * 10}%` }}
         />
       </div>
@@ -67,9 +68,9 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
       )}
 
       {!isNewFormat && analysis.overall_grade_estimate && (
-        <div className="bg-zinc-900 border border-[#FF6B35]/40 rounded-2xl p-6 text-center">
+        <div className="bg-zinc-900 border border-orange-500/40 rounded-2xl p-6 text-center">
           <p className="text-sm text-zinc-400 mb-2">Grado stimato</p>
-          <span className="inline-block px-6 py-3 bg-[#FF6B35] text-white text-3xl font-black rounded-xl">
+          <span className="inline-block px-6 py-3 bg-orange-500 text-white text-3xl font-black rounded-xl">
             {analysis.overall_grade_estimate}
           </span>
         </div>
@@ -77,14 +78,14 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {analysis.summary && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-3">Valutazione</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Valutazione</h3>
           <p className="text-zinc-200 leading-relaxed">{analysis.summary}</p>
         </div>
       )}
 
       {(analysis.technique_score || analysis.body_tension_score || analysis.footwork_score) && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-4">Punteggi</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-4">Punteggi</h3>
           <div className="space-y-3">
             {analysis.technique_score && <ScoreBar label="Tecnica" score={analysis.technique_score} />}
             {analysis.body_tension_score && <ScoreBar label="Tensione corporea" score={analysis.body_tension_score} />}
@@ -117,7 +118,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
               <div key={i} className="border-l-2 border-yellow-500/40 pl-4">
                 <p className="text-zinc-200 text-sm">{item.issue}</p>
                 <p className="text-zinc-400 text-sm mt-1">&#8594; {item.fix}</p>
-                <p className="text-[#FF6B35] text-sm mt-1">Drill: {item.drill}</p>
+                <p className="text-orange-500 text-sm mt-1">Drill: {item.drill}</p>
               </div>
             ))}
           </div>
@@ -140,11 +141,11 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {!isNewFormat && analysis.drills_recommended && analysis.drills_recommended.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-3">Esercizi consigliati</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Esercizi consigliati</h3>
           <ul className="space-y-2">
             {analysis.drills_recommended.map((drill: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
-                <span className="text-[#FF6B35]">&#8226;</span>
+                <span className="text-orange-500">&#8226;</span>
                 <span>{drill}</span>
               </li>
             ))}
@@ -153,8 +154,8 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
       )}
 
       {!isNewFormat && analysis.next_steps && (
-        <div className="bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-[#FF6B35] uppercase tracking-wide mb-2">Prossimo passo</h3>
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-6">
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-2">Prossimo passo</h3>
           <p className="text-zinc-200 leading-relaxed">{analysis.next_steps}</p>
         </div>
       )}
@@ -201,7 +202,7 @@ function VideoContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -211,17 +212,17 @@ function VideoContent() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-zinc-400 mb-4">Video non trovato</p>
-          <Link href="/dashboard" className="text-[#FF6B35] hover:underline">Torna alla dashboard</Link>
+          <Link href="/dashboard" className="text-orange-500 hover:underline">Torna alla dashboard</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950 pb-nav">
       <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-black text-[#FF6B35]">CLIMBRITZ</Link>
+          <Link href="/dashboard" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
           <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Dashboard</Link>
         </div>
       </header>
@@ -250,8 +251,8 @@ function VideoContent() {
         {video.processing_status === 'processing' && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
             <div className="relative w-16 h-16 mx-auto mb-6">
-              <div className="absolute inset-0 border-4 border-[#FF6B35]/20 rounded-full" />
-              <div className="absolute inset-0 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+              <div className="absolute inset-0 border-4 border-orange-500/20 rounded-full" />
+              <div className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
             </div>
             <h2 className="text-lg font-semibold text-white mb-2">Analysis in progress</h2>
             <p className="text-zinc-400">Gemini is analyzing your technique…</p>
@@ -263,7 +264,7 @@ function VideoContent() {
             <div className="text-5xl mb-4">&#10060;</div>
             <h2 className="text-lg font-semibold text-white mb-2">Analysis failed</h2>
             <p className="text-zinc-400 mb-6">An error occurred while analyzing the video.</p>
-            <Link href="/upload" className="px-8 py-3 bg-[#FF6B35] hover:bg-[#ff7d4d] text-white font-bold rounded-xl transition-colors inline-block">
+            <Link href="/upload" className="px-8 py-3 bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl transition-colors inline-block">
               Upload a new video
             </Link>
           </div>
@@ -273,6 +274,8 @@ function VideoContent() {
           <AnalysisResults analysis={video.form_analysis} />
         )}
       </main>
+
+      <BottomNav />
     </div>
   );
 }
