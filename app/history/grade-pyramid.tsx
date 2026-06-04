@@ -46,7 +46,7 @@ export default function GradePyramid({
                 aria-pressed={active}
                 className={`px-2 py-1 rounded-full text-xs border transition-colors ${
                   active
-                    ? 'bg-orange-500 border-orange-500 text-white font-semibold'
+                    ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                     : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600'
                 }`}
               >

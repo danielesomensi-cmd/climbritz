@@ -145,7 +145,7 @@ function HistoryInner() {
                   aria-pressed={active}
                   className={`flex-1 py-2 rounded-full text-xs border transition-colors ${
                     active
-                      ? 'bg-orange-500 border-orange-500 text-white font-semibold'
+                      ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
                       : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-600'
                   }`}
                 >
