@@ -5,6 +5,9 @@ import { useUser } from '@clerk/clerk-react';
 import BoardMap, { type Placement, getHoldImageUrl } from '@/components/BoardMap';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   bulkImportClassifications,
   deleteClassification,
@@ -250,35 +253,20 @@ function ClassifyContent() {
             <p className="text-xs text-zinc-400">Click any hold to classify or reclassify it.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              data-testid="btn-next"
-              onClick={jumpToNext}
-              disabled={isDone}
-              className="px-3 py-1.5 rounded-lg border border-blue-600 text-sm text-blue-300 hover:border-blue-400 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
-            >
+            {/* B033: Next is navigation, not a category — moved off blue (blue is
+                reserved for the good_crimp category swatch) to a neutral button. */}
+            <Button variant="secondary" data-testid="btn-next" onClick={jumpToNext} disabled={isDone}>
               Next unclassified →
-            </button>
-            <button
-              data-testid="btn-send-export"
-              onClick={handleSendExport}
-              className="px-3 py-1.5 rounded-lg bg-orange-500 text-sm font-semibold text-zinc-950 hover:bg-orange-400 transition-colors"
-            >
+            </Button>
+            <Button variant="primary" data-testid="btn-send-export" onClick={handleSendExport}>
               Send my export
-            </button>
-            <button
-              data-testid="btn-export"
-              onClick={handleExport}
-              className="px-3 py-1.5 rounded-lg border border-emerald-600 text-sm text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10 transition-colors"
-            >
+            </Button>
+            <Button variant="secondary" data-testid="btn-export" onClick={handleExport}>
               Export JSON
-            </button>
-            <button
-              data-testid="btn-import"
-              onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-lg border border-zinc-600 text-sm text-zinc-300 hover:border-zinc-400 transition-colors"
-            >
+            </Button>
+            <Button variant="secondary" data-testid="btn-import" onClick={() => fileInputRef.current?.click()}>
               Import JSON
-            </button>
+            </Button>
             <input
               ref={fileInputRef}
               data-testid="import-file-input"
@@ -287,12 +275,9 @@ function ClassifyContent() {
               onChange={handleImportFile}
               className="hidden"
             />
-            <button
-              onClick={() => setConfirmReset(true)}
-              className="px-3 py-1.5 rounded-lg border border-zinc-700 text-sm text-zinc-400 hover:border-red-500 hover:text-red-400 transition-colors"
-            >
+            <Button variant="ghost" onClick={() => setConfirmReset(true)} className="hover:text-red-400">
               Reset
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -316,7 +301,7 @@ function ClassifyContent() {
           <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
             <div
               data-testid="progress-bar"
-              className="h-full bg-blue-500 transition-all duration-300"
+              className="h-full bg-orange-500 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -357,22 +342,31 @@ function ClassifyContent() {
           </div>
 
           {/* Detail panel */}
-          <aside
+          <Card
             data-testid="classify-panel"
-            className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 min-h-[320px] flex flex-col gap-3"
+            className="border-border-strong p-4 min-h-[320px] flex flex-col gap-3"
           >
             {selected == null ? (
-              <div className="flex-1 flex items-center justify-center text-center text-sm text-zinc-500 px-4">
+              <div className="flex-1 flex items-center justify-center">
                 {isDone ? (
-                  <span>
-                    🎉 All {TOTAL} holds classified! Use <strong>Export JSON</strong> above to
-                    download your work.
-                  </span>
+                  <EmptyState
+                    icon="🎉"
+                    title={
+                      <span>
+                        All {TOTAL} holds classified! Use <strong>Export JSON</strong> above to
+                        download your work.
+                      </span>
+                    }
+                  />
                 ) : (
-                  <span>
-                    Click a hold on the board to classify it, or tap{' '}
-                    <strong>Next unclassified</strong> to jump to the first untouched hold.
-                  </span>
+                  <EmptyState
+                    title={
+                      <span>
+                        Click a hold on the board to classify it, or tap{' '}
+                        <strong>Next unclassified</strong> to jump to the first untouched hold.
+                      </span>
+                    }
+                  />
                 )}
               </div>
             ) : (
@@ -438,25 +432,16 @@ function ClassifyContent() {
 
                 {/* Skip / jump */}
                 <div className="flex gap-2 pt-1">
-                  <button
-                    data-testid="btn-skip"
-                    onClick={handleSkip}
-                    disabled={isSelectedSkipped}
-                    className="flex-1 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300 hover:border-zinc-400 disabled:opacity-40 transition-colors"
-                  >
+                  <Button variant="secondary" className="flex-1" data-testid="btn-skip" onClick={handleSkip} disabled={isSelectedSkipped}>
                     Skip
-                  </button>
-                  <button
-                    onClick={jumpToNext}
-                    disabled={isDone}
-                    className="flex-1 py-2 rounded-lg border border-blue-700 text-xs text-blue-300 hover:border-blue-400 disabled:opacity-40 transition-colors"
-                  >
+                  </Button>
+                  <Button variant="secondary" className="flex-1" onClick={jumpToNext} disabled={isDone}>
                     Next →
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
-          </aside>
+          </Card>
         </div>
 
         {/* Reset confirmation modal */}
@@ -468,19 +453,12 @@ function ClassifyContent() {
                 This will clear all {classifiedCount} classifications. Cannot be undone.
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmReset(false)}
-                  className="flex-1 py-2 rounded-lg border border-zinc-600 text-sm hover:border-zinc-400 transition-colors"
-                >
+                <Button variant="secondary" className="flex-1" onClick={() => setConfirmReset(false)}>
                   Cancel
-                </button>
-                <button
-                  data-testid="btn-confirm-reset"
-                  onClick={handleReset}
-                  className="flex-1 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-sm font-semibold transition-colors"
-                >
+                </Button>
+                <Button variant="destructive" className="flex-1" data-testid="btn-confirm-reset" onClick={handleReset}>
                   Reset
-                </button>
+                </Button>
               </div>
             </div>
           </div>
