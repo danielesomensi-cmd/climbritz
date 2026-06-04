@@ -74,7 +74,7 @@ function HomeContent() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #000 100%)',
+        background: 'var(--hero-gradient)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

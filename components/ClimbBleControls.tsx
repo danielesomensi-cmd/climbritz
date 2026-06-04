@@ -10,7 +10,7 @@ import type { EncoderHold } from '@/lib/ble/kilter-protocol';
 const AUTO_SEND_DEBOUNCE_MS = 300;
 
 const STATUS_COLORS: Record<BleStatus, string> = {
-  idle: 'bg-gray-500',
+  idle: 'bg-zinc-500',
   requesting: 'bg-yellow-400 animate-pulse',
   scanning: 'bg-yellow-400 animate-pulse',
   connecting: 'bg-yellow-400 animate-pulse',

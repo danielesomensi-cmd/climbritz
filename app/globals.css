@@ -111,7 +111,10 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
+  /* B033 Phase 2.1 — was slate #0f172a (dead paint: every real page overlays
+     bg-zinc-950). Align the base to the canonical zinc surface so the cascade
+     matches the pages. */
+  background: var(--color-surface-base);
+  color: var(--color-text-secondary);
 }
 
