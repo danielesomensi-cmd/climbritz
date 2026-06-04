@@ -21,6 +21,80 @@
   --brand-orange: #ff6b35;
 }
 
+/* B033 Phase 1 — design-system token foundation (DEFINE ONLY, no adoption yet).
+   These are NEW namespaces — they do NOT override any Tailwind default, so the
+   B032 `:root`-override caveat (which only applies to overriding built-in ramps
+   like `orange-*`) does not bite here. `@theme` registers each as a `:root` CSS
+   variable AND lets Tailwind emit the matching utility on demand (e.g.
+   `bg-surface-raised`, `rounded-card`, `shadow-elev-raised`). Color values mirror
+   the zinc / emerald / amber scales the app already uses — this is the *semantic*
+   layer over the existing palette, not a new set of hues, so the visual diff of
+   this phase alone is ~zero. Spec: docs/design-audit-2026-06-04/DESIGN-SYSTEM-DRAFT.md §4.1.
+
+   `@theme static` (not bare `@theme`): Tailwind v4 tree-shakes theme variables it
+   thinks are unused, which would drop tokens consumed only from author CSS (the
+   `body{}` rule below) or inline `var()` (homepage). `static` forces every var to
+   emit to :root unconditionally; utilities are still generated on demand from the
+   content scan. */
+@theme static {
+  /* Surfaces & borders (D18-2 — canonical zinc family) */
+  --color-surface-base: #09090b;     /* zinc-950 — page background */
+  --color-surface-raised: #18181b;   /* zinc-900 — cards, panels, inputs */
+  --color-surface-overlay: #27272a;  /* zinc-800 — inactive chip / secondary button */
+  --color-border-default: #27272a;   /* zinc-800 — hairlines */
+  --color-border-strong: #3f3f46;    /* zinc-700 — emphasized borders */
+
+  /* Text (D18-13 / type voice) */
+  --color-text-primary: #fafafa;     /* zinc-50  — headings, key values */
+  --color-text-secondary: #d4d4d8;   /* zinc-300 — body */
+  --color-text-tertiary: #a1a1aa;    /* zinc-400 — labels, captions */
+  --color-text-muted: #71717a;       /* zinc-500 — disabled / hints */
+
+  /* State — climb result semantics (D18-10) */
+  --color-state-flash: #fcd34d;      /* yellow-300 */
+  --color-state-send: #34d399;       /* emerald-400 — also "connected" */
+  --color-state-attempt: #a1a1aa;    /* zinc-400 */
+  --color-state-project: #ff6b35;    /* brand */
+
+  /* Feedback (D18-10) */
+  --color-feedback-success: #10b981; /* emerald-500 */
+  --color-feedback-warn: #f59e0b;    /* amber-500 */
+  --color-feedback-error: #ef4444;   /* red-500 */
+  --color-feedback-info: #3b82f6;    /* blue-500 — transient "sending" */
+
+  /* Category — data palette (SEPARATE axis from the UI accent). Mirrors
+     classify/state.ts. `crimp` is intentionally moved OFF brand-orange to a
+     distinct teal (Phase 2.4 adopts this in state.ts) so the accent stays unique. */
+  --color-category-jug: #16a34a;        /* green-600 */
+  --color-category-good-crimp: #2563eb; /* blue-600 */
+  --color-category-crimp: #0d9488;      /* teal-600 — was orange, de-conflicted */
+  --color-category-sloper: #9333ea;     /* purple-600 */
+  --color-category-undercling: #dc2626; /* red-600 */
+  --color-category-pinch: #eab308;      /* yellow-500 */
+
+  /* Radius (D18-6 — 3-tier scale) */
+  --radius-pill: 9999px;  /* chips, toggles, badges */
+  --radius-card: 12px;    /* cards, panels, modals, primary buttons */
+  --radius-control: 8px;  /* inputs, list items, secondary buttons */
+
+  /* Elevation (dark UI — surface-step + restrained shadow) */
+  --shadow-elev-raised: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --shadow-elev-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+}
+
+/* Tokens that don't map to a Tailwind utility namespace — plain :root so
+   `var()` works from both classes (arbitrary values) and inline styles. */
+:root {
+  /* Homepage hero atmosphere (D18-2) — named so it's deliberate, not accidental. */
+  --hero-gradient: linear-gradient(135deg, #0f172a, #1e293b, #000000);
+  /* Modal/toast scrim that pairs with --shadow-elev-overlay. */
+  --elev-overlay-scrim: rgb(0 0 0 / 0.7);
+}
+
+/* Spacing convention (D18-4.1.4): adopt Tailwind's existing 4px scale AS-IS —
+   no custom tokens. Documented rhythm: gap-2 = default control gap;
+   space-y-3 = intra-section; space-y-5 / space-y-6 = inter-section. */
+
 * {
   margin: 0;
   padding: 0;
