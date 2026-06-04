@@ -1,5 +1,13 @@
+/* B032-fix — top safe-area padding for every page/header that owns its own
+   scroll container (PageHeader + classify/dashboard/upload/board-map/debug/
+   videos-detail/AuthShell). The previous `max(inset, 1rem)` placed content
+   FLUSH at the inset boundary — on Dynamic Island (~59px) the title touched
+   the island, reading as clipped. `calc(inset + 1rem)` keeps a 1rem breathing
+   gap BELOW the inset on every device. On non-notch/web (inset=0) this is 1rem
+   — identical to the old fallback, so nothing regresses; on notch/island it's
+   strictly larger. Single source of truth: change here, not per-page. */
 .pt-safe {
-  padding-top: max(env(safe-area-inset-top), 1rem);
+  padding-top: calc(env(safe-area-inset-top) + 1rem);
 }
 
 .pb-safe {

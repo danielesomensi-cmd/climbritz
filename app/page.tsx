@@ -73,11 +73,11 @@ function HomeContent() {
   return (
     // B033 Phase 4 (D18-12): ported off inline styles to Tailwind classes +
     // design tokens. Hero gradient is the named --hero-gradient token (2.1).
-    <div className="relative min-h-screen flex flex-col items-center px-4 pb-8 pt-[max(env(safe-area-inset-top),48px)] bg-[image:var(--hero-gradient)]">
+    <div className="relative min-h-screen flex flex-col items-center px-4 pb-8 pt-[calc(env(safe-area-inset-top)_+_2.5rem)] bg-[image:var(--hero-gradient)]">
       {/* B032 — account / sign-out entry point. Clerk's hosted menu owns
           profile management + sign-out (afterSignOutUrl → /sign-in), purely
           client-side. Anchored top-right (safe-area aware). */}
-      <div className="absolute right-4 top-[max(env(safe-area-inset-top),16px)] z-10">
+      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)_+_0.75rem)] z-10">
         <UserButton afterSignOutUrl="/sign-in" />
       </div>
 
