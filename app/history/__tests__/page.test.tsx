@@ -155,7 +155,7 @@ describe('HistoryPage — loading + empty state', () => {
 });
 
 describe('HistoryPage — stats header', () => {
-  it('counts sessions, sends, flashes and shows pyramid peak', async () => {
+  it('counts sessions, climbs, sends, flashes and shows pyramid peak', async () => {
     getSessionsMock.mockResolvedValue([
       mkSession('2026-05-11', { sends: 2, flashes: 1, total_climbs: 3 }),
       mkSession('2026-05-09', { sends: 0, flashes: 2, total_climbs: 2 }),
@@ -172,11 +172,12 @@ describe('HistoryPage — stats header', () => {
       expect(screen.queryByTestId('history-loading')).not.toBeInTheDocument(),
     );
 
-    const statsRow = screen.getByTestId('history-stats');
-    expect(statsRow).toHaveTextContent('2'); // sessions
-    expect(statsRow).toHaveTextContent('3'); // flashes (1+2)
-    expect(statsRow).toHaveTextContent('2'); // sends (2+0)
-    expect(statsRow).toHaveTextContent('6b/V4'); // peak (last entry)
+    // A024: per-tile testids so we can assert each metric unambiguously.
+    expect(screen.getByTestId('stat-card-sessions')).toHaveTextContent('2');
+    expect(screen.getByTestId('stat-card-climbs')).toHaveTextContent('5'); // 3+2 volume
+    expect(screen.getByTestId('stat-card-flashes')).toHaveTextContent('3'); // 1+2
+    expect(screen.getByTestId('stat-card-sends')).toHaveTextContent('2'); // 2+0
+    expect(screen.getByTestId('stat-card-peak')).toHaveTextContent('6b/V4'); // last entry
   });
 });
 
@@ -228,27 +229,9 @@ describe('HistoryPage — pyramid filter toggle', () => {
   });
 });
 
-describe('HistoryPage — sessions + calendar interaction', () => {
-  it('clicking a calendar day with sessions scrolls to that session card', async () => {
-    const today = new Date();
-    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    getSessionsMock.mockResolvedValue([mkSession(iso)]);
-    const scrollSpy = jest.fn();
-    // jsdom doesn't implement scrollIntoView — install a spy so the
-    // call doesn't throw and we can assert it fired.
-    (HTMLDivElement.prototype as unknown as {
-      scrollIntoView: typeof scrollSpy;
-    }).scrollIntoView = scrollSpy;
-
-    render(<HistoryPage />);
-    await waitFor(() =>
-      expect(screen.getByTestId(`session-card-${iso}`)).toBeInTheDocument(),
-    );
-
-    fireEvent.click(screen.getByTestId(`calendar-day-${iso}`));
-    expect(scrollSpy).toHaveBeenCalled();
-  });
-
+describe('HistoryPage — sessions interaction', () => {
+  // A024: the activity calendar (and its day → session-card scroll) was
+  // removed; the sessions list is now the only session surface.
   it('clicking a session-climb row routes to /discover/detail', async () => {
     const iso = '2026-05-11';
     getSessionsMock.mockResolvedValue([mkSession(iso)]);

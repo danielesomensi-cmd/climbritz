@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ApiError,
   getPyramid,
@@ -17,7 +17,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import Chip from '@/components/ui/Chip';
 import Card from '@/components/ui/Card';
 import LoadingState from '@/components/ui/LoadingState';
-import HistoryCalendar from './calendar';
 import SessionsList from './sessions-list';
 import GradePyramid from './grade-pyramid';
 import TrendChart from './trend-chart';
@@ -99,34 +98,23 @@ function HistoryInner() {
     };
   }, [dateRange.from, dateRange.to, pyramidFilter]);
 
-  // Calendar → session-card scroll. Each session card registers itself
-  // here on mount via the ref-callback prop.
-  const sessionRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const registerSessionRef = useCallback(
-    (iso: string, el: HTMLDivElement | null) => {
-      if (el) sessionRefs.current.set(iso, el);
-      else sessionRefs.current.delete(iso);
-    },
-    [],
-  );
-  const scrollToSession = useCallback((iso: string) => {
-    const el = sessionRefs.current.get(iso);
-    if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-  }, []);
-
-  // Top-of-page stat counters derived from already-fetched data.
+  // Top-of-page stat counters derived from already-fetched data — no extra
+  // endpoint. A024: added `climbs` (total volume in range), summed from the
+  // sessions payload.
   const stats = useMemo(() => {
     const sessionsCount = sessions.length;
+    let climbs = 0;
     let sends = 0;
     let flashes = 0;
     for (const s of sessions) {
+      climbs += s.total_climbs;
       sends += s.sends;
       flashes += s.flashes;
     }
     // Peak = the last grade_band in the pyramid array (backend sorts
     // by grade label, so the last entry is the hardest one with logs).
     const peak = pyramid.length > 0 ? pyramid[pyramid.length - 1].grade_band : null;
-    return { sessionsCount, sends, flashes, peak };
+    return { sessionsCount, climbs, sends, flashes, peak };
   }, [sessions, pyramid]);
 
   return (
@@ -149,15 +137,35 @@ function HistoryInner() {
       </PageHeader>
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-6">
-        {/* Top stats strip */}
-        <section
-          data-testid="history-stats"
-          className="grid grid-cols-4 gap-2"
-        >
-          <StatCard label="Sessions" value={stats.sessionsCount} />
-          <StatCard label="Flashes" value={stats.flashes} icon="⚡" />
-          <StatCard label="Sends" value={stats.sends} icon="✓" />
-          <StatCard label="Peak" value={stats.peak ?? '—'} />
+        {/* A025 slot — a future "Generate comment" (Gemini) card mounts here,
+            just under the range picker and above the stats. Kept empty for now;
+            the layout stays a vertical stack so inserting one <section> is a
+            no-op for everything below. */}
+
+        {/* A024 stats header — a hero row (Climbs + Sessions) over a secondary
+            row (Flashes / Sends / Peak), all derived from the already-fetched
+            sessions + pyramid payloads. Replaces the old flat 4-stat strip. */}
+        <section data-testid="history-stats" className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile
+              label="Climbs"
+              value={stats.climbs}
+              icon="🧗"
+              size="lg"
+              accent
+            />
+            <StatTile
+              label="Sessions"
+              value={stats.sessionsCount}
+              icon="📅"
+              size="lg"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile label="Flashes" value={stats.flashes} icon="⚡" />
+            <StatTile label="Sends" value={stats.sends} icon="✓" />
+            <StatTile label="Peak" value={stats.peak ?? '—'} icon="🏆" />
+          </div>
         </section>
 
         {error && (
@@ -178,24 +186,9 @@ function HistoryInner() {
           <>
             <section>
               <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide mb-3">
-                Activity
-              </h2>
-              <HistoryCalendar
-                sessions={sessions}
-                dateFrom={dateRange.from ?? sessions[sessions.length - 1]?.date ?? formatIso(new Date())}
-                dateTo={dateRange.to}
-                onDayClick={scrollToSession}
-              />
-            </section>
-
-            <section>
-              <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide mb-3">
                 Sessions
               </h2>
-              <SessionsList
-                sessions={sessions}
-                registerSessionRef={registerSessionRef}
-              />
+              <SessionsList sessions={sessions} />
             </section>
 
             <section>
@@ -218,30 +211,52 @@ function HistoryInner() {
   );
 }
 
-interface StatCardProps {
+interface StatTileProps {
   label: string;
   value: number | string;
   icon?: string;
+  /** `lg` = hero tile (bigger number + padding). Defaults to the compact tile. */
+  size?: 'lg' | 'sm';
+  /** Orange-tinted hero treatment — used for the headline volume metric. */
+  accent?: boolean;
 }
 
-function StatCard({ label, value, icon }: StatCardProps) {
-  // B026: dim zero-value tiles so the stats strip celebrates wins instead of
+function StatTile({ label, value, icon, size = 'sm', accent = false }: StatTileProps) {
+  // B026: dim zero-value tiles so the stats block celebrates wins instead of
   // visually flagging gaps. Non-zero stays full-saturation.
   const isZero = typeof value === 'number' && value === 0;
+  const isLg = size === 'lg';
   return (
     <Card
       data-testid={`stat-card-${label.toLowerCase()}`}
-      className={`px-2 py-3 text-center ${isZero ? 'opacity-50' : ''}`}
+      className={[
+        'flex flex-col justify-center',
+        isLg ? 'px-4 py-4' : 'px-3 py-3',
+        accent ? 'bg-orange-500/[0.08] border-orange-500/30' : '',
+        isZero ? 'opacity-50' : '',
+      ].join(' ')}
     >
-      <div
-        className={`text-xl font-bold tabular-nums ${
-          isZero ? 'text-zinc-500' : 'text-white'
-        }`}
-      >
-        {icon && <span className="mr-1">{icon}</span>}
-        {value}
+      <div className="flex items-baseline gap-1.5">
+        {icon && (
+          <span className={isLg ? 'text-base leading-none' : 'text-sm leading-none'}>
+            {icon}
+          </span>
+        )}
+        <span
+          className={[
+            'font-bold tabular-nums leading-none',
+            isLg ? 'text-3xl' : 'text-xl',
+            isZero
+              ? 'text-zinc-500'
+              : accent
+                ? 'text-[color:var(--brand-orange)]'
+                : 'text-white',
+          ].join(' ')}
+        >
+          {value}
+        </span>
       </div>
-      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mt-0.5">
+      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mt-2">
         {label}
       </div>
     </Card>
