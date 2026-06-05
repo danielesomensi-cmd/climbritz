@@ -19,6 +19,7 @@ from app.api import (
     stats,
     classifications,
     coach,
+    generate,
 )
 
 logger = logging.getLogger(__name__)
@@ -151,6 +152,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(videos.router, prefix="/api/videos", tags=["videos"])
 app.include_router(circuits.router, prefix="/api/circuits", tags=["circuits"])
 app.include_router(climbs.router, prefix="/api/climbs", tags=["climbs"])
+# A026 — POST /api/climbs/generate (mounted before the climbs GET /{uuid}
+# catch-all is irrelevant: different method, no route collision).
+app.include_router(generate.router, prefix="/api/climbs", tags=["generate"])
 app.include_router(holds.router, prefix="/api/holds", tags=["holds"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])

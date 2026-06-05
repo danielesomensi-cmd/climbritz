@@ -404,6 +404,61 @@ def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
         }
 
 
+def get_holds_for_climbs(uuids: list[str]) -> dict[str, list[dict]]:
+    """A026 — bulk-fetch parsed holds + positions for many climbs at once.
+
+    Used by the problem generator to build a swap-candidate pool. Two
+    queries total (frames for all uuids, then x/y for the union of their
+    placements), regardless of pool size.
+
+    Returns ``{uuid: [{placement_id, role, x, y}, ...]}``. Roles are the
+    human-readable strings from ``kilter_parser`` (start/middle/finish/
+    foot_only). Missing positions surface as ``None`` (defensive — every
+    layout-1 placement has a hole).
+    """
+    if not uuids:
+        return {}
+
+    with _get_connection() as conn:
+        placeholders = ",".join("?" for _ in uuids)
+        climb_rows = conn.execute(
+            f"SELECT uuid, frames FROM climbs WHERE uuid IN ({placeholders})",
+            uuids,
+        ).fetchall()
+        parsed = {row["uuid"]: parse_layout(row["frames"]) for row in climb_rows}
+
+        all_pids = {
+            h["placement_id"] for holds in parsed.values() for h in holds
+        }
+        pos_map: dict[int, tuple[int, int]] = {}
+        if all_pids:
+            pid_list = list(all_pids)
+            ph = ",".join("?" for _ in pid_list)
+            for row in conn.execute(
+                f"""
+                SELECT p.id AS placement_id, h.x, h.y
+                FROM placements p JOIN holes h ON p.hole_id = h.id
+                WHERE p.id IN ({ph})
+                """,
+                pid_list,
+            ):
+                pos_map[row["placement_id"]] = (row["x"], row["y"])
+
+    result: dict[str, list[dict]] = {}
+    for uuid, holds in parsed.items():
+        enriched = []
+        for h in holds:
+            pos = pos_map.get(h["placement_id"])
+            enriched.append({
+                "placement_id": h["placement_id"],
+                "role": h["role"],
+                "x": pos[0] if pos else None,
+                "y": pos[1] if pos else None,
+            })
+        result[uuid] = enriched
+    return result
+
+
 def get_db_stats() -> dict:
     """Quick stats about the BoardLib database. Useful for health checks."""
     with _get_connection() as conn:
