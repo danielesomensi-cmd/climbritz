@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter_Tight } from "next/font/google";
 import ClerkSpaProvider from "@/components/ClerkSpaProvider";
+import IosSafeArea from "@/components/IosSafeArea";
 import "./globals.css";
 import "./safe-area.css";
 
@@ -46,6 +47,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontDisplay.variable} ${fontBody.variable}`}>
       <body>
+        {/* B034 — native-iOS safe-area probe; sets --safe-top fallback when the
+            WKWebView fails to resolve env(safe-area-inset-top). No-op on web. */}
+        <IosSafeArea />
         <ClerkSpaProvider>{children}</ClerkSpaProvider>
       </body>
     </html>

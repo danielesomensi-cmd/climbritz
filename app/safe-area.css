@@ -7,7 +7,9 @@
    — identical to the old fallback, so nothing regresses; on notch/island it's
    strictly larger. Single source of truth: change here, not per-page. */
 .pt-safe {
-  padding-top: calc(env(safe-area-inset-top) + 1rem);
+  /* B034 — reads --safe-top (globals.css) instead of env() directly so the
+     native-iOS fallback in IosSafeArea.tsx reaches every page header at once. */
+  padding-top: calc(var(--safe-top) + 1rem);
 }
 
 .pb-safe {

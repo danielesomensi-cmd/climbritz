@@ -116,6 +116,17 @@
   --hero-gradient: linear-gradient(135deg, #0f172a, #1e293b, #000000);
   /* Modal/toast scrim that pairs with --shadow-elev-overlay. */
   --elev-overlay-scrim: rgb(0 0 0 / 0.7);
+
+  /* B034 — single source of truth for the top safe-area inset. On web and on
+     iOS WebViews where env() resolves correctly this IS env(safe-area-inset-top)
+     (0 on notchless devices). But the Capacitor iOS WKWebView is known to report
+     env(safe-area-inset-top)=0 even with viewport-fit=cover present (verified:
+     viewport meta IS in the bundled native index.html, yet the Dynamic Island
+     still clipped the homepage hero on build 7). `components/IosSafeArea.tsx`
+     probes this at runtime on native iOS and, ONLY when env reads 0, overrides
+     this var with a Dynamic-Island-safe fallback (59px). Every safe-area top
+     padding reads this var, so the fix lands everywhere from one place. */
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 /* Spacing convention (D18-4.1.4): adopt Tailwind's existing 4px scale AS-IS —
