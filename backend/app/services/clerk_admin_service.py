@@ -48,17 +48,28 @@ def _full_name(user: dict) -> Optional[str]:
     return name or None
 
 
-def _guess_platform(device_type: Optional[str], is_mobile: Optional[bool]) -> str:
-    """Best-effort iOS/Android label from Clerk's UA-derived device_type.
+def _guess_platform(
+    device_type: Optional[str],
+    is_mobile: Optional[bool],
+    browser: Optional[str] = None,
+) -> str:
+    """Best-effort OS label from Clerk's UA-parsed fields.
 
-    The Capacitor WebViews surface as an iPhone/iPad (iOS) or an Android device,
-    so device_type usually disambiguates. Falls back gracefully when Clerk can't
-    parse the UA (e.g. an unusual native WebView string)."""
+    Clerk's parsing is quirky for native WebViews:
+      - iOS Capacitor app → device_type "iPhone"/"iPad".
+      - Android → device_type "Linux" with browser "Android" (NOT "Android" in
+        device_type), so we must also inspect the browser to catch it.
+      - A desktop Mac is "Macintosh" → macOS, NOT iOS (don't conflate them)."""
     dt = (device_type or "").lower()
-    if "iphone" in dt or "ipad" in dt or "ios" in dt or "mac" in dt:
+    br = (browser or "").lower()
+    if "iphone" in dt or "ipad" in dt or "ios" in dt:
         return "iOS"
-    if "android" in dt:
+    if "android" in dt or "android" in br:
         return "Android"
+    if "mac" in dt:
+        return "macOS"
+    if "windows" in dt:
+        return "Windows"
     if is_mobile:
         return "Mobile (OS unknown)"
     return device_type or "Unknown"
@@ -137,7 +148,9 @@ def get_user_devices(secret_key: str, clerk_user_id: str) -> list[dict]:
         seen.add(key)
         devices.append(
             {
-                "platform": _guess_platform(device_type, is_mobile),
+                "platform": _guess_platform(
+                    device_type, is_mobile, act.get("browser_name")
+                ),
                 "device_type": device_type,
                 "is_mobile": is_mobile,
                 "browser": act.get("browser_name"),

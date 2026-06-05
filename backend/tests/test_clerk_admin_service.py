@@ -41,18 +41,22 @@ def test_primary_email_falls_back_to_first():
 
 
 @pytest.mark.parametrize(
-    "device_type,is_mobile,expected",
+    "device_type,is_mobile,browser,expected",
     [
-        ("iPhone", True, "iOS"),
-        ("iPad", True, "iOS"),
-        ("Android", True, "Android"),
-        (None, True, "Mobile (OS unknown)"),
-        ("Linux", False, "Linux"),
-        (None, False, "Unknown"),
+        ("iPhone", True, "Mobile Safari", "iOS"),
+        ("iPad", True, "Safari", "iOS"),
+        ("Android", True, "Chrome", "Android"),
+        # Clerk reports Android WebView as device_type "Linux" + browser "Android".
+        ("Linux", True, "Android", "Android"),
+        # A desktop Mac must NOT be labeled iOS.
+        ("Macintosh", False, "Safari", "macOS"),
+        ("Windows", False, "Edge", "Windows"),
+        (None, True, "curl", "Mobile (OS unknown)"),
+        (None, False, "curl", "Unknown"),
     ],
 )
-def test_guess_platform(device_type, is_mobile, expected):
-    assert svc._guess_platform(device_type, is_mobile) == expected
+def test_guess_platform(device_type, is_mobile, browser, expected):
+    assert svc._guess_platform(device_type, is_mobile, browser) == expected
 
 
 def test_list_recent_users_normalizes_payload():
