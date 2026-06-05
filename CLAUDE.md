@@ -83,6 +83,7 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 
 **Admin**
 - `POST /api/admin/sync-db` (JWT) → runs `boardlib database kilter` · `POST /api/admin/upload-db` (ADMIN_SECRET) → upload DB to Railway volume
+- `GET /api/admin/recent-users?limit=&include_devices=` (X-Admin-Secret) → newest Clerk sign-ups joined with in-app activity. Server-side join of the Clerk Backend API (email/name/created/last-sign-in/last-active + device-OS/city from session `latest_activity`) with our DB (climb_logs / videos / classifications / projects via the `users` shadow row; `has_local_row=false` ⇒ never used the app). Read-only. Clerk calls live in `services/clerk_admin_service.py` (httpx) — `core/clerk.py` untouched. Devices are best-effort ([] on any Clerk hiccup). 503 if `CLERK_SECRET_KEY` unset, 502 on Clerk API error.
 
 **Deploy:** Backend on Railway (SQLite + kilter.db auto-downloaded on first boot, persistent volume `/data/climbritz`; startup re-downloads if `SELECT 1 FROM climbs` fails, `_validate_boardlib_db()` crashes prod on invalid DB). Frontend on Vercel. Health: `GET /health`.
 
@@ -127,7 +128,7 @@ climbritz/
 │   ├── core/           config (prod guard on CLERK_JWKS_URL) · database · clerk (JWKS verify + shadow-row + cache) · deps (get_current_user_id / get_optional_user_id)
 │   ├── models/         user (Clerk shadow row) · video · climb_log · user_climb · user_hold_classification
 │   ├── schemas/        user · video · climb · generate(A026) · logs · classifications
-│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · problem_generator (A026 pure remix) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
+│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · clerk_admin_service (admin recent-users, httpx Clerk API) · problem_generator (A026 pure remix) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
 │   ├── utils/          kilter_parser
 │   └── main.py
 ├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications
