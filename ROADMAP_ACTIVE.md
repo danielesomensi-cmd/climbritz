@@ -134,15 +134,15 @@ Three levels of coaching intelligence (Coach tier):
 
 **Pending:**
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → LED positions → BLE packet
-- [ ] Light up generated problems
+- [x] Light up generated problems — A026: `/generate` lights the remixed problem via the existing `ClimbBleControls` + `climb-to-leds` stack
 - [ ] Connection management (reconnect, error states, disconnect on background)
 - [ ] Auto-connect on page load + in-session memory of last device
 - [ ] Tests
 
 ### 3f — Problem Generation (1-2 weeks)
-- [ ] `POST /api/climbs/generate` — constraints: grip types, move count, grade target, angle
-- [ ] Algorithm: select classified holds → validate reachability (x/y) → assign roles
-- [ ] Generate valid layout string (internal only) · save/name · frontend generation UI · tests
+- [x] **v1 Remix (A026)** — `POST /api/climbs/generate` + `/generate` page. Pick a real climb from the filtered pool (same `_build_search_filters` path as Discovery, `min_ascents=5`), swap ≥2 hand holds with same-role candidates within a corpus-derived ε (Phase 0: grid pitch 8 → ε=24) inside role y-bands (start ≤88 / finish ≥144). Same-role 1:1 swaps preserve move count; feet inherited. Pure logic in `services/problem_generator.py`; ephemeral (no persistence); 422 on pool-too-small / can't-reach-2-swaps. Frontend reuses `ClimbBoardView` + `ClimbBleControls`. Filters: angle / grade / moves (stars + benchmark omitted; grip-type disabled "Coming soon"). pytest + jest green.
+- [ ] **v2** — grade-coherence scoring (needs HC-7 grip difficulty), grip-type filtering, foot remix, save/name + persistence (Alembic STOP gate), from-scratch generation
+- [ ] ~~Algorithm: select classified holds → validate reachability (x/y) → assign roles~~ (superseded by remix-from-real-climbs; from-scratch generation deferred to v2)
 
 ### 3g — Recommendation Engine + Attempt Logging (1 week)
 - [ ] `GET /api/climbs/recommend` — training queries (hold type, angle, grade, min ascents)
