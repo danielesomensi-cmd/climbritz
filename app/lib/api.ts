@@ -295,6 +295,48 @@ export async function getClimbDetail(
   return apiFetch<ClimbDetail>(`/api/climbs/${uuid}${qs}`);
 }
 
+// --- A026: Problem Generator (Remix v1) ---
+
+export interface GeneratedHold {
+  placement_id: number;
+  role: string;
+}
+
+export interface GenerateMeta {
+  seed_uuid: string;
+  swapped_count: number;
+  filters: Record<string, unknown>;
+}
+
+export interface GenerateResponse {
+  holds: GeneratedHold[];
+  meta: GenerateMeta;
+}
+
+export interface GenerateParams {
+  angle: number;
+  grade_min: number;
+  grade_max: number;
+  moves?: MovesFilter;
+}
+
+/** POST /api/climbs/generate — remix a fresh problem from the matching
+ *  pool. Ephemeral (nothing persisted). 422 when the pool is too small
+ *  for the chosen filters. */
+export async function generateProblem(
+  params: GenerateParams,
+): Promise<GenerateResponse> {
+  return apiFetch<GenerateResponse>('/api/climbs/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      angle: params.angle,
+      grade_min: params.grade_min,
+      grade_max: params.grade_max,
+      moves: params.moves ?? 'any',
+    }),
+  });
+}
+
 // --- A021: Logs / user_climbs API ---
 
 export type LogResultType = 'flash' | 'send' | 'attempt';

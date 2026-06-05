@@ -22,6 +22,14 @@ const IS_PRODUCTION_BUILD =
 
 const TILES: Tile[] = [
   {
+    // A026: AI problem generator (remix). New top section — the most
+    // "AI" thing a free user can do: pick filters → generate → light up.
+    href: '/generate',
+    label: 'Create with AI',
+    subtitle: 'Generate a problem',
+    icon: '✨',
+  },
+  {
     // B033: Discover is the hero — the core find → light → climb loop, and the
     // differentiator vs Climbdex (board light-up). Promoted to top-left.
     href: '/discover',
