@@ -47,6 +47,17 @@ describe('Home Page', () => {
     expect(screen.getByText('Generate a problem')).toBeInTheDocument();
   });
 
+  // A027 — Contact tile opens the native mail composer via mailto: (no backend).
+  it('renders the Contact tile with a mailto: href (correct to + subject)', () => {
+    render(<Home />);
+    const link = screen.getByTestId('tile-contact');
+    expect(link).toHaveTextContent('Contact');
+    expect(link).toHaveTextContent('Send feedback');
+    const href = link.getAttribute('href') ?? '';
+    expect(href.startsWith('mailto:daniele.somensi@gmail.com')).toBe(true);
+    expect(href).toContain('subject=Climbritz%20feedback');
+  });
+
   it('renders tile subtitles', () => {
     render(<Home />);
     expect(screen.getByText('Test BLE connection')).toBeInTheDocument();

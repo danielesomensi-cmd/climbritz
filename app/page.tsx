@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
@@ -10,6 +11,27 @@ interface Tile {
   subtitle: string;
   icon: string;
   locked?: boolean;
+  // A027: `external` tiles open a non-route URL (mailto:) via a plain <a> the
+  // OS/WebView delegates to the system handler — NOT SPA navigation.
+  external?: boolean;
+}
+
+// A027 — Contact tile. No backend: tapping opens the native mail composer via
+// mailto:. The body carries a version/build footer (filled from @capacitor/app
+// on native; omitted on web) so Daniele can tell which build feedback came from.
+const CONTACT_EMAIL = 'daniele.somensi@gmail.com';
+const CONTACT_SUBJECT = 'Climbritz feedback';
+const CONTACT_TILE_HREF = 'contact:feedback'; // sentinel (React key only; the
+// rendered href is the runtime-built mailto in HomeContent).
+
+function buildMailto(versionLabel: string | null): string {
+  // Two blank lines for the user to type above an optional provenance footer.
+  const body = versionLabel ? `\n\n---\nClimbritz ${versionLabel}` : '\n\n';
+  return (
+    `mailto:${CONTACT_EMAIL}` +
+    `?subject=${encodeURIComponent(CONTACT_SUBJECT)}` +
+    `&body=${encodeURIComponent(body)}`
+  );
 }
 
 // A021 follow-up: Debug is a developer-only diagnostic. It stays at
@@ -42,6 +64,14 @@ const TILES: Tile[] = [
     label: 'History',
     subtitle: 'Sessions, pyramid, trend',
     icon: '📊',
+  },
+  {
+    // A027: one-tap feedback → native mail composer (mailto, no backend).
+    href: CONTACT_TILE_HREF,
+    label: 'Contact',
+    subtitle: 'Send feedback',
+    icon: '✉️',
+    external: true,
   },
   {
     href: '/classify',
@@ -82,6 +112,31 @@ const TILES: Tile[] = [
 ];
 
 function HomeContent() {
+  // A027 — default to the web/no-version mailto; upgrade to a version-stamped
+  // one on native once @capacitor/app resolves. Dynamic import keeps Capacitor
+  // off the module graph for web/jest (web stays on the fallback href).
+  const [mailtoHref, setMailtoHref] = useState(() => buildMailto(null));
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (!Capacitor.isNativePlatform()) return;
+        const { App } = await import('@capacitor/app');
+        const info = await App.getInfo();
+        if (!cancelled) {
+          setMailtoHref(buildMailto(`v${info.version} (build ${info.build})`));
+        }
+      } catch {
+        // No @capacitor/app (web) or getInfo failed → keep the footer-less href.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     // B033 Phase 4 (D18-12): ported off inline styles to Tailwind classes +
     // design tokens. Hero gradient is the named --hero-gradient token (2.1).
@@ -107,14 +162,11 @@ function HomeContent() {
           // Odd tile count leaves a gap in the 2-col grid — let the last tile
           // span both columns so the grid reads as deliberate, not orphaned.
           const fullWidth = i === TILES.length - 1 && TILES.length % 2 === 1;
-          return (
-            <Link
-              key={tile.href}
-              href={tile.href}
-              className={`relative flex flex-col items-center justify-center min-h-[140px] px-4 py-6 rounded-card bg-orange-500/[0.06] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/40 transition-colors ${
-                fullWidth ? 'col-span-2' : ''
-              }`}
-            >
+          const className = `relative flex flex-col items-center justify-center min-h-[140px] px-4 py-6 rounded-card bg-orange-500/[0.06] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/40 transition-colors ${
+            fullWidth ? 'col-span-2' : ''
+          }`;
+          const inner = (
+            <>
               <span className="text-[40px] mb-3">{tile.icon}</span>
               <span className="text-[15px] font-bold text-center text-zinc-200">
                 {tile.label}
@@ -130,6 +182,26 @@ function HomeContent() {
                   Coming Soon
                 </span>
               )}
+            </>
+          );
+
+          // A027: external (mailto) tiles render a plain <a> so the OS handles
+          // the scheme; internal tiles stay SPA <Link>s.
+          if (tile.external) {
+            return (
+              <a
+                key={tile.href}
+                href={mailtoHref}
+                data-testid="tile-contact"
+                className={className}
+              >
+                {inner}
+              </a>
+            );
+          }
+          return (
+            <Link key={tile.href} href={tile.href} className={className}>
+              {inner}
             </Link>
           );
         })}
