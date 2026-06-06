@@ -20,6 +20,7 @@ from app.api import (
     classifications,
     coach,
     generate,
+    webhooks,
 )
 
 logger = logging.getLogger(__name__)
@@ -168,6 +169,7 @@ app.include_router(
     tags=["classifications"],
 )
 app.include_router(coach.router, prefix="/api/coach", tags=["coach"])
+app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 
 
 import time

@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     clerk_secret_key: str = ""
     clerk_publishable_key: str = ""
 
+    # New-signup alert: Clerk webhook (Svix-signed) → Telegram. All optional;
+    # when unset the webhook returns 503 and no alert is sent.
+    clerk_webhook_secret: str = ""
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+
     class Config:
         env_file = ".env"
         # Tolerate unrelated keys in .env / environment so removing a Settings

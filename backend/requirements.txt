@@ -9,6 +9,7 @@ alembic==1.13.1
 PyJWT[crypto]>=2.10.0
 python-multipart==0.0.9
 httpx>=0.28.1
+svix>=1.40.0
 pytest==7.4.4
 pytest-asyncio==0.23.2
 email-validator==2.1.0
