@@ -3,29 +3,50 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 
-// B034 — make the top safe-area inset actually clear the Dynamic Island on the
-// native iOS WebView.
+// Dynamic-Island-safe floor for the top inset on native iOS. The current
+// island-class hardware reports a ~59px safe-area-inset-top; 16 Pro is ~62px
+// (covered by the max() below when env() actually resolves). 59px never clips
+// on island devices and, layered under the hero's extra +2.5rem, leaves the
+// wordmark well clear of the island.
+const IOS_TOP_FLOOR = '59px';
+
+// B034 (hardened) — guarantee the top safe-area inset clears the Dynamic Island
+// on the native iOS WebView.
 //
-// Background: B032 padded the homepage hero with calc(env(safe-area-inset-top)
-// + 2.5rem) and added viewport-fit=cover. Both are present in the bundled
-// native index.html (verified), yet the iOS build still clipped the title
-// behind the Dynamic Island. Root cause is NOT a missing viewport meta — it's
-// that the Capacitor iOS WKWebView resolves env(safe-area-inset-top) to 0 in
-// this configuration, so only the 2.5rem fallback applied (~40px < ~59px island).
+// History:
+//  - B032 padded the hero with calc(env(safe-area-inset-top) + 2.5rem) +
+//    viewport-fit=cover. Both present in the bundled native index.html, yet the
+//    iOS build still clipped the title behind the island.
+//  - B034 v1 probed whether env() resolved and ONLY overrode --safe-top with a
+//    59px fallback when the probe measured < 1px ("env reads exactly 0").
+//    Shipped in iOS build 8/9 — and STILL clipped on device.
 //
-// Rather than blindly hardcode padding on all iOS (which would over-pad
-// notchless devices), this probes at runtime whether env() resolves. We measure
-// the rendered height of a fixed element sized to env(safe-area-inset-top):
-//   - env works  → height > 0 → leave --safe-top = env(...) (accurate per device).
-//   - env broken → height ~0 → override --safe-top with a Dynamic-Island-safe
-//                  59px so the hero clears the island.
-// Scoped to native iOS only; web and Android are never touched.
+// Root cause of the v1 miss: the Capacitor WKWebView does not necessarily
+// resolve env(safe-area-inset-top) to *exactly* 0. It can return a small,
+// island-insufficient value (e.g. a legacy ~20px status-bar height or a
+// subpixel), which is >= 1 — so the v1 "< 1" branch never fired and left an
+// inset far smaller than the ~59px island. Result: only ~40px of padding (the
+// 2.5rem base) under a ~59px island → clipped.
+//
+// Hardened fix: stop trusting env() to be either correct OR exactly 0. On
+// native iOS, ALWAYS pin --safe-top to max(env(safe-area-inset-top), 59px) so:
+//   - env broken (0 / too small) → floored at 59px (clears the island).
+//   - env correct & larger (e.g. 62px on 16 Pro) → honoured, no under-pad.
+// The only cost is over-padding notch-less iOS (iPhone SE → 59px instead of
+// ~20px) — purely cosmetic, never a clip, and current TestFlight hardware is
+// island-class. Web and Android are never touched (early return).
 export default function IosSafeArea() {
   useEffect(() => {
     if (Capacitor.getPlatform() !== 'ios' || !Capacitor.isNativePlatform()) {
       return;
     }
 
+    const root = document.documentElement;
+    root.classList.add('ios-native');
+
+    // Measure what env() actually resolves to, purely for field debugging
+    // (invisible; inspect in Safari Web Inspector → <html data-safe-top="…">).
+    // The applied value below does NOT depend on this — it's diagnostics only.
     const probe = document.createElement('div');
     probe.style.cssText =
       'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);' +
@@ -33,19 +54,15 @@ export default function IosSafeArea() {
     document.body.appendChild(probe);
     const measured = probe.getBoundingClientRect().height;
     probe.remove();
-
-    const root = document.documentElement;
-    root.classList.add('ios-native');
-    // Expose the measurement for field debugging (invisible; inspect in Safari
-    // Web Inspector → <html data-safe-top="…">).
     root.dataset.safeTop = String(Math.round(measured));
 
-    if (measured < 1) {
-      // env(safe-area-inset-top) is broken on this WebView → apply a fallback
-      // sized for the Dynamic Island. Slightly over-pads pre-island devices,
-      // but never clips — and current TestFlight hardware is island-class.
-      root.style.setProperty('--safe-top', '59px');
-    }
+    // Unconditionally floor the inset on native iOS. max() keeps the real
+    // per-device inset when env() works and is larger; otherwise guarantees a
+    // Dynamic-Island-safe minimum regardless of how the WebView mis-reports env.
+    root.style.setProperty(
+      '--safe-top',
+      `max(env(safe-area-inset-top, 0px), ${IOS_TOP_FLOOR})`,
+    );
   }, []);
 
   return null;

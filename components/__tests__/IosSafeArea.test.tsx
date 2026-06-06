@@ -38,15 +38,19 @@ describe('IosSafeArea', () => {
     expect(document.documentElement.classList.contains('ios-native')).toBe(false);
   });
 
-  it('flags native iOS and applies the fallback inset when env resolves to 0', () => {
-    // jsdom never lays out, so the env() probe measures 0 height → the broken-env
-    // branch (exactly the Dynamic-Island case this component exists to fix).
+  it('flags native iOS and pins a Dynamic-Island-safe floor on --safe-top', () => {
+    // B034 hardened: on native iOS we ALWAYS floor the inset via max() instead
+    // of only overriding when env() reads exactly 0 — the WebView can report a
+    // small-but-nonzero (island-insufficient) inset that the old "< 1" branch
+    // missed. jsdom never lays out, so the probe still measures 0 (diagnostics).
     mockPlatform = 'ios';
     mockNative = true;
     render(<IosSafeArea />);
     const root = document.documentElement;
     expect(root.classList.contains('ios-native')).toBe(true);
     expect(root.dataset.safeTop).toBe('0');
-    expect(root.style.getPropertyValue('--safe-top')).toBe('59px');
+    expect(root.style.getPropertyValue('--safe-top')).toBe(
+      'max(env(safe-area-inset-top, 0px), 59px)',
+    );
   });
 });

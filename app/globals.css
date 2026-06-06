@@ -122,10 +122,12 @@
      (0 on notchless devices). But the Capacitor iOS WKWebView is known to report
      env(safe-area-inset-top)=0 even with viewport-fit=cover present (verified:
      viewport meta IS in the bundled native index.html, yet the Dynamic Island
-     still clipped the homepage hero on build 7). `components/IosSafeArea.tsx`
-     probes this at runtime on native iOS and, ONLY when env reads 0, overrides
-     this var with a Dynamic-Island-safe fallback (59px). Every safe-area top
-     padding reads this var, so the fix lands everywhere from one place. */
+     still clipped the homepage hero on build 7/8/9). `components/IosSafeArea.tsx`
+     hardens this at runtime on native iOS: it ALWAYS pins this var to
+     max(env(safe-area-inset-top), 59px) — flooring at a Dynamic-Island-safe
+     value because the WebView can report a small-but-nonzero (island-
+     insufficient) inset, not just exactly 0. Every safe-area top padding reads
+     this var, so the fix lands everywhere from one place. */
   --safe-top: env(safe-area-inset-top, 0px);
 }
 
