@@ -39,18 +39,17 @@ describe('IosSafeArea', () => {
   });
 
   it('flags native iOS and pins a Dynamic-Island-safe floor on --safe-top', () => {
-    // B034 hardened: on native iOS we ALWAYS floor the inset via max() instead
-    // of only overriding when env() reads exactly 0 — the WebView can report a
-    // small-but-nonzero (island-insufficient) inset that the old "< 1" branch
-    // missed. jsdom never lays out, so the probe still measures 0 (diagnostics).
+    // B034 v3: on native iOS we ALWAYS floor the inset, and resolve it to a
+    // PLAIN px value in JS (no env() left inside the CSS custom property — that
+    // indirection broke env() evaluation in some iOS WebKit builds and left the
+    // hero clipped). jsdom never lays out, so the probe measures 0 → max(0,62).
     mockPlatform = 'ios';
     mockNative = true;
     render(<IosSafeArea />);
     const root = document.documentElement;
     expect(root.classList.contains('ios-native')).toBe(true);
     expect(root.dataset.safeTop).toBe('0');
-    expect(root.style.getPropertyValue('--safe-top')).toBe(
-      'max(env(safe-area-inset-top, 0px), 59px)',
-    );
+    // Pure px, no env() — calc(var(--safe-top) + 2.5rem) can never fail to resolve.
+    expect(root.style.getPropertyValue('--safe-top')).toBe('62px');
   });
 });

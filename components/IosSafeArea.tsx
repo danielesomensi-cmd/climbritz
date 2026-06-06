@@ -8,7 +8,7 @@ import { Capacitor } from '@capacitor/core';
 // (covered by the max() below when env() actually resolves). 59px never clips
 // on island devices and, layered under the hero's extra +2.5rem, leaves the
 // wordmark well clear of the island.
-const IOS_TOP_FLOOR = '59px';
+const IOS_TOP_FLOOR_PX = 62; // covers Dynamic Island (~59) + iPhone 16 Pro (~62)
 
 // B034 (hardened) — guarantee the top safe-area inset clears the Dynamic Island
 // on the native iOS WebView.
@@ -59,10 +59,17 @@ export default function IosSafeArea() {
     // Unconditionally floor the inset on native iOS. max() keeps the real
     // per-device inset when env() works and is larger; otherwise guarantees a
     // Dynamic-Island-safe minimum regardless of how the WebView mis-reports env.
-    root.style.setProperty(
-      '--safe-top',
-      `max(env(safe-area-inset-top, 0px), ${IOS_TOP_FLOOR})`,
-    );
+    // B034 v3 — resolve to a PLAIN px value in JS; never leave env() inside the
+    // applied custom property. v1/hardened set --safe-top to a string CONTAINING
+    // env() (e.g. `max(env(safe-area-inset-top,0px), 59px)`). Some iOS WebKit
+    // builds fail to evaluate env() when it's referenced indirectly through a
+    // custom property inside calc() — so `calc(var(--safe-top) + 2.5rem)` became
+    // invalid → padding-top dropped to 0 → the hero stayed clipped behind the
+    // island even after the "hardened" fix. Computing the max() here against the
+    // already-measured probe value yields a pure number, which calc() can never
+    // fail to resolve.
+    const applied = Math.max(Math.round(measured), IOS_TOP_FLOOR_PX);
+    root.style.setProperty('--safe-top', `${applied}px`);
   }, []);
 
   return null;
