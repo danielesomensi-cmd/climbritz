@@ -23,6 +23,8 @@ def _settings(secret="whsec_test", token="TG", chat="CHAT"):
     s.clerk_webhook_secret = secret
     s.telegram_bot_token = token
     s.telegram_chat_id = chat
+    s.gmail_address = "ops@example.com"
+    s.gmail_app_password = "app-pw"
     return s
 
 
@@ -67,7 +69,9 @@ def test_user_created_sends_telegram_alert():
         "app.api.webhooks.Webhook"
     ) as MockWebhook, patch(
         "app.api.webhooks.telegram_service.send_message", return_value=True
-    ) as send:
+    ) as send, patch(
+        "app.api.webhooks.email_service.send_email", return_value=True
+    ):
         MockWebhook.return_value.verify.return_value = _USER_CREATED
         resp = client.post(
             "/api/webhooks/clerk", content=b"{}", headers=_HEADERS
@@ -80,13 +84,39 @@ def test_user_created_sends_telegram_alert():
     assert "newbie@example.com" in args[2]
 
 
-def test_non_user_created_event_does_not_alert():
+def test_user_created_sends_welcome_email():
+    with patch("app.api.webhooks.get_settings", return_value=_settings()), patch(
+        "app.api.webhooks.Webhook"
+    ) as MockWebhook, patch(
+        "app.api.webhooks.telegram_service.send_message", return_value=True
+    ), patch(
+        "app.api.webhooks.email_service.send_email", return_value=True
+    ) as email:
+        MockWebhook.return_value.verify.return_value = _USER_CREATED
+        resp = client.post(
+            "/api/webhooks/clerk", content=b"{}", headers=_HEADERS
+        )
+    assert resp.status_code == 200
+    assert resp.json()["welcomed"] is True
+    # Welcome email goes to the new user, with the configured Gmail creds + a
+    # personalised, English subject.
+    kw = email.call_args.kwargs
+    assert kw["to"] == "newbie@example.com"
+    assert kw["gmail_address"] == "ops@example.com"
+    assert kw["gmail_app_password"] == "app-pw"
+    assert "Welcome to Climbritz" in kw["subject"]
+    assert "New" in kw["html_body"]  # first_name personalisation
+
+
+def test_non_user_created_event_does_not_alert_or_email():
     event = {"type": "session.created", "data": {}}
     with patch("app.api.webhooks.get_settings", return_value=_settings()), patch(
         "app.api.webhooks.Webhook"
     ) as MockWebhook, patch(
         "app.api.webhooks.telegram_service.send_message"
-    ) as send:
+    ) as send, patch(
+        "app.api.webhooks.email_service.send_email"
+    ) as email:
         MockWebhook.return_value.verify.return_value = event
         resp = client.post(
             "/api/webhooks/clerk", content=b"{}", headers=_HEADERS
@@ -94,3 +124,4 @@ def test_non_user_created_event_does_not_alert():
     assert resp.status_code == 200
     assert resp.json()["alerted"] is False
     send.assert_not_called()
+    email.assert_not_called()

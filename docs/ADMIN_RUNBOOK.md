@@ -128,6 +128,34 @@ both the automatic and the on-request pushes.
 
 ---
 
+## Welcome email to new sign-ups (Gmail SMTP)
+
+On a verified `user.created`, the same webhook also sends the new user a
+**welcome email** (best-effort — a send failure never blocks the ack; the
+Telegram alert and the email are independent). Sent from your personal Gmail
+via SMTP (`app/services/email_service.py`). English copy, personalised with the
+user's first name, with a reply-to-me invite.
+
+### One-time setup
+
+1. **Enable 2-Step Verification** on the Gmail account (required for app passwords):
+   https://myaccount.google.com/security
+2. **Create an App Password:** https://myaccount.google.com/apppasswords → name
+   it "Climbritz" → copy the **16-character** password (no spaces).
+3. **Set 2 vars** on the Railway service → *Variables*, then redeploy
+   (also mirrored in `backend/.env` for local runs):
+   - `GMAIL_ADDRESS=daniele.somensi@gmail.com`
+   - `GMAIL_APP_PASSWORD=<the 16-char app password>` (NOT your normal password)
+
+Until `GMAIL_APP_PASSWORD` is set, sending is skipped (the webhook still
+returns 200). Free Gmail allows ~500 recipients/day — fine for the beta; move
+to a domain-verified provider (Resend/SendGrid) before real volume.
+
+> "Interesting activity" emails (first send, milestones, first video) are a
+> planned phase 2 — not built yet.
+
+---
+
 ## Where the data lives (so you know what's knowable from where)
 
 | Question | Source |

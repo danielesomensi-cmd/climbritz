@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
 
+    # Outbound user emails via Gmail SMTP (welcome on sign-up, etc). Optional;
+    # when unset email sending is skipped (best-effort, never blocks a request).
+    # gmail_app_password is a Google App Password (16 chars), NOT the account
+    # password — requires 2FA on the account.
+    gmail_address: str = ""
+    gmail_app_password: str = ""
+
     class Config:
         env_file = ".env"
         # Tolerate unrelated keys in .env / environment so removing a Settings
