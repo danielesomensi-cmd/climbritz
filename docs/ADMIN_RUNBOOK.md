@@ -60,6 +60,40 @@ fooled by "Linux".
 
 ---
 
+## Automatic alert on every new sign-up (Clerk webhook → Telegram)
+
+`POST /api/webhooks/clerk` verifies a Svix-signed Clerk webhook and, on a
+`user.created` event, pushes a Telegram message. Truly automatic + server-side
+(no laptop / Claude session needed). Implementation:
+`backend/app/api/webhooks.py` + `backend/app/services/telegram_service.py`.
+
+### One-time setup (do once)
+
+1. **Create a Telegram bot:** message **@BotFather** → `/newbot` → copy the
+   **bot token**.
+2. **Get your chat id:** message your new bot once (say "hi"), then open
+   `https://api.telegram.org/bot<TOKEN>/getUpdates` and read
+   `result[].message.chat.id` (a number). That's `TELEGRAM_CHAT_ID`.
+3. **Create the Clerk webhook:** Clerk Dashboard → **Webhooks** → *Add Endpoint*
+   → URL `https://web-production-cea9.up.railway.app/api/webhooks/clerk`,
+   subscribe to **`user.created`** → copy the **Signing Secret** (`whsec_...`).
+4. **Set 3 env vars** on the Railway service → *Variables*, then redeploy:
+   - `CLERK_WEBHOOK_SECRET=whsec_...`
+   - `TELEGRAM_BOT_TOKEN=...`
+   - `TELEGRAM_CHAT_ID=...`
+5. **Test:** Clerk's webhook page has a *Send example* button → you should get a
+   Telegram ping. (Or sign up a throwaway user.)
+
+### Behaviour / troubleshooting
+
+- Unset secret → webhook returns **503** (no alert). Bad signature → **400**.
+- Telegram is best-effort: if the bot token/chat is wrong the webhook still
+  returns 200 (check Railway logs for `telegram send -> ...`).
+- The alert only fires on **`user.created`**; other Clerk events are ack'd and
+  ignored.
+
+---
+
 ## Where the data lives (so you know what's knowable from where)
 
 | Question | Source |
