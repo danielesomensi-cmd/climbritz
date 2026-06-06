@@ -18,7 +18,7 @@ from app.models.user import User
 from app.models.user_climb import UserClimb
 from app.models.user_hold_classification import UserHoldClassification
 from app.models.video import VideoUpload
-from app.services import clerk_admin_service
+from app.services import clerk_admin_service, telegram_service
 
 logger = logging.getLogger(__name__)
 
@@ -149,23 +149,10 @@ def _local_activity(db: Session, clerk_id: str) -> dict:
     }
 
 
-@router.get("/recent-users")
-def recent_users(
-    limit: int = Query(10, ge=1, le=50),
-    include_devices: bool = Query(True),
-    x_admin_secret: str = Header(..., alias="X-Admin-Secret"),
-    db: Session = Depends(get_db),
-):
-    """Newest Clerk sign-ups + device (iOS/Android) + in-app activity counts.
-
-    Server-side join of the Clerk Backend API (identity + device/location) with
-    our DB (climb logs / videos / classifications / projects). Protected by the
-    same X-Admin-Secret as /upload-db — no JWT needed, runnable from a one-line
-    curl. Read-only.
-    """
-    if not ADMIN_SECRET or x_admin_secret != ADMIN_SECRET:
-        raise HTTPException(status_code=403, detail="Invalid admin secret")
-
+def _assemble_recent_users(db: Session, *, limit: int, include_devices: bool) -> list[dict]:
+    """Fetch newest Clerk sign-ups joined with local in-app activity (and,
+    optionally, device info). Shared by the GET endpoint and the Telegram
+    push. Raises HTTPException on missing Clerk key / Clerk API error."""
     settings = get_settings()
     if not settings.clerk_secret_key:
         raise HTTPException(
@@ -189,5 +176,90 @@ def recent_users(
                 settings.clerk_secret_key, clerk_id
             )
         enriched.append(entry)
+    return enriched
 
+
+def _platform_label(user: dict) -> str:
+    """Best-guess platform from the user's devices (already de-quirked by
+    clerk_admin_service._guess_platform). Falls back to '?'."""
+    devices = user.get("devices") or []
+    # Prefer an active mobile device, else the first device.
+    for d in devices:
+        if d.get("is_mobile") and d.get("session_status") == "active":
+            return d.get("platform") or "?"
+    return devices[0].get("platform", "?") if devices else "?"
+
+
+_PLATFORM_EMOJI = {"iOS": "🍏", "Android": "🤖", "macOS": "💻", "Windows": "🪟"}
+
+
+def _format_recent_users_telegram(users: list[dict]) -> str:
+    """Compact HTML summary of recent sign-ups for a Telegram push."""
+    if not users:
+        return "📋 <b>Climbritz — recent sign-ups</b>\nNessun iscritto trovato."
+    lines = [f"📋 <b>Climbritz — recent sign-ups ({len(users)})</b>"]
+    for u in users:
+        plat = _platform_label(u)
+        emoji = _PLATFORM_EMOJI.get(plat, "❔")
+        who = u.get("name") or u.get("email") or u.get("clerk_id", "unknown")
+        created = (u.get("created_at") or "")[:10]
+        act = u.get("activity") or {}
+        if act.get("has_local_row"):
+            summary = (
+                f"{act.get('climb_logs', 0)} logs · "
+                f"{act.get('videos', 0)} vids · "
+                f"{act.get('classifications', 0)} classif · "
+                f"{act.get('projects', 0)} proj"
+            )
+        else:
+            summary = "no app activity"
+        lines.append(f"\n{emoji} <b>{who}</b> · {plat} · {created}\n   {summary}")
+    return "".join(lines) if len(lines) == 1 else "\n".join(lines)
+
+
+@router.get("/recent-users")
+def recent_users(
+    limit: int = Query(10, ge=1, le=50),
+    include_devices: bool = Query(True),
+    x_admin_secret: str = Header(..., alias="X-Admin-Secret"),
+    db: Session = Depends(get_db),
+):
+    """Newest Clerk sign-ups + device (iOS/Android) + in-app activity counts.
+
+    Server-side join of the Clerk Backend API (identity + device/location) with
+    our DB (climb logs / videos / classifications / projects). Protected by the
+    same X-Admin-Secret as /upload-db — no JWT needed, runnable from a one-line
+    curl. Read-only.
+    """
+    if not ADMIN_SECRET or x_admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid admin secret")
+
+    enriched = _assemble_recent_users(
+        db, limit=limit, include_devices=include_devices
+    )
     return {"count": len(enriched), "users": enriched}
+
+
+@router.post("/notify-recent-users")
+def notify_recent_users(
+    limit: int = Query(10, ge=1, le=50),
+    x_admin_secret: str = Header(..., alias="X-Admin-Secret"),
+    db: Session = Depends(get_db),
+):
+    """On-request: push a compact summary of recent sign-ups to Telegram.
+
+    Same X-Admin-Secret gate as /recent-users. Reuses the GET assembly +
+    telegram_service. Returns {sent, count}. ``sent: false`` means Telegram
+    isn't configured (TELEGRAM_BOT_TOKEN/CHAT_ID) or the send failed — the
+    request still returns 200 (best-effort, mirrors the webhook behaviour)."""
+    if not ADMIN_SECRET or x_admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid admin secret")
+
+    settings = get_settings()
+    enriched = _assemble_recent_users(db, limit=limit, include_devices=True)
+    text = _format_recent_users_telegram(enriched)
+    sent = telegram_service.send_message(
+        settings.telegram_bot_token, settings.telegram_chat_id, text
+    )
+    logger.info("notify-recent-users: count=%s sent=%s", len(enriched), sent)
+    return {"sent": sent, "count": len(enriched)}

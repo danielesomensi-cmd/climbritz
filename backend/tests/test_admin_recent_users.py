@@ -148,6 +148,80 @@ def test_joins_clerk_user_with_local_activity_and_device():
     assert user["devices"][0]["platform"] == "iOS"
 
 
+def test_notify_rejects_invalid_admin_secret():
+    with patch("app.api.admin.ADMIN_SECRET", SECRET):
+        resp = client.post("/api/admin/notify-recent-users", headers=_hdr("wrong"))
+    assert resp.status_code == 403
+
+
+def test_notify_pushes_summary_to_telegram():
+    clerk_id = _seed_user_with_activity()
+    fake_users = [
+        {
+            "clerk_id": clerk_id,
+            "email": "new@tester.com",
+            "name": "New Tester",
+            "created_at": "2026-06-05T10:00:00+00:00",
+            "last_sign_in_at": "2026-06-05T10:05:00+00:00",
+            "last_active_at": "2026-06-05T10:06:00+00:00",
+        }
+    ]
+    fake_devices = [
+        {
+            "platform": "Android",
+            "device_type": "Linux",
+            "is_mobile": True,
+            "browser": "Android",
+            "session_status": "active",
+            "last_active_at": "2026-06-05T10:06:00+00:00",
+        }
+    ]
+    with patch("app.api.admin.ADMIN_SECRET", SECRET), patch(
+        "app.api.admin.get_settings", return_value=_settings()
+    ), patch.object(
+        clerk_admin_service, "list_recent_users", return_value=fake_users
+    ), patch.object(
+        clerk_admin_service, "get_user_devices", return_value=fake_devices
+    ), patch(
+        "app.api.admin.telegram_service.send_message", return_value=True
+    ) as send:
+        resp = client.post("/api/admin/notify-recent-users", headers=_hdr())
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": True, "count": 1}
+    # The pushed text references the tester + their platform + activity.
+    sent_text = send.call_args.args[2]
+    assert "New Tester" in sent_text
+    assert "Android" in sent_text
+    assert "2 logs" in sent_text
+
+
+def test_notify_returns_sent_false_when_telegram_send_fails():
+    fake_users = [
+        {
+            "clerk_id": f"user_{uuid.uuid4().hex[:10]}",
+            "email": "ghost@tester.com",
+            "name": None,
+            "created_at": "2026-06-05T10:00:00+00:00",
+            "last_sign_in_at": None,
+            "last_active_at": None,
+        }
+    ]
+    with patch("app.api.admin.ADMIN_SECRET", SECRET), patch(
+        "app.api.admin.get_settings", return_value=_settings()
+    ), patch.object(
+        clerk_admin_service, "list_recent_users", return_value=fake_users
+    ), patch.object(
+        clerk_admin_service, "get_user_devices", return_value=[]
+    ), patch(
+        "app.api.admin.telegram_service.send_message", return_value=False
+    ):
+        resp = client.post("/api/admin/notify-recent-users", headers=_hdr())
+
+    assert resp.status_code == 200
+    assert resp.json() == {"sent": False, "count": 1}
+
+
 def test_user_without_local_row_reports_zero_activity():
     fake_users = [
         {

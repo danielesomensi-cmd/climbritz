@@ -6,6 +6,19 @@ just `curl` + the `ADMIN_SECRET`.
 Backend base URL (Railway): `https://web-production-cea9.up.railway.app`
 `ADMIN_SECRET` lives in the Railway service **Variables** (rotate it there if it
 ever leaks — the endpoint keeps working with the new value, nothing to redeploy).
+A local copy is in **`backend/.env`** (gitignored, `ADMIN_SECRET=...`) so the
+helper scripts below work without you typing it.
+
+## ⚡ TL;DR — the two helper scripts (easiest)
+
+Both read `ADMIN_SECRET` from `backend/.env` (or the env var) and never print it:
+
+```bash
+./backend/scripts/check_recent_users.sh        # who signed up + what they did (prints JSON)
+./backend/scripts/check_recent_users.sh 25      # last 25 (max 50)
+
+./backend/scripts/notify_recent_users.sh        # PUSH that summary to Telegram (on-request)
+```
 
 ---
 
@@ -57,6 +70,27 @@ fooled by "Linux".
 - `403` → wrong/missing `X-Admin-Secret`.
 - `503` → `CLERK_SECRET_KEY` not set on the server.
 - `502` → Clerk API call failed (transient; retry).
+
+---
+
+## On-request Telegram push of recent sign-ups
+
+`POST /api/admin/notify-recent-users` reuses the join above and pushes a
+compact summary to Telegram on demand (one line per user: platform emoji +
+name + activity counts). Same `X-Admin-Secret` gate.
+
+```bash
+./backend/scripts/notify_recent_users.sh        # or: ...notify_recent_users.sh 25
+# raw curl equivalent:
+curl -s -X POST -H "X-Admin-Secret: $ADMIN_SECRET" \
+  "https://web-production-cea9.up.railway.app/api/admin/notify-recent-users?limit=10"
+```
+
+Returns `{sent, count}`. `sent: false` = Telegram not configured
+(`TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` Railway vars) or the send failed —
+the request still returns 200 (best-effort, same as the webhook). The message
+text is the same regardless; configure Telegram once (see next section) for
+both the automatic and the on-request pushes.
 
 ---
 
