@@ -47,6 +47,24 @@ describe('Home Page', () => {
     expect(screen.getByText('Generate a problem')).toBeInTheDocument();
   });
 
+  // B034 v4 — the hero's top safe-area padding MUST come from an inline style,
+  // NEVER a Tailwind `pt-*` utility. globals.css has an unlayered
+  // `* { padding: 0 }` reset that beats `@layer utilities` in the CSS cascade,
+  // so ANY pt-* class computes to padding-top:0 → the wordmark clips behind the
+  // iOS Dynamic Island regardless of --safe-top. Do NOT "simplify" the inline
+  // style back into a className — it silently re-breaks iOS.
+  // (jsdom's CSSOM rejects the inline `calc(var(--safe-top) + 2.5rem)` value, so
+  // we can't read it back; instead we assert no pt-* utility is present — the
+  // exact regression — on the verified-correct hero element.)
+  it('keeps the hero top safe-area padding off Tailwind pt-* utilities (B034 v4)', () => {
+    render(<Home />);
+    const hero = screen.getByText('CLIMBRITZ').parentElement as HTMLElement;
+    // Sanity: this is the hero (carries the gradient bg), not some other wrapper.
+    expect(hero.className).toMatch(/var\(--hero-gradient\)/);
+    // The regression guard: top padding must not be a utility class.
+    expect(hero.className).not.toMatch(/\bpt-/);
+  });
+
   // A027 — Contact tile opens the native mail composer via mailto: (no backend).
   it('renders the Contact tile with a mailto: href (correct to + subject)', () => {
     render(<Home />);
