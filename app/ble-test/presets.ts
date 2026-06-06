@@ -209,6 +209,19 @@ function buildAllLedsStressTest(): LedHold[] {
   return holds;
 }
 
+// A028 — max-brightness diagnostic: every LED full white. On RGB LEDs white
+// lights all three channels (7+7+3), so it's physically brighter than any
+// saturated colour in the rainbow stress test. Same 476 LEDs / packet load as
+// #11 — only the colour differs. WHITE ('FFFFFF') encodes to byte 0xFF via
+// kilter-protocol's encodeColor.
+function buildAllLedsWhite(): LedHold[] {
+  const holds: LedHold[] = [];
+  for (const [posStr, [x, y]] of Object.entries(POSITION_COORDS)) {
+    holds.push({ position: Number(posStr), color: WHITE, x, y });
+  }
+  return holds;
+}
+
 export const PRESETS: Preset[] = [
   {
     id: 1,
@@ -456,5 +469,12 @@ export const PRESETS: Preset[] = [
     name: 'All LEDs Diagnostic',
     description: 'Stress test — all LEDs, rainbow stripes from the bottom',
     holds: buildAllLedsStressTest(),
+  },
+  // ─── Max brightness (A028) ────────────────────────────────────────────
+  {
+    id: 12,
+    name: 'All White (max)',
+    description: 'All LEDs at full white — maximum brightness',
+    holds: buildAllLedsWhite(),
   },
 ];

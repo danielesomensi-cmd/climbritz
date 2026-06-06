@@ -1,9 +1,11 @@
 import { PRESETS } from '../presets';
 
 describe('PRESETS', () => {
-  it('contains exactly 11 presets', () => {
-    expect(PRESETS).toHaveLength(11);
-    expect(PRESETS.map((p) => p.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  it('contains exactly 12 presets', () => {
+    expect(PRESETS).toHaveLength(12);
+    expect(PRESETS.map((p) => p.id)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+    ]);
   });
 
   it('every hold in every preset has either role_id or color', () => {
@@ -85,6 +87,20 @@ describe('PRESETS', () => {
       // Uses multiple colours from the rainbow palette
       const distinctColors = new Set(stress.holds.map((h) => h.color));
       expect(distinctColors.size).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('max brightness (A028)', () => {
+    it('#12 All White lights all 476 LEDs at full white (FFFFFF)', () => {
+      const white = PRESETS.find((p) => p.id === 12)!;
+      expect(white.name).toBe('All White (max)');
+      expect(white.holds).toHaveLength(476);
+      for (const h of white.holds) expect(h.color).toBe('FFFFFF');
+      // Same position set as the rainbow stress test (#11), only colour differs.
+      const stress = PRESETS.find((p) => p.id === 11)!;
+      expect(new Set(white.holds.map((h) => h.position))).toEqual(
+        new Set(stress.holds.map((h) => h.position)),
+      );
     });
   });
 });
