@@ -1,5 +1,5 @@
 # Climbritz — Active Roadmap
-> Updated: 30 May 2026
+> Updated: 6 June 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 > Completed-brief detail lives in `PROJECT_STATUS.md`; this file is the forward plan + checklist.
 
@@ -67,6 +67,15 @@ Three levels of coaching intelligence (Coach tier):
 **Done:** Apple Developer account ✅ · Clerk dashboard (prod, email+password) ✅ · iOS TestFlight builds 1–5 ✅ · Android AAB builds 4–9 ✅ · B021 Clerk prod auth (Android shipped to Play Console Internal Testing; iOS verified on Xcode debug build) ✅ · **iOS TestFlight build 5** (2026-05-31) — carries the `WKAppBoundDomains` removal (`f435516`) + the Gemini video-analysis `thinking_budget=0` fix; uploaded to App Store Connect (delivery UUID `5034ddc5-…`) ✅
 
 **2026-06-04 BLE pacing fix (`4fae221`):** iOS build 6 ✅ uploaded to App Store Connect (tag `ios-v1.0.0-build6`). Android build 10 AAB signed locally — **still to upload** to Play Console closed testing (`android/app/build/outputs/bundle/release/app-release.aab`).
+
+**2026-06-06 release in volo (B034 v4 + A028 + A027 + admin/alerts):** iOS **build 11** da tagliare (`bash ~/deploy_climbritz.sh 11`; build 10 = A026/A027/B034-v1 già caricato e clippava — B034 v4 è il fix vero, provato sul Simulatore). Android **versionCode 13** AAB ribuildato con v4 (`android/app/build/outputs/bundle/release/app-release.aab`) — **da caricare** su Play Console. ⚠️ Gotcha keychain: il codesign iOS dà `errSecInternalComponent` in automatico → sbloccare il keychain prima del deploy (vedi `docs/ADMIN_RUNBOOK.md`/PROJECT_STATUS).
+
+**Recently shipped — June 2026 (ops/polish, fuori dalle fasi):**
+- [x] **A027 Contact tile** — homepage "Send feedback" → mailto nativo (zero backend).
+- [x] **A028 BLE preset "All White (max)"** — preset #12, tutti i 476 LED a bianco pieno (max luminosità) accanto al rainbow #11.
+- [x] **B034 v4 — homepage iOS safe-area** — causa vera: reset `* { padding: 0 }` non-layerizzato azzerava il `pt-[...]` Tailwind del hero; fix = paddingTop inline + `IosSafeArea` floor 62px. Guard di regressione nel test home.
+- [x] **Admin `GET /api/admin/recent-users`** — chi si iscrive + iOS/Android + attività in-app (Clerk API ⨝ DB). Runbook: `docs/ADMIN_RUNBOOK.md`.
+- [x] **Alert nuovi iscritti** — `POST /api/webhooks/clerk` (Svix) → Telegram su `user.created` + welcome email (Gmail SMTP). Serve config one-time (bot/webhook/env Railway).
 
 **Open:**
 - [ ] **Play Console** — finish Internal Testing setup (App content / Data safety / Content rating, Store listing assets: 512×512 icon + feature graphic + screenshots).
