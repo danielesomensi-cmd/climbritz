@@ -1,0 +1,29 @@
+name: Recent-users Telegram digest
+
+# Pushes a compact "who signed up + what they did" summary to Telegram every
+# 12h (a passive heartbeat), plus a manual button. New-sign-up alerts are
+# already real-time via the Clerk webhook — this is the periodic situation
+# digest. Inert until the repo secret ADMIN_SECRET is set AND the prod backend
+# has TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID configured on Railway.
+
+on:
+  schedule:
+    # 07:00 and 19:00 UTC = 09:00 / 21:00 CEST
+    - cron: "0 7,19 * * *"
+  workflow_dispatch: # manual run from the Actions tab
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push recent-users summary to Telegram
+        env:
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: |
+          if [ -z "$ADMIN_SECRET" ]; then
+            echo "ADMIN_SECRET repo secret not set — skipping."
+            exit 0
+          fi
+          curl -fsS -X POST \
+            -H "X-Admin-Secret: $ADMIN_SECRET" \
+            "https://web-production-cea9.up.railway.app/api/admin/notify-recent-users?limit=10"
