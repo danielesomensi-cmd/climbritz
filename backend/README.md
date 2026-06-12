@@ -35,8 +35,9 @@ Auth is handled by Clerk (hosted /sign-in and /sign-up pages). Backend verifies 
 - `POST /api/climbs/generate` — A026: remix a fresh problem from the matching pool (angle / grade range / moves; `grip_types` reserved, ignored in v1). Ephemeral. 422 when the pool is too small. JWT-gated.
 
 ### My Problems (A030 — saved AI-generated climbs)
-- `POST /api/my-climbs` — Save a generated problem (validates BoardLib frames encoding, prefills grade from the seed, AI-proposes the name with a local fallback). JWT-gated, owner-scoped.
-- `GET /api/my-climbs` — List (newest first, with `ascent_count`) · `GET /api/my-climbs/{uuid}` — Detail with holds · `PATCH /api/my-climbs/{uuid}` — Edit name/grade · `DELETE /api/my-climbs/{uuid}`
+- `POST /api/my-climbs` — Save a generated problem (validates BoardLib frames encoding incl. 1–2 start / 1–2 finish / ≥3 holds; optional `name`/`grade` overrides (A031); otherwise grade from seed + AI name with local fallback). JWT-gated, owner-scoped.
+- `POST /api/my-climbs/propose-name` — A031: `{angle?, grade?}` → `{name, source}` (name-on-generate; never fails).
+- `GET /api/my-climbs` — List (newest first, with `ascent_count`) · `GET /api/my-climbs/{uuid}` — Detail with holds · `PATCH /api/my-climbs/{uuid}` — Edit name/grade/frames (A031, frames re-validated) · `DELETE /api/my-climbs/{uuid}`
 - Generated problems are loggable via `POST /api/logs` and merge into `/api/climbs/search` via `my_problems=include|only` (flagged `is_mine`).
 
 ## Documentation

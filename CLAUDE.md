@@ -60,9 +60,10 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 - `GET /api/climbs/{climb_uuid}?angle=` → full detail with holds · `GET /api/climbs/stats` → DB health
 - `POST /api/climbs/generate` (JWT) → **A026 Problem Generator (Remix v1)**. Body `{angle, grade_min, grade_max, moves?, grip_types?}` (`grip_types` reserved — accepted but ignored in v1). Builds the pool via the same `_build_search_filters()` path as Discovery (`min_ascents=5`), picks a seed (weighted by ascents), swaps ≥2 hand holds with same-role candidates within ε=24 board-units inside role y-bands (start ≤88 / finish ≥144) — same-role 1:1 so move count is preserved; feet inherited from the seed. Returns `{holds: [{placement_id, role}], meta: {seed_uuid, swapped_count, filters}}`. **Ephemeral** (no persistence). `422` when the pool is `< 10` climbs or no seed reaches 2 swaps. Pure remix logic in `services/problem_generator.py` (corpus-derived constants — Phase 0 `scripts/analyze_a026_corpus.py`); saving lives in `/api/my-climbs` (A030); grade-coherence + grip-type filtering are future briefs.
 
-**My Problems** (A030 — saved AI-generated climbs, JWT, owner-scoped)
-- `POST /api/my-climbs` → 201. Body `{frames, angle, seed_climb_uuid?}`. Validates the exact BoardLib `p{placement_id}r{role_id}` encoding (roles ∈ {12,13,14,15}, no dup placements → 422), prefills `grade`/`difficulty` from the seed's BoardLib stats, proposes the name via `problem_name_service` (Gemini 2.5-flash text-only, `thinking_budget=0`, 2s timeout → local adjective+noun fallback; saving never fails/blocks on naming). Stored in `user_generated_climbs` (migration 006, BoardLib-compatible: `is_listed` for future publishing, `is_nomatch` A029 parity).
-- `GET /api/my-climbs` → list, newest first, each with `ascent_count` (user's flash/send logs) · `GET /api/my-climbs/{uuid}` → detail incl. BoardLib-shaped `holds` · `PATCH /api/my-climbs/{uuid}` `{name?, grade?}` · `DELETE` → 204. Cross-user access → 404.
+**My Problems** (A030/A031 — saved AI-generated climbs, JWT, owner-scoped)
+- `POST /api/my-climbs` → 201. Body `{frames, angle, seed_climb_uuid?, name?, grade?}`. Validates the exact BoardLib `p{placement_id}r{role_id}` encoding (roles ∈ {12,13,14,15}, no dup placements, **1–2 start, 1–2 finish, ≥3 holds** (A031) → 422). `name`/`grade` are optional client overrides (A031 — the generate page persists the displayed name, the editor sets both); absent → grade prefilled from the seed's BoardLib stats and name proposed via `problem_name_service` (Gemini 2.5-flash text-only, `thinking_budget=0`, 2s timeout → local adjective+noun fallback; saving never fails/blocks on naming). Stored in `user_generated_climbs` (migration 006, BoardLib-compatible: `is_listed` for future publishing, `is_nomatch` A029 parity).
+- `POST /api/my-climbs/propose-name` (A031) → `{name, source: "ai"|"fallback"}`. Body `{angle?, grade?, grip_hints?}` (`grip_hints` reserved). Backs name-on-generate; never fails.
+- `GET /api/my-climbs` → list, newest first, each with `ascent_count` (user's flash/send logs) · `GET /api/my-climbs/{uuid}` → detail incl. BoardLib-shaped `holds` · `PATCH /api/my-climbs/{uuid}` `{name?, grade?, frames?}` (A031 — frames fully re-validated; logs stay attached, uuid-keyed) · `DELETE` → 204. Cross-user access → 404.
 - Generated uuids are loggable: `POST /api/logs` checks `user_generated_climbs` (owner-scoped) before the BoardLib meta guard; `GET /api/logs/sessions` resolves their name/grade too.
 
 **Holds**
@@ -144,8 +145,9 @@ climbritz/
 ├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot)
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
-│   ├── generate/       page (A026 — filters → remix → board + BLE → re-roll; A030 one-tap Save + toast)
-│   ├── my-problems/    page (A030 — saved problems list) · detail/page (board + BLE + LogSection + inline edit + delete)
+│   ├── generate/       page ("AI Create": A026 filters → remix → board + BLE → re-roll; A030 one-tap Save; A031 name-on-generate + Edit + Start-from-blank)
+│   ├── create/         page (A031 hold editor: palette+paint, live BLE, validation) · editor-state (pure transitions) · draft-storage (sessionStorage hand-off)
+│   ├── my-problems/    page (A030 — saved problems list) · detail/page (board + BLE + LogSection + inline edit + Edit holds (A031) + delete)
 │   ├── discover/       page (search+filters) · detail/page (board + BLE + Next/Prev) · detail/climb-to-leds · filtered-list-storage · discover-filters-storage
 │   ├── history/        page · coach-comment (A025) · sessions-list · grade-pyramid · trend-chart
 │   ├── classify/       page (cloud-synced) · state · ble-test/ (presets · board-preview)
