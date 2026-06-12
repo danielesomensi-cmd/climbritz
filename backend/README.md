@@ -29,7 +29,7 @@ Auth is handled by Clerk (hosted /sign-in and /sign-up pages). Backend verifies 
 - `DELETE /api/videos/{id}` — Delete video
 
 ### Climbs (BoardLib)
-- `GET /api/climbs/search?q={name}&angle={angle}&moves={bucket}&benchmark={bool}&limit={n}` — Search climbs by name + filters (`benchmark=true` → benchmark climbs at the selected angle, A022)
+- `GET /api/climbs/search?q={name}&angle={angle}&moves={bucket}&benchmark={bool}&nomatch={bool}&limit={n}` — Search climbs by name + filters (`benchmark=true` → benchmark climbs at the selected angle, A022; `nomatch=true` → climbs with the setter's "no matching" rule, A029)
 - `GET /api/climbs/{climb_uuid}?angle={angle}` — Full climb detail with holds
 - `GET /api/climbs/stats` — Database stats
 - `POST /api/climbs/generate` — A026: remix a fresh problem from the matching pool (angle / grade range / moves; `grip_types` reserved, ignored in v1). Ephemeral. 422 when the pool is too small. JWT-gated.

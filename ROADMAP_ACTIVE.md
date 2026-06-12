@@ -75,6 +75,7 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **A028 BLE preset "All White (max)"** — preset #12, tutti i 476 LED a bianco pieno (max luminosità) accanto al rainbow #11.
 - [x] **B034 v4 — homepage iOS safe-area** — causa vera: reset `* { padding: 0 }` non-layerizzato azzerava il `pt-[...]` Tailwind del hero; fix = paddingTop inline + `IosSafeArea` floor 62px. Guard di regressione nel test home.
 - [x] **B036 — header Android sotto la status bar** (2026-06-12) — edge-to-edge enforced (targetSdk 36) + `env()` inaffidabile nella WebView; fix = safe-area CSS dual-source (`max(env(), var(--safe-area-inset-*))` iniettate dal plugin built-in SystemBars di Capacitor 8) + `SystemBars: {style:'DARK'}`. Verificato su emulatore API 37 via CDP. iOS invariato. Nel prossimo build mobile batched.
+- [x] **A029 — filtro "No matching" in Discovery + badge** (2026-06-12) — toggle "No matching only" nel FilterPanel (`climbs.is_nomatch`, audit D019), pill "NO MATCHING" prominente su `/discover/detail`, chip "No match" sulle card. Vedi 3b sotto.
 - [x] **Admin `GET /api/admin/recent-users`** — chi si iscrive + iOS/Android + attività in-app (Clerk API ⨝ DB). Runbook: `docs/ADMIN_RUNBOOK.md`.
 - [x] **Alert nuovi iscritti** — `POST /api/webhooks/clerk` (Svix) → Telegram su `user.created` + welcome email (Gmail SMTP). Serve config one-time (bot/webhook/env Railway).
 
@@ -114,7 +115,7 @@ Three levels of coaching intelligence (Coach tier):
 ## Phase 3 — Discovery + Coach Build (~8 weeks)
 
 ### 3b — Climb Search API + Advanced Filters ✅ (core done)
-**Done:** name autocomplete · grade range · angle · min ascents · min stars · sort · **moves** chip (A019) · **benchmark** toggle (A022) · 500-cap + `total_count` envelope (B020) · climb detail with holds · dual Font/V grade · A021 logging overlay (`user_state`, done/project chips) · A023 hold-classification cloud sync · A024 History redesign (drop calendar, richer stats header) · A025 free-tier AI progress comment in History (on-tap, text-only Gemini) · tests.
+**Done:** name autocomplete · grade range · angle · min ascents · min stars · sort · **moves** chip (A019) · **benchmark** toggle (A022) · **no-matching** toggle + badge (A029, `climbs.is_nomatch` per l'audit D019 — 25.5% del pool; pill "NO MATCHING" sul detail + chip "No match" sulle card) · 500-cap + `total_count` envelope (B020) · climb detail with holds · dual Font/V grade · A021 logging overlay (`user_state`, done/project chips) · A023 hold-classification cloud sync · A024 History redesign (drop calendar, richer stats header) · A025 free-tier AI progress comment in History (on-tap, text-only Gemini) · tests.
 
 **Pending:**
 - [ ] Difficulty accuracy filter (deferred) · board size/layout (12x12 only at launch) · setter name (deferred)
