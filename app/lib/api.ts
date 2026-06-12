@@ -196,6 +196,8 @@ export type MovesFilter = 'any' | 'le5' | '6-7' | '8-10' | 'gt10';
 // done_filter and project_filter query params (Phase 2 work).
 export type DoneFilter = 'all' | 'only' | 'exclude';
 export type ProjectFilter = 'all' | 'only' | 'exclude';
+// A030 — My Problems merge mode on /api/climbs/search.
+export type MyProblemsFilter = 'include' | 'only';
 
 export interface ClimbSearchResult {
   uuid: string;
@@ -203,8 +205,13 @@ export interface ClimbSearchResult {
   setter: string;
   grade: string;
   angle: number;
+  /** A030 — for merged "mine" rows this is the user's flash/send count. */
   ascensionist_count: number;
-  quality_average: number;
+  /** A030 — null for merged "mine" rows (generated problems have no stars). */
+  quality_average: number | null;
+  /** A030 — true for the user's saved generated problems merged into the
+   *  results. MY badge; card routes to /my-problems/detail. */
+  is_mine?: boolean;
   /** A029 — setter's "no matching" rule (climbs.is_nomatch, audit D019).
    *  Drives the "No match" badge on result cards. */
   is_nomatch: boolean;
@@ -262,6 +269,9 @@ export interface ClimbSearchParams {
   benchmark?: boolean;
   // A029 — when true, restrict to climbs with the "no matching" rule.
   nomatch?: boolean;
+  // A030 — 'only' = just the user's saved generated problems; omit or
+  // 'include' (default) = BoardLib + mine prepended.
+  my_problems?: MyProblemsFilter;
   sort?: SortField;
   limit?: number;
   // A021.4 — chip filter params. Omit or pass 'all' to skip the filter
@@ -284,6 +294,9 @@ export async function searchClimbs(
   if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
   if (params.benchmark) qs.set('benchmark', 'true');
   if (params.nomatch) qs.set('nomatch', 'true');
+  if (params.my_problems && params.my_problems !== 'include') {
+    qs.set('my_problems', params.my_problems);
+  }
   if (params.sort) qs.set('sort', params.sort);
   if (params.done_filter && params.done_filter !== 'all') qs.set('done_filter', params.done_filter);
   if (params.project_filter && params.project_filter !== 'all') qs.set('project_filter', params.project_filter);
@@ -314,7 +327,15 @@ export interface GeneratedHold {
 export interface GenerateMeta {
   seed_uuid: string;
   swapped_count: number;
-  filters: Record<string, unknown>;
+  // A030 — typed so the Save flow can persist the generation's angle even
+  // if the user moved the angle selector afterwards. Matches the backend
+  // GenerateMeta.filters payload exactly.
+  filters: {
+    angle: number;
+    grade_min: number;
+    grade_max: number;
+    moves: MovesFilter;
+  };
 }
 
 export interface GenerateResponse {
@@ -344,6 +365,63 @@ export async function generateProblem(
       moves: params.moves ?? 'any',
     }),
   });
+}
+
+// --- A030: My Problems (saved AI-generated climbs) ---
+
+export interface MyClimb {
+  uuid: string;
+  name: string;
+  description: string | null;
+  frames: string;
+  angle: number;
+  grade: string | null;
+  difficulty: number | null;
+  seed_climb_uuid: string | null;
+  /** Count of the user's flash/send logs on this problem. */
+  ascent_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MyClimbDetail extends MyClimb {
+  holds: HoldPosition[];
+}
+
+/** POST /api/my-climbs — save a generated problem. The server validates
+ *  frames, prefills the grade from the seed, and AI-names it (with a
+ *  local fallback — saving never blocks on naming). */
+export async function saveMyClimb(params: {
+  frames: string;
+  angle: number;
+  seed_climb_uuid?: string | null;
+}): Promise<MyClimb> {
+  return apiFetch<MyClimb>('/api/my-climbs', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function listMyClimbs(): Promise<MyClimb[]> {
+  return apiFetch<MyClimb[]>('/api/my-climbs');
+}
+
+export async function getMyClimbDetail(uuid: string): Promise<MyClimbDetail> {
+  return apiFetch<MyClimbDetail>(`/api/my-climbs/${uuid}`);
+}
+
+export async function patchMyClimb(
+  uuid: string,
+  body: { name?: string; grade?: string },
+): Promise<MyClimb> {
+  return apiFetch<MyClimb>(`/api/my-climbs/${uuid}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteMyClimb(uuid: string): Promise<void> {
+  await apiFetch<void>(`/api/my-climbs/${uuid}`, { method: 'DELETE' });
 }
 
 // --- A021: Logs / user_climbs API ---

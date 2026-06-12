@@ -12,7 +12,7 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/app/lib/api', () => {
   const actual = jest.requireActual('@/app/lib/api');
-  return { ...actual, generateProblem: jest.fn() };
+  return { ...actual, generateProblem: jest.fn(), saveMyClimb: jest.fn() };
 });
 
 // Heavy children → lightweight stubs (BLE / board tested elsewhere).
@@ -31,9 +31,24 @@ jest.mock('@/components/BottomNav', () => ({
 }));
 
 import GeneratePage from '../page';
-import { generateProblem, ApiError } from '@/app/lib/api';
+import { generateProblem, saveMyClimb, ApiError } from '@/app/lib/api';
 
 const generateMock = generateProblem as jest.MockedFunction<typeof generateProblem>;
+const saveMock = saveMyClimb as jest.MockedFunction<typeof saveMyClimb>;
+
+const SAVED = {
+  uuid: 'GEN-UUID-1',
+  name: 'Sneaky Gaston',
+  description: null,
+  frames: 'p1001r12p1002r13p1003r13p1004r14p1005r15',
+  angle: 40,
+  grade: '6a/V3',
+  difficulty: 16,
+  seed_climb_uuid: 'SEED-1',
+  ascent_count: 0,
+  created_at: '2026-06-12T10:00:00Z',
+  updated_at: '2026-06-12T10:00:00Z',
+};
 
 const RESULT = {
   holds: [
@@ -43,10 +58,17 @@ const RESULT = {
     { placement_id: 1004, role: 'finish' },
     { placement_id: 1005, role: 'foot_only' },
   ],
-  meta: { seed_uuid: 'SEED-1', swapped_count: 2, filters: {} },
+  meta: {
+    seed_uuid: 'SEED-1',
+    swapped_count: 2,
+    filters: { angle: 40, grade_min: 16, grade_max: 20, moves: 'any' as const },
+  },
 };
 
-beforeEach(() => generateMock.mockReset());
+beforeEach(() => {
+  generateMock.mockReset();
+  saveMock.mockReset();
+});
 
 describe('GeneratePage', () => {
   it('renders the filter controls + disabled grip-type chips', () => {
@@ -109,5 +131,83 @@ describe('GeneratePage', () => {
     expect(screen.getByTestId('generate-btn')).toBeDisabled();
     fireEvent.click(screen.getByTestId('generate-btn'));
     expect(generateMock).not.toHaveBeenCalled();
+  });
+
+  // ── A030: one-tap save ────────────────────────────────────────────────
+
+  describe('A030 — save to My Problems', () => {
+    async function generateOnce() {
+      generateMock.mockResolvedValue(RESULT);
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generate-result')).toBeInTheDocument(),
+      );
+    }
+
+    it('no Save button before generating', () => {
+      render(<GeneratePage />);
+      expect(screen.queryByTestId('save-btn')).not.toBeInTheDocument();
+    });
+
+    it('saves with the exact BoardLib frames, generation angle and seed', async () => {
+      saveMock.mockResolvedValue(SAVED);
+      await generateOnce();
+      fireEvent.click(screen.getByTestId('save-btn'));
+      await waitFor(() =>
+        expect(saveMock).toHaveBeenCalledWith({
+          frames: 'p1001r12p1002r13p1003r13p1004r14p1005r15',
+          angle: 40,
+          seed_climb_uuid: 'SEED-1',
+        }),
+      );
+    });
+
+    it('shows a toast with the AI name and a My Problems link', async () => {
+      saveMock.mockResolvedValue(SAVED);
+      await generateOnce();
+      fireEvent.click(screen.getByTestId('save-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('save-toast')).toHaveTextContent('Sneaky Gaston'),
+      );
+    });
+
+    it('dedupes: Save disables after success until the next generation', async () => {
+      saveMock.mockResolvedValue(SAVED);
+      await generateOnce();
+      fireEvent.click(screen.getByTestId('save-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('save-btn')).toHaveTextContent('Saved ✓'),
+      );
+      expect(screen.getByTestId('save-btn')).toBeDisabled();
+      fireEvent.click(screen.getByTestId('save-btn'));
+      expect(saveMock).toHaveBeenCalledTimes(1);
+
+      // Re-roll → saveable again.
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('save-btn')).toHaveTextContent('Save to My Problems'),
+      );
+      expect(screen.getByTestId('save-btn')).not.toBeDisabled();
+    });
+
+    it('save failure shows a toast and keeps the loop usable', async () => {
+      saveMock.mockRejectedValue(new ApiError(500, 'boom'));
+      await generateOnce();
+      fireEvent.click(screen.getByTestId('save-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('save-toast')).toHaveTextContent(/save failed/i),
+      );
+      expect(screen.getByTestId('save-btn')).not.toBeDisabled();
+      expect(screen.getByTestId('generate-btn')).not.toBeDisabled();
+    });
+
+    it('renders the My Problems entry link', () => {
+      render(<GeneratePage />);
+      expect(screen.getByTestId('my-problems-link')).toHaveAttribute(
+        'href',
+        '/my-problems',
+      );
+    });
   });
 });

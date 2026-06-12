@@ -6,9 +6,11 @@
 // — nothing is saved; "Generate again" re-rolls. Capacitor-safe: query-param
 // route (no dynamic segments), static data imported, AuthGuard-wrapped.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   generateProblem,
+  saveMyClimb,
   ApiError,
   type GenerateResponse,
   type HoldPosition,
@@ -23,7 +25,10 @@ import Chip from '@/components/ui/Chip';
 import Button from '@/components/ui/Button';
 import ClimbBoardView, { ROLE_COLORS } from '@/components/ClimbBoardView';
 import ClimbBleControls from '@/components/ClimbBleControls';
-import { climbToLedCommands } from '../discover/detail/climb-to-leds';
+import {
+  climbToLedCommands,
+  ROLE_STRING_TO_ID,
+} from '../discover/detail/climb-to-leds';
 
 const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const DEFAULT_ANGLE = 40;
@@ -71,6 +76,20 @@ function GeneratePageInner() {
   // the new problem (debounced) when the board is connected.
   const [genCount, setGenCount] = useState(0);
 
+  // A030 — one-tap save. savedGen remembers which generation is already
+  // saved (dedupe: re-tapping Save on the same problem is a no-op), the
+  // toast is non-blocking and the generate loop stays untouched.
+  const [saving, setSaving] = useState(false);
+  const [savedGen, setSavedGen] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
+
   const gradeInvalid = gradeMin > gradeMax;
 
   const handleGenerate = async () => {
@@ -86,6 +105,7 @@ function GeneratePageInner() {
       });
       setResult(res);
       setGenCount((c) => c + 1);
+      setSavedGen(null); // fresh generation → saveable again
     } catch (e) {
       // 422 carries the "loosen your filters" message from the backend.
       if (e instanceof ApiError) setError(e.message);
@@ -114,6 +134,33 @@ function GeneratePageInner() {
     () => climbToLedCommands(holdsForView),
     [holdsForView],
   );
+
+  // A030 — one tap, optimistic, never blocks the loop. The frames string
+  // is the exact BoardLib encoding rebuilt from the generated holds.
+  const handleSave = async () => {
+    if (!result || saving || savedGen === genCount) return;
+    setSaving(true);
+    try {
+      const frames = result.holds
+        .map((h) => `p${h.placement_id}r${ROLE_STRING_TO_ID[h.role]}`)
+        .join('');
+      const saved = await saveMyClimb({
+        frames,
+        angle: result.meta.filters.angle,
+        seed_climb_uuid: result.meta.seed_uuid,
+      });
+      setSavedGen(genCount);
+      setToast(`Saved as “${saved.name}”`);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToast(null), 5000);
+    } catch (e) {
+      setToast(e instanceof ApiError ? `Save failed: ${e.message}` : 'Save failed');
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToast(null), 5000);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const roleCounts = holdsForView.reduce<Record<string, number>>((acc, h) => {
     acc[h.role] = (acc[h.role] ?? 0) + 1;
@@ -248,6 +295,19 @@ function GeneratePageInner() {
         {/* ── Result ────────────────────────────────────────────────── */}
         {result && (
           <div data-testid="generate-result" className="space-y-5">
+            {/* A030 — one-tap save; the generate loop stays untouched. */}
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              data-testid="save-btn"
+              onClick={handleSave}
+              loading={saving}
+              disabled={savedGen === genCount}
+            >
+              {savedGen === genCount ? 'Saved ✓' : 'Save to My Problems'}
+            </Button>
+
             {/* BLE — light up the generated problem. genCount drives the
                 auto-send on re-roll when the board is connected. */}
             <ClimbBleControls
@@ -282,7 +342,29 @@ function GeneratePageInner() {
             </p>
           </div>
         )}
+
+        {/* A030 — entry point to the saved list. */}
+        <Link
+          href="/my-problems"
+          data-testid="my-problems-link"
+          className="block text-center text-sm text-orange-400 hover:text-orange-300 py-2"
+        >
+          My Problems →
+        </Link>
       </main>
+
+      {/* A030 — non-blocking save toast (auto-hides). */}
+      {toast && (
+        <div
+          data-testid="save-toast"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] rounded-full bg-zinc-800 border border-zinc-700 px-4 py-2 text-sm text-white shadow-lg"
+        >
+          {toast}{' '}
+          <Link href="/my-problems" className="text-orange-400 font-semibold">
+            View
+          </Link>
+        </div>
+      )}
 
       <BottomNav />
     </div>

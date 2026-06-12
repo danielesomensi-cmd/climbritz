@@ -88,6 +88,8 @@ describe('FilterPanel', () => {
       benchmark: false,
       // A029 — reset clears the "no matching" toggle.
       nomatch: false,
+      // A030 — reset clears the My Problems toggle.
+      myProblems: false,
       // A021.4 — reset also clears the new chip filters back to 'all'.
       doneFilter: 'all',
       projectFilter: 'all',
@@ -184,6 +186,35 @@ describe('FilterPanel', () => {
     const btn = screen.getByTestId('filter-nomatch');
     expect(btn.className).toMatch(/bg-orange-500/);
     expect(btn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  // ── A030: My Problems toggle ──────────────────────────────────────────────
+
+  it('renders the My Problems toggle, off by default', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    const btn = screen.getByTestId('filter-my-problems');
+    expect(btn).toHaveTextContent('My problems only');
+    expect(btn).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('clicking the My Problems toggle emits myProblems: true', () => {
+    const onChange = jest.fn();
+    render(<FilterPanel value={DEFAULT} onChange={onChange} expanded={true} />);
+    fireEvent.click(screen.getByTestId('filter-my-problems'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ myProblems: true }));
+  });
+
+  it('clicking the My Problems toggle when active emits myProblems: false', () => {
+    const onChange = jest.fn();
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, myProblems: true }}
+        onChange={onChange}
+        expanded={true}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('filter-my-problems'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ myProblems: false }));
   });
 
   // ── A019: moves filter ──────────────────────────────────────────────────
@@ -310,5 +341,10 @@ describe('countActiveFilters', () => {
     expect(
       countActiveFilters({ sort: 'popularity', benchmark: true, nomatch: true }),
     ).toBe(2);
+  });
+
+  it('counts an active My Problems toggle as one active filter (A030)', () => {
+    expect(countActiveFilters({ sort: 'popularity', myProblems: true })).toBe(1);
+    expect(countActiveFilters({ sort: 'popularity', myProblems: false })).toBe(0);
   });
 });

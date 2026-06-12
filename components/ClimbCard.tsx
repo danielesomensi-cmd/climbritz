@@ -20,9 +20,14 @@ function formatAscents(count: number): string {
 // the card list to be stable across parent re-renders (filter UI state,
 // debounce ticks, sessionStorage writes) when the climb prop is unchanged.
 function ClimbCardComponent({ climb }: ClimbCardProps) {
+  // A030 — the user's saved generated problems route to their own detail
+  // page (My Problems), not the BoardLib one.
+  const href = climb.is_mine
+    ? `/my-problems/detail?id=${climb.uuid}`
+    : `/discover/detail?id=${climb.uuid}&angle=${climb.angle}`;
   return (
     <Link
-      href={`/discover/detail?id=${climb.uuid}&angle=${climb.angle}`}
+      href={href}
       data-testid={`climb-card-${climb.uuid}`}
       className="flex items-center gap-4 p-4 rounded-card bg-surface-raised border border-border-default hover:border-orange-500/50 hover:bg-zinc-800/60 transition-colors"
     >
@@ -32,13 +37,27 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
         data-testid="card-info-column"
         className="flex-1 min-w-0"
       >
-        <div className="text-white font-semibold truncate">{climb.name}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          {/* A030 — orange MY badge on the user's generated problems. */}
+          {climb.is_mine && (
+            <span
+              data-testid="my-badge"
+              className="shrink-0 rounded bg-orange-500 px-1 text-[10px] font-bold uppercase tracking-wide text-zinc-950"
+            >
+              My
+            </span>
+          )}
+          <span className="text-white font-semibold truncate">{climb.name}</span>
+        </div>
         <div className="text-xs text-zinc-400 truncate">by {climb.setter}</div>
         {/* flex-wrap: at 360px the info column is ~200px — stars + ascents
             + the A029 chip don't always fit on one line; wrapping beats
             clipping. */}
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <StarRating value={climb.quality_average} size={12} />
+          {/* A030 — mine have no community stars (quality_average null). */}
+          {climb.quality_average !== null && (
+            <StarRating value={climb.quality_average} size={12} />
+          )}
           <span className="text-xs text-zinc-500">
             {formatAscents(climb.ascensionist_count)} ascents
           </span>

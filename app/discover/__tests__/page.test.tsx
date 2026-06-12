@@ -500,6 +500,46 @@ describe('DiscoverPage', () => {
     });
   });
 
+  describe('My Problems filter (A030)', () => {
+    it('toggling My problems only passes my_problems: only to the API', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      searchClimbsMock.mockClear();
+
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-my-problems'));
+
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ my_problems: 'only' }),
+        );
+      });
+    });
+
+    it('default sends no my_problems restriction (include)', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      expect(searchClimbsMock).toHaveBeenCalledWith(
+        expect.objectContaining({ my_problems: undefined }),
+      );
+    });
+
+    it('initialises from a my_problems=only URL param', async () => {
+      searchParamsString = 'my_problems=only';
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      expect(screen.getByTestId('filter-my-problems')).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ my_problems: 'only' }),
+        );
+      });
+    });
+  });
+
   describe('search cap + overflow banner (B020)', () => {
     function fakeClimb(i: number) {
       return {

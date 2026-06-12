@@ -40,6 +40,38 @@ describe('ClimbCard', () => {
     expect(link).toHaveAttribute('href', '/discover/detail?id=abc-123&angle=40');
   });
 
+  // A030 — the user's saved generated problems in merged results.
+  describe('A030 — MY badge + routing', () => {
+    it('renders the MY badge and routes to the My Problems detail', () => {
+      render(
+        <ClimbCard
+          climb={{ ...SAMPLE, is_mine: true, quality_average: null, setter: 'You' }}
+        />,
+      );
+      expect(screen.getByTestId('my-badge')).toBeInTheDocument();
+      expect(screen.getByTestId('climb-card-abc-123')).toHaveAttribute(
+        'href',
+        '/my-problems/detail?id=abc-123',
+      );
+    });
+
+    it('hides the star rating when quality_average is null', () => {
+      render(
+        <ClimbCard climb={{ ...SAMPLE, is_mine: true, quality_average: null }} />,
+      );
+      expect(screen.queryByTestId('star-rating')).not.toBeInTheDocument();
+    });
+
+    it('no MY badge and BoardLib routing for normal climbs', () => {
+      render(<ClimbCard climb={SAMPLE} />);
+      expect(screen.queryByTestId('my-badge')).not.toBeInTheDocument();
+      expect(screen.getByTestId('climb-card-abc-123')).toHaveAttribute(
+        'href',
+        '/discover/detail?id=abc-123&angle=40',
+      );
+    });
+  });
+
   // A029 — subtle "No match" hint on flagged climbs; loud badge lives on detail.
   describe('A029 — no-matching chip', () => {
     it('renders the No match chip when is_nomatch is true', () => {

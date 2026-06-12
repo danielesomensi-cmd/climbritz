@@ -20,6 +20,10 @@ export interface Filters {
    *  rule (climbs.is_nomatch, audit D019). Same boolean idiom as
    *  benchmark: "exclude no-matching climbs" isn't a real user need. */
   nomatch?: boolean;
+  /** A030 — when true, show ONLY the user's saved generated problems
+   *  (my_problems=only). Off (default) = include: BoardLib results plus
+   *  mine prepended with the MY badge. */
+  myProblems?: boolean;
   sort: SortField;
   /** A021.4 — tri-state chip filters surfaced ABOVE this panel on
    *  /discover, not inside it. The panel doesn't render UI for them
@@ -72,6 +76,7 @@ export function countActiveFilters(value: Filters): number {
     (value.moves !== undefined && value.moves !== 'any' ? 1 : 0) +
     (value.benchmark ? 1 : 0) +
     (value.nomatch ? 1 : 0) +
+    (value.myProblems ? 1 : 0) +
     (value.sort !== 'popularity' ? 1 : 0) +
     (value.doneFilter !== undefined && value.doneFilter !== 'all' ? 1 : 0) +
     (value.projectFilter !== undefined && value.projectFilter !== 'all' ? 1 : 0)
@@ -91,6 +96,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       moves: 'any',
       benchmark: false,
       nomatch: false,
+      myProblems: false,
       doneFilter: 'all',
       projectFilter: 'all',
     });
@@ -129,6 +135,21 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           onClick={() => onChange({ ...value, nomatch: !value.nomatch })}
         >
           No matching only
+        </Chip>
+      </div>
+
+      {/* My Problems (A030) — off (default) = BoardLib + mine prepended
+          with the MY badge; on = only the user's saved problems. */}
+      <div>
+        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+          My Problems
+        </label>
+        <Chip
+          data-testid="filter-my-problems"
+          selected={!!value.myProblems}
+          onClick={() => onChange({ ...value, myProblems: !value.myProblems })}
+        >
+          My problems only
         </Chip>
       </div>
 

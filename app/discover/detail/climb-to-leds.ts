@@ -8,7 +8,9 @@ import ledsMap from '@/app/data/leds_12x12.json';
 
 // Role strings the climb API returns → role_id the BLE encoder expects.
 // Source of truth for role_id → color is kilter-protocol.PLACEMENT_ROLES.
-const ROLE_STRING_TO_ID: Record<string, number> = {
+// Exported for A030: the generate page serializes saved problems into the
+// BoardLib frames encoding (p{placement_id}r{role_id}) with the same map.
+export const ROLE_STRING_TO_ID: Record<string, number> = {
   start: 12,
   middle: 13,
   finish: 14,

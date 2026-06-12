@@ -91,6 +91,7 @@ function parseInitialFilters(params: URLSearchParams): Filters {
     moves: (MOVES_VALUES.includes(moves as MovesFilter) ? moves : 'any') as MovesFilter,
     benchmark: params.get('benchmark') === 'true',
     nomatch: params.get('nomatch') === 'true',
+    myProblems: params.get('my_problems') === 'only',
     sort: (SORT_VALUES.includes(sort as SortField) ? sort : 'popularity') as SortField,
     doneFilter: (DONE_VALUES.includes(doneFilter as DoneFilter)
       ? doneFilter
@@ -111,6 +112,7 @@ const URL_FILTER_KEYS = [
   'moves',
   'benchmark',
   'nomatch',
+  'my_problems',
   'sort',
   'done_filter',
   'project_filter',
@@ -141,6 +143,7 @@ function resolveInitialState(
       moves: 'any',
       benchmark: false,
       nomatch: false,
+      myProblems: false,
       doneFilter: 'all',
       projectFilter: 'all',
     },
@@ -190,6 +193,7 @@ function DiscoverPageInner() {
     if (filters.moves && filters.moves !== 'any') qs.set('moves', filters.moves);
     if (filters.benchmark) qs.set('benchmark', 'true');
     if (filters.nomatch) qs.set('nomatch', 'true');
+    if (filters.myProblems) qs.set('my_problems', 'only');
     if (filters.sort !== 'popularity') qs.set('sort', filters.sort);
     if (filters.doneFilter && filters.doneFilter !== 'all') {
       qs.set('done_filter', filters.doneFilter);
@@ -228,6 +232,7 @@ function DiscoverPageInner() {
         moves: filters.moves,
         benchmark: filters.benchmark,
         nomatch: filters.nomatch,
+        my_problems: filters.myProblems ? 'only' : undefined,
         sort: filters.sort,
         done_filter: filters.doneFilter,
         project_filter: filters.projectFilter,
