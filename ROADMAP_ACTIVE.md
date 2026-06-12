@@ -1,5 +1,5 @@
 # Climbritz — Active Roadmap
-> Updated: 6 June 2026
+> Updated: 12 June 2026
 > Strategy: AI Climbing Companion — Discovery (free) + Coach (paid)
 > Completed-brief detail lives in `PROJECT_STATUS.md`; this file is the forward plan + checklist.
 
