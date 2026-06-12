@@ -144,9 +144,9 @@ Three levels of coaching intelligence (Coach tier):
 **Pending:**
 - [ ] **"Illuminate only [grip type]"** — query hold_classifications → filter hold_ids → LED positions → BLE packet
 - [x] Light up generated problems — A026: `/generate` lights the remixed problem via the existing `ClimbBleControls` + `climb-to-leds` stack
-- [ ] Connection management (reconnect, error states, disconnect on background)
-- [ ] Auto-connect on page load + in-session memory of last device
-- [ ] Tests
+- [x] Connection management — **B035**: connessione persistente globale (`BleProvider` nel root layout, `useBle()`), onDisconnect→UI ovunque, resume check read-only. Contratto: MAI disconnect su navigazione/background (solo tap utente), MAI auto-reconnect (galateo palestra)
+- [x] ~~Auto-connect on page load + in-session memory of last device~~ — **droppato** per contratto B035 (nessun auto-(re)connect, mai)
+- [x] Tests — suite BLE: kilter-protocol · presets · status · ClimbBleControls · ble-test page · BleProvider (B035)
 
 ### 3f — Problem Generation (1-2 weeks)
 - [x] **v1 Remix (A026)** — `POST /api/climbs/generate` + `/generate` page. Pick a real climb from the filtered pool (same `_build_search_filters` path as Discovery, `min_ascents=5`), swap ≥2 hand holds with same-role candidates within a corpus-derived ε (Phase 0: grid pitch 8 → ε=24) inside role y-bands (start ≤88 / finish ≥144). Same-role 1:1 swaps preserve move count; feet inherited. Pure logic in `services/problem_generator.py`; ephemeral (no persistence); 422 on pool-too-small / can't-reach-2-swaps. Frontend reuses `ClimbBoardView` + `ClimbBleControls`. Filters: angle / grade / moves (stars + benchmark omitted; grip-type disabled "Coming soon"). pytest + jest green.
