@@ -74,6 +74,7 @@ Three levels of coaching intelligence (Coach tier):
 - [x] **A027 Contact tile** — homepage "Send feedback" → mailto nativo (zero backend).
 - [x] **A028 BLE preset "All White (max)"** — preset #12, tutti i 476 LED a bianco pieno (max luminosità) accanto al rainbow #11.
 - [x] **B034 v4 — homepage iOS safe-area** — causa vera: reset `* { padding: 0 }` non-layerizzato azzerava il `pt-[...]` Tailwind del hero; fix = paddingTop inline + `IosSafeArea` floor 62px. Guard di regressione nel test home.
+- [x] **B036 — header Android sotto la status bar** (2026-06-12) — edge-to-edge enforced (targetSdk 36) + `env()` inaffidabile nella WebView; fix = safe-area CSS dual-source (`max(env(), var(--safe-area-inset-*))` iniettate dal plugin built-in SystemBars di Capacitor 8) + `SystemBars: {style:'DARK'}`. Verificato su emulatore API 37 via CDP. iOS invariato. Nel prossimo build mobile batched.
 - [x] **Admin `GET /api/admin/recent-users`** — chi si iscrive + iOS/Android + attività in-app (Clerk API ⨝ DB). Runbook: `docs/ADMIN_RUNBOOK.md`.
 - [x] **Alert nuovi iscritti** — `POST /api/webhooks/clerk` (Svix) → Telegram su `user.created` + welcome email (Gmail SMTP). Serve config one-time (bot/webhook/env Railway).
 
