@@ -21,11 +21,26 @@ from app.schemas.my_climbs import (
     MyClimbDetail,
     MyClimbPatch,
     MyClimbResponse,
+    ProposeNameRequest,
+    ProposeNameResponse,
 )
-from app.services import my_climbs_service
+from app.services import my_climbs_service, problem_name_service
 from app.services.my_climbs_service import InvalidFramesError
 
 router = APIRouter()
+
+
+@router.post("/propose-name", response_model=ProposeNameResponse)
+def propose_name(
+    body: ProposeNameRequest,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    """A031 — name-on-generate. Thin wrapper over problem_name_service
+    (2s Gemini budget, local adjective+noun fallback — never fails)."""
+    name, source = problem_name_service.propose_problem_name_detailed(
+        grade=body.grade, angle=body.angle
+    )
+    return ProposeNameResponse(name=name, source=source)
 
 
 @router.post("", response_model=MyClimbResponse, status_code=201)
@@ -41,6 +56,8 @@ def create_my_climb(
             frames=body.frames,
             angle=body.angle,
             seed_climb_uuid=body.seed_climb_uuid,
+            name=body.name,
+            grade=body.grade,
         )
     except InvalidFramesError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -79,17 +96,22 @@ def patch_my_climb(
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    if body.name is None and body.grade is None:
+    if body.name is None and body.grade is None and body.frames is None:
         raise HTTPException(
-            status_code=422, detail="Provide at least one of: name, grade"
+            status_code=422,
+            detail="Provide at least one of: name, grade, frames",
         )
-    row = my_climbs_service.patch_my_climb(
-        db,
-        user_id=current_user_id,
-        uuid=uuid,
-        name=body.name,
-        grade=body.grade,
-    )
+    try:
+        row = my_climbs_service.patch_my_climb(
+            db,
+            user_id=current_user_id,
+            uuid=uuid,
+            name=body.name,
+            grade=body.grade,
+            frames=body.frames,
+        )
+    except InvalidFramesError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     if row is None:
         raise HTTPException(status_code=404, detail="Problem not found")
     # Re-read through the detail path so ascent_count is real, not the

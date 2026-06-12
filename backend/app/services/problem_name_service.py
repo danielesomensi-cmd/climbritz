@@ -79,6 +79,17 @@ def propose_problem_name(
     rng: random.Random | None = None,
 ) -> str:
     """One short witty problem name. Never raises, never blocks > ~2s."""
+    return propose_problem_name_detailed(grade=grade, angle=angle, rng=rng)[0]
+
+
+def propose_problem_name_detailed(
+    grade: str | None = None,
+    angle: int | None = None,
+    rng: random.Random | None = None,
+) -> tuple[str, str]:
+    """A031 — like propose_problem_name but also reports the source
+    (``"ai"`` | ``"fallback"``) so the name-on-generate endpoint can tell
+    the client which path produced it. Same never-raise contract."""
     try:
         # Imported here (not module level) so tests can patch either layer
         # and a missing GEMINI_API_KEY only costs the fallback path.
@@ -101,8 +112,8 @@ def propose_problem_name(
         if response.text:
             name = _sanitize(response.text)
             if name:
-                return name
+                return name, "ai"
         logger.info("Gemini naming returned unusable text — local fallback")
     except Exception as exc:
         logger.info("Gemini naming failed (%s) — local fallback", exc)
-    return _fallback_name(rng)
+    return _fallback_name(rng), "fallback"

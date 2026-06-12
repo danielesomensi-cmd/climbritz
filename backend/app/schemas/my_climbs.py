@@ -21,13 +21,36 @@ class MyClimbCreate(BaseModel):
     seed_climb_uuid: Optional[str] = Field(
         default=None, description="A026 seed climb (provenance)"
     )
+    # A031 — client overrides. name: the generate page shows the AI name
+    # before saving ("Save as is" persists what the user saw); the editor
+    # sets both. Absent → server-side naming / seed grade as in v1.
+    name: Optional[str] = Field(default=None, min_length=1, max_length=60)
+    grade: Optional[str] = Field(default=None, max_length=20)
 
 
 class MyClimbPatch(BaseModel):
-    """Inline edits from the My Problems detail page."""
+    """Inline edits from the My Problems detail page; A031 adds frames
+    (hold editor) — fully validated server-side, logs stay attached."""
 
     name: Optional[str] = Field(default=None, min_length=1, max_length=120)
     grade: Optional[str] = Field(default=None, max_length=20)
+    frames: Optional[str] = Field(default=None, min_length=1)
+
+
+class ProposeNameRequest(BaseModel):
+    """A031 — name-on-generate. All hints optional."""
+
+    angle: Optional[int] = Field(default=None, ge=0, le=70)
+    grade: Optional[str] = Field(default=None, max_length=20)
+    grip_hints: Optional[list[str]] = Field(
+        default=None,
+        description="Reserved (post-HC-7 grip types). Accepted, unused.",
+    )
+
+
+class ProposeNameResponse(BaseModel):
+    name: str
+    source: str = Field(..., description='"ai" | "fallback"')
 
 
 class MyClimbResponse(BaseModel):

@@ -36,7 +36,11 @@ class InvalidFramesError(ValueError):
 
 def validate_frames(frames: str) -> list[dict]:
     """Validate + parse a frames string. Returns the parsed holds or raises
-    InvalidFramesError with a user-presentable message."""
+    InvalidFramesError with a user-presentable message.
+
+    A031 — beyond the encoding checks, enforce problem structure (mirrors
+    the editor's client-side rules): 1–2 start, 1–2 finish, ≥3 holds.
+    """
     if not frames or not _FRAMES_RE.match(frames):
         raise InvalidFramesError(
             "frames must be a non-empty p{placement_id}r{role_id} sequence"
@@ -51,6 +55,18 @@ def validate_frames(frames: str) -> list[dict]:
     pids = [h["placement_id"] for h in holds]
     if len(pids) != len(set(pids)):
         raise InvalidFramesError("duplicate placement_id in frames")
+    if len(holds) < 3:
+        raise InvalidFramesError("a problem needs at least 3 holds")
+    starts = sum(1 for h in holds if h["role_code"] == 12)
+    finishes = sum(1 for h in holds if h["role_code"] == 14)
+    if not 1 <= starts <= 2:
+        raise InvalidFramesError(
+            f"a problem needs 1 or 2 start holds (got {starts})"
+        )
+    if not 1 <= finishes <= 2:
+        raise InvalidFramesError(
+            f"a problem needs 1 or 2 finish holds (got {finishes})"
+        )
     return holds
 
 
@@ -114,12 +130,24 @@ def create_my_climb(
     frames: str,
     angle: int,
     seed_climb_uuid: Optional[str] = None,
+    name: Optional[str] = None,
+    grade: Optional[str] = None,
 ) -> UserGeneratedClimb:
-    """Validate, name (AI with local fallback — never blocks the save),
-    prefill grade from the seed, insert. Raises InvalidFramesError."""
+    """Validate, name, prefill grade from the seed, insert.
+
+    A031 — ``name``/``grade`` are optional client overrides (the generate
+    page shows the AI name BEFORE saving; the editor sets both). When
+    absent, server-side behavior is unchanged: AI name with local
+    fallback (never blocks the save), grade from the seed.
+    Raises InvalidFramesError."""
     validate_frames(frames)
-    grade, difficulty = _seed_grade(seed_climb_uuid, angle)
-    name = problem_name_service.propose_problem_name(grade=grade, angle=angle)
+    seed_grade, difficulty = _seed_grade(seed_climb_uuid, angle)
+    if grade is None:
+        grade = seed_grade
+    if name is None:
+        name = problem_name_service.propose_problem_name(
+            grade=grade, angle=angle
+        )
     row = UserGeneratedClimb(
         user_id=user_id,
         name=name,
@@ -191,10 +219,16 @@ def patch_my_climb(
     uuid: str,
     name: Optional[str] = None,
     grade: Optional[str] = None,
+    frames: Optional[str] = None,
 ) -> Optional[UserGeneratedClimb]:
+    """A031 — ``frames`` is editable too (hold editor). Full validation;
+    logs/ascents stay attached (they're keyed by uuid, untouched here)."""
     row = get_my_climb(db, user_id=user_id, uuid=uuid)
     if row is None:
         return None
+    if frames is not None:
+        validate_frames(frames)  # raises InvalidFramesError
+        row.frames = frames
     if name is not None:
         row.name = name
     if grade is not None:

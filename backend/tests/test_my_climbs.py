@@ -208,6 +208,206 @@ class TestCrud:
 
 
 # ===========================================================================
+# A031 — name override, structural frames validation, frames PATCH,
+# propose-name endpoint
+# ===========================================================================
+
+
+class TestNameGradeOverride:
+    def test_post_with_name_override_skips_ai_naming(self):
+        user = _create_user()
+        with patch(
+            "app.services.my_climbs_service.problem_name_service.propose_problem_name"
+        ) as naming:
+            resp = client.post(
+                "/api/my-climbs",
+                json={
+                    "frames": VALID_FRAMES,
+                    "angle": 40,
+                    "seed_climb_uuid": SEED_UUID,
+                    "name": "Displayed Name",
+                },
+                headers=_auth(user.id),
+            )
+        assert resp.status_code == 201
+        assert resp.json()["name"] == "Displayed Name"
+        naming.assert_not_called()
+
+    def test_post_with_grade_override_beats_seed_prefill(self):
+        user = _create_user()
+        resp = client.post(
+            "/api/my-climbs",
+            json={
+                "frames": VALID_FRAMES,
+                "angle": 40,
+                "seed_climb_uuid": SEED_UUID,
+                "grade": "7a/V6",
+            },
+            headers=_auth(user.id),
+        )
+        assert resp.status_code == 201
+        assert resp.json()["grade"] == "7a/V6"
+
+    def test_post_name_too_long_rejected(self):
+        user = _create_user()
+        resp = client.post(
+            "/api/my-climbs",
+            json={"frames": VALID_FRAMES, "angle": 40, "name": "x" * 61},
+            headers=_auth(user.id),
+        )
+        assert resp.status_code == 422
+
+    def test_post_empty_name_rejected(self):
+        user = _create_user()
+        resp = client.post(
+            "/api/my-climbs",
+            json={"frames": VALID_FRAMES, "angle": 40, "name": ""},
+            headers=_auth(user.id),
+        )
+        assert resp.status_code == 422
+
+
+class TestStructuralFramesValidation:
+    """A031 — 1–2 start, 1–2 finish, ≥3 holds, on POST and PATCH alike."""
+
+    @pytest.mark.parametrize(
+        "frames",
+        [
+            "p1r13p2r13p3r14",                    # 0 starts
+            "p1r12p2r12p3r12p4r13p5r14",          # 3 starts
+            "p1r12p2r13p3r13",                    # 0 finishes
+            "p1r12p2r14p3r14p4r14",               # 3 finishes
+            "p1r12p2r14",                         # only 2 holds
+        ],
+    )
+    def test_post_structural_violations_422(self, frames):
+        user = _create_user()
+        resp = _save(user.id, frames=frames, seed=None)
+        assert resp.status_code == 422
+
+    def test_post_two_starts_two_finishes_ok(self):
+        user = _create_user()
+        resp = _save(
+            user.id, frames="p1r12p2r12p3r13p4r14p5r14", seed=None
+        )
+        assert resp.status_code == 201
+
+
+class TestFramesPatch:
+    NEW_FRAMES = "p3001r12p3002r13p3003r13p3004r14"
+
+    def test_patch_frames_updates_holds(self):
+        user = _create_user()
+        saved = _save(user.id).json()
+        resp = client.patch(
+            f"/api/my-climbs/{saved['uuid']}",
+            json={"frames": self.NEW_FRAMES},
+            headers=_auth(user.id),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["frames"] == self.NEW_FRAMES
+        detail = client.get(
+            f"/api/my-climbs/{saved['uuid']}", headers=_auth(user.id)
+        ).json()
+        assert [h["placement_id"] for h in detail["holds"]] == [
+            3001, 3002, 3003, 3004,
+        ]
+
+    @pytest.mark.parametrize(
+        "frames",
+        [
+            "garbage",
+            "p1r12p2r99p3r14",        # bad role
+            "p1r12p1r13p2r14",        # duplicate placement
+            "p1r13p2r13p3r14",        # 0 starts
+            "p1r12p2r13p3r13",        # 0 finishes
+        ],
+    )
+    def test_patch_invalid_frames_422(self, frames):
+        user = _create_user()
+        saved = _save(user.id).json()
+        resp = client.patch(
+            f"/api/my-climbs/{saved['uuid']}",
+            json={"frames": frames},
+            headers=_auth(user.id),
+        )
+        assert resp.status_code == 422
+
+    def test_patch_frames_cross_user_404(self):
+        user_a, user_b = _create_user(), _create_user()
+        saved = _save(user_a.id).json()
+        resp = client.patch(
+            f"/api/my-climbs/{saved['uuid']}",
+            json={"frames": self.NEW_FRAMES},
+            headers=_auth(user_b.id),
+        )
+        assert resp.status_code == 404
+
+    def test_logs_survive_a_frames_patch(self):
+        """Logs/ascents are keyed by uuid — editing holds must not touch
+        them (the editor warns the user, the data stays attached)."""
+        user = _create_user()
+        saved = _save(user.id).json()
+        client.post(
+            "/api/logs",
+            json={
+                "climb_uuid": saved["uuid"],
+                "angle": saved["angle"],
+                "result_type": "flash",
+            },
+            headers=_auth(user.id),
+        )
+        client.patch(
+            f"/api/my-climbs/{saved['uuid']}",
+            json={"frames": self.NEW_FRAMES},
+            headers=_auth(user.id),
+        )
+        logs = client.get(
+            f"/api/logs?climb_uuid={saved['uuid']}", headers=_auth(user.id)
+        ).json()
+        assert len(logs) == 1
+        listed = client.get("/api/my-climbs", headers=_auth(user.id)).json()
+        assert listed[0]["ascent_count"] == 1
+
+
+class TestProposeNameEndpoint:
+    def test_requires_auth(self):
+        resp = client.post("/api/my-climbs/propose-name", json={})
+        assert resp.status_code in (401, 403)
+
+    def test_returns_fallback_when_gemini_down(self):
+        user = _create_user()
+        with patch(
+            "app.services.gemini_service._get_client",
+            side_effect=RuntimeError("down"),
+        ):
+            resp = client.post(
+                "/api/my-climbs/propose-name",
+                json={"angle": 40, "grade": "6a/V3"},
+                headers=_auth(user.id),
+            )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["source"] == "fallback"
+        assert any(
+            body["name"].startswith(a + " ")
+            for a in problem_name_service._ADJECTIVES
+        )
+
+    def test_empty_body_ok(self):
+        user = _create_user()
+        with patch(
+            "app.services.gemini_service._get_client",
+            side_effect=RuntimeError("down"),
+        ):
+            resp = client.post(
+                "/api/my-climbs/propose-name", json={}, headers=_auth(user.id)
+            )
+        assert resp.status_code == 200
+        assert resp.json()["name"]
+
+
+# ===========================================================================
 # Auth isolation — user B can't see/edit user A's problems
 # ===========================================================================
 
