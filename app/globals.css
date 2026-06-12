@@ -127,8 +127,20 @@
      max(env(safe-area-inset-top), 59px) — flooring at a Dynamic-Island-safe
      value because the WebView can report a small-but-nonzero (island-
      insufficient) inset, not just exactly 0. Every safe-area top padding reads
-     this var, so the fix lands everywhere from one place. */
-  --safe-top: env(safe-area-inset-top, 0px);
+     this var, so the fix lands everywhere from one place.
+
+     B036 — Android leg of the same story. With targetSdk 35+ Android enforces
+     edge-to-edge and the WebView's env(safe-area-inset-*) is unreliable
+     (returns 0 on e.g. Samsung S22/S24 → header rendered under the status
+     bar). Capacitor 8's built-in SystemBars plugin injects the REAL insets as
+     `--safe-area-inset-*` custom properties on <html> precisely because env()
+     can't be trusted there — so we take the max() of both sources. On iOS/web
+     the injected vars don't exist → fallback 0px → identical to before; on
+     native iOS IosSafeArea.tsx still overrides --safe-top inline (plain px),
+     which beats this :root rule. Do NOT reduce this back to env()-only. */
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  /* (No --safe-bottom token on purpose: the bottom utilities in safe-area.css
+     keep env() DIRECT at the usage site — see the B036 note there.) */
 }
 
 /* Spacing convention (D18-4.1.4): adopt Tailwind's existing 4px scale AS-IS —

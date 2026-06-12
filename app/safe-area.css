@@ -12,8 +12,18 @@
   padding-top: calc(var(--safe-top) + 1rem);
 }
 
+/* B036 — Android edge-to-edge (targetSdk 36): the WebView's env(safe-area-
+   inset-bottom) can read 0, so the bottom utilities ALSO consider the
+   `--safe-area-inset-bottom` custom property that Capacitor 8's SystemBars
+   plugin injects on <html> (verified live on an API-37 emulator: env=24px
+   AND injected var=24px → max works either way; on Samsung S22/S24 env=0 and
+   only the injected var carries the real inset). Deliberately NOT routed
+   through a --safe-bottom token: B034 field notes suspect some iOS WebKit
+   builds fail env() referenced through a custom property, and these rules
+   work on iOS today with direct env() — keep it direct. The var() side is
+   harmless on iOS/web: the property doesn't exist there → literal 0px. */
 .pb-safe {
-  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
 }
 
 /* B-A021-fix-1.6.1 — bottom padding for any page that mounts BottomNav.
@@ -24,5 +34,7 @@
    the BottomNav. Use this utility wherever BottomNav is mounted; if the
    BottomNav ever resizes, change one rule here instead of grepping. */
 .pb-nav {
-  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(
+    6rem + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))
+  );
 }

@@ -28,6 +28,17 @@ const config: CapacitorConfig = {
     ],
   },
   plugins: {
+    // B036 — Android status-bar contrast under enforced edge-to-edge
+    // (targetSdk 36). The app is permanently dark (#0a0a0a), but SystemBars'
+    // default style follows the DEVICE theme: a light-mode phone got dark
+    // status-bar icons over our dark header → unreadable. 'DARK' = dark
+    // background → light icons/text. Android-only option; iOS reads its
+    // style from the OS as before. The matching inset fix lives in CSS:
+    // globals.css --safe-top/--safe-bottom consume the --safe-area-inset-*
+    // variables this same plugin injects into the WebView.
+    SystemBars: {
+      style: 'DARK',
+    },
     BluetoothLe: {
       displayStrings: {
         scanning: 'Cerco Kilter Board...',
