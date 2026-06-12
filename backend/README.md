@@ -34,6 +34,11 @@ Auth is handled by Clerk (hosted /sign-in and /sign-up pages). Backend verifies 
 - `GET /api/climbs/stats` — Database stats
 - `POST /api/climbs/generate` — A026: remix a fresh problem from the matching pool (angle / grade range / moves; `grip_types` reserved, ignored in v1). Ephemeral. 422 when the pool is too small. JWT-gated.
 
+### My Problems (A030 — saved AI-generated climbs)
+- `POST /api/my-climbs` — Save a generated problem (validates BoardLib frames encoding, prefills grade from the seed, AI-proposes the name with a local fallback). JWT-gated, owner-scoped.
+- `GET /api/my-climbs` — List (newest first, with `ascent_count`) · `GET /api/my-climbs/{uuid}` — Detail with holds · `PATCH /api/my-climbs/{uuid}` — Edit name/grade · `DELETE /api/my-climbs/{uuid}`
+- Generated problems are loggable via `POST /api/logs` and merge into `/api/climbs/search` via `my_problems=include|only` (flagged `is_mine`).
+
 ## Documentation
 
 - **Swagger UI**: http://localhost:8001/docs

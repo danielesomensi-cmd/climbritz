@@ -39,7 +39,7 @@ Detailed per-brief history lives in `PROJECT_STATUS.md` (decisions log) and `ROA
 - **Mobile ✅** — Capacitor iOS + Android; Clerk **production** auth working on both platforms (custom domain `clerk.climbritz.app`, email+password). Android shipped to Play Console Internal Testing; iOS on TestFlight.
 - **Coach tier** — gated behind a "Coming Soon" pill pending production readiness; `/upload` stays URL-reachable.
 
-- **Problem Generation (Phase 3f) ✅ v1** — `/generate` page + `POST /api/climbs/generate` (A026). Remix a real climb from the filtered pool: swap ≥2 hand holds (same-role, corpus-derived ε + y-bands) → light it up over BLE. Ephemeral; grip-type filtering / save / grade-coherence are future.
+- **Problem Generation (Phase 3f) ✅ v1 + save** — `/generate` page + `POST /api/climbs/generate` (A026). Remix a real climb from the filtered pool: swap ≥2 hand holds (same-role, corpus-derived ε + y-bands) → light it up over BLE. **A030:** one-tap save → "My Problems" (`/my-problems`, AI-proposed name, grade from seed, loggable, merged into Discovery with a MY badge); grip-type filtering / grade-coherence / hold editor are future.
 
 **Next up:** HC-3/HC-6/HC-7 hold-classification validation + DB migration, Phase 3c AI Session Builder, Phase 3d Level 2 analysis, Phase 3e remaining BLE items, Phase 3f v2 (grade-coherence + grip-type + save). See `ROADMAP_ACTIVE.md`.
 
@@ -54,11 +54,16 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 - `GET /api/videos/{id}` → video + status/results · `GET /api/videos` → paginated list · `DELETE /api/videos/{id}`
 
 **Climbs** (BoardLib, read-only)
-- `GET /api/climbs/search?q=&angle=&grade_min=&grade_max=&min_ascents=&min_quality=&moves=&benchmark=&nomatch=&sort=&limit=&done_filter=&project_filter=`
+- `GET /api/climbs/search?q=&angle=&grade_min=&grade_max=&min_ascents=&min_quality=&moves=&benchmark=&nomatch=&my_problems=&sort=&limit=&done_filter=&project_filter=`
   - `moves` bucket: `any` | `le5` | `6-7` | `8-10` | `gt10`. `benchmark` (bool): climbs flagged at the selected angle (angle-specific by DB design). `nomatch` (bool, A029): only climbs with the setter's "no matching" rule (`climbs.is_nomatch`, climb-level — audit D019: flag is authoritative, no description heuristics); search results and the detail payload both carry `is_nomatch`. Animated sequences (`frames_count > 1`) excluded globally. `limit` defaults to 500, hard cap 500 (422 above). Response: `{climbs, total_count}` (total_count ignores the cap → drives the overflow banner).
-  - When authenticated: also accepts `done_filter`/`project_filter` (`all`|`only`|`exclude`) and enriches each climb with `user_state` `{is_project, best_result, last_logged_at}`.
+  - When authenticated: also accepts `done_filter`/`project_filter` (`all`|`only`|`exclude`) and enriches each climb with `user_state` `{is_project, best_result, last_logged_at}`. **A030:** `my_problems` (`include` default | `only`) merges the user's saved generated problems — prepended, flagged `is_mine: true`, setter "You", `quality_average: null` (schema is `float|None`), ascents = own flash/send count; `only` skips BoardLib. Filters are applied with equivalent semantics Python-side; benchmark/nomatch/min_quality naturally exclude mine.
 - `GET /api/climbs/{climb_uuid}?angle=` → full detail with holds · `GET /api/climbs/stats` → DB health
-- `POST /api/climbs/generate` (JWT) → **A026 Problem Generator (Remix v1)**. Body `{angle, grade_min, grade_max, moves?, grip_types?}` (`grip_types` reserved — accepted but ignored in v1). Builds the pool via the same `_build_search_filters()` path as Discovery (`min_ascents=5`), picks a seed (weighted by ascents), swaps ≥2 hand holds with same-role candidates within ε=24 board-units inside role y-bands (start ≤88 / finish ≥144) — same-role 1:1 so move count is preserved; feet inherited from the seed. Returns `{holds: [{placement_id, role}], meta: {seed_uuid, swapped_count, filters}}`. **Ephemeral** (no persistence). `422` when the pool is `< 10` climbs or no seed reaches 2 swaps. Pure remix logic in `services/problem_generator.py` (corpus-derived constants — Phase 0 `scripts/analyze_a026_corpus.py`); save/name + grade-coherence + grip-type filtering are future briefs.
+- `POST /api/climbs/generate` (JWT) → **A026 Problem Generator (Remix v1)**. Body `{angle, grade_min, grade_max, moves?, grip_types?}` (`grip_types` reserved — accepted but ignored in v1). Builds the pool via the same `_build_search_filters()` path as Discovery (`min_ascents=5`), picks a seed (weighted by ascents), swaps ≥2 hand holds with same-role candidates within ε=24 board-units inside role y-bands (start ≤88 / finish ≥144) — same-role 1:1 so move count is preserved; feet inherited from the seed. Returns `{holds: [{placement_id, role}], meta: {seed_uuid, swapped_count, filters}}`. **Ephemeral** (no persistence). `422` when the pool is `< 10` climbs or no seed reaches 2 swaps. Pure remix logic in `services/problem_generator.py` (corpus-derived constants — Phase 0 `scripts/analyze_a026_corpus.py`); saving lives in `/api/my-climbs` (A030); grade-coherence + grip-type filtering are future briefs.
+
+**My Problems** (A030 — saved AI-generated climbs, JWT, owner-scoped)
+- `POST /api/my-climbs` → 201. Body `{frames, angle, seed_climb_uuid?}`. Validates the exact BoardLib `p{placement_id}r{role_id}` encoding (roles ∈ {12,13,14,15}, no dup placements → 422), prefills `grade`/`difficulty` from the seed's BoardLib stats, proposes the name via `problem_name_service` (Gemini 2.5-flash text-only, `thinking_budget=0`, 2s timeout → local adjective+noun fallback; saving never fails/blocks on naming). Stored in `user_generated_climbs` (migration 006, BoardLib-compatible: `is_listed` for future publishing, `is_nomatch` A029 parity).
+- `GET /api/my-climbs` → list, newest first, each with `ascent_count` (user's flash/send logs) · `GET /api/my-climbs/{uuid}` → detail incl. BoardLib-shaped `holds` · `PATCH /api/my-climbs/{uuid}` `{name?, grade?}` · `DELETE` → 204. Cross-user access → 404.
+- Generated uuids are loggable: `POST /api/logs` checks `user_generated_climbs` (owner-scoped) before the BoardLib meta guard; `GET /api/logs/sessions` resolves their name/grade too.
 
 **Holds**
 - `GET /api/holds/board-image` · `GET /api/holds/{placement_id}/image`
@@ -127,19 +132,20 @@ When a change touches a fact shared across docs (model version, deploy status, r
 ```
 climbritz/
 ├── backend/app/
-│   ├── api/            videos · climbs · generate(A026) · holds · admin · logs · user_climbs · stats · coach · classifications · webhooks(clerk→telegram) · circuits(stub)
+│   ├── api/            videos · climbs · generate(A026) · my_climbs(A030) · holds · admin · logs · user_climbs · stats · coach · classifications · webhooks(clerk→telegram) · circuits(stub)
 │   ├── core/           config (prod guard on CLERK_JWKS_URL) · database · clerk (JWKS verify + shadow-row + cache) · deps (get_current_user_id / get_optional_user_id)
-│   ├── models/         user (Clerk shadow row) · video · climb_log · user_climb · user_hold_classification
-│   ├── schemas/        user · video · climb · generate(A026) · logs · classifications
-│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · clerk_admin_service (admin recent-users, httpx Clerk API) · telegram_service (signup alert) · problem_generator (A026 pure remix) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
+│   ├── models/         user (Clerk shadow row) · video · climb_log · user_climb · user_hold_classification · user_generated_climb (A030)
+│   ├── schemas/        user · video · climb · generate(A026) · my_climbs(A030) · logs · classifications
+│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · problem_name_service (A030 AI naming + local fallback) · clerk_admin_service (admin recent-users, httpx Clerk API) · telegram_service (signup alert) · problem_generator (A026 pure remix) · my_climbs_service (A030 CRUD + Discovery merge + logs guard) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
 │   ├── utils/          kilter_parser
 │   └── main.py
-├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications
+├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications · 006 user_generated_climbs (A030)
 ├── backend/tests/              one test_*.py per api/service + fixtures/test_kilter.db
 ├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot)
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
-│   ├── generate/       page (A026 — filters → remix → board + BLE → re-roll)
+│   ├── generate/       page (A026 — filters → remix → board + BLE → re-roll; A030 one-tap Save + toast)
+│   ├── my-problems/    page (A030 — saved problems list) · detail/page (board + BLE + LogSection + inline edit + delete)
 │   ├── discover/       page (search+filters) · detail/page (board + BLE + Next/Prev) · detail/climb-to-leds · filtered-list-storage · discover-filters-storage
 │   ├── history/        page · coach-comment (A025) · sessions-list · grade-pyramid · trend-chart
 │   ├── classify/       page (cloud-synced) · state · ble-test/ (presets · board-preview)
