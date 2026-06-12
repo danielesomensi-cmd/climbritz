@@ -232,6 +232,35 @@ class TestSearchEndpoint:
         resp = client.get("/api/climbs/search?benchmark=notabool")
         assert resp.status_code == 422
 
+    # ── A029: "no matching" filter (climbs.is_nomatch, audit D019) ─────────
+    # Fixture flags: UUID-BENCH-001 + UUID-A019-BUCKET-67 → is_nomatch=1.
+
+    def test_search_nomatch_returns_only_flagged(self):
+        resp = client.get("/api/climbs/search?nomatch=true")
+        assert resp.status_code == 200
+        body = resp.json()
+        uuids = {r["uuid"] for r in body["climbs"]}
+        assert uuids == {"UUID-BENCH-001", "UUID-A019-BUCKET-67"}
+        assert all(r["is_nomatch"] is True for r in body["climbs"])
+        assert body["total_count"] == len(body["climbs"])
+
+    def test_search_nomatch_false_does_not_filter(self):
+        resp_off = client.get("/api/climbs/search?nomatch=false")
+        resp_no = client.get("/api/climbs/search")
+        assert {r["uuid"] for r in resp_off.json()["climbs"]} == {
+            r["uuid"] for r in resp_no.json()["climbs"]
+        }
+
+    def test_search_results_carry_is_nomatch(self):
+        resp = client.get("/api/climbs/search")
+        by_uuid = {r["uuid"]: r["is_nomatch"] for r in resp.json()["climbs"]}
+        assert by_uuid["UUID-BENCH-001"] is True
+        assert by_uuid["UUID-BENCH-002"] is False
+
+    def test_search_nomatch_invalid_value_returns_422(self):
+        resp = client.get("/api/climbs/search?nomatch=notabool")
+        assert resp.status_code == 422
+
     # ── B020: envelope + 500-cap ────────────────────────────────────────────
 
     def test_search_response_has_envelope(self):
@@ -302,6 +331,13 @@ class TestDetailEndpoint:
         assert data["setter"] == "test_setter"
         assert len(data["holds"]) == 6
         assert len(data["stats"]) == 2
+        # A029 — detail carries the "no matching" flag (Alpha is flagged).
+        assert data["is_nomatch"] is True
+
+    def test_get_climb_detail_is_nomatch_false(self):
+        resp = client.get("/api/climbs/UUID-BENCH-002")
+        assert resp.status_code == 200
+        assert resp.json()["is_nomatch"] is False
 
     def test_get_climb_with_angle(self):
         resp = client.get("/api/climbs/UUID-BENCH-001?angle=45")

@@ -49,6 +49,9 @@ class ClimbSearchResult(BaseModel):
     angle: int
     ascensionist_count: int
     quality_average: float
+    # A029 — setter's "no matching" rule (climbs.is_nomatch, audit D019).
+    # Drives the "No match" badge on result cards.
+    is_nomatch: bool
     # A021 — populated only when the caller is authenticated AND has a
     # user_climbs row for this (uuid, angle). Discovery uses it to render
     # the ⚡/✓/☆ icon strip on each card.
@@ -76,6 +79,9 @@ class ClimbDetail(BaseModel):
     name: str
     setter: str
     description: str
+    # A029 — setter's "no matching" rule. Drives the prominent
+    # "NO MATCHING" badge on /discover/detail.
+    is_nomatch: bool
     holds: list[HoldPosition]
     stats: list[ClimbStats]
 

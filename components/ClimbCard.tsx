@@ -34,11 +34,23 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
       >
         <div className="text-white font-semibold truncate">{climb.name}</div>
         <div className="text-xs text-zinc-400 truncate">by {climb.setter}</div>
-        <div className="mt-1 flex items-center gap-3">
+        {/* flex-wrap: at 360px the info column is ~200px — stars + ascents
+            + the A029 chip don't always fit on one line; wrapping beats
+            clipping. */}
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <StarRating value={climb.quality_average} size={12} />
           <span className="text-xs text-zinc-500">
             {formatAscents(climb.ascensionist_count)} ascents
           </span>
+          {/* A029 — subtle scannable hint; the loud version lives on detail. */}
+          {climb.is_nomatch && (
+            <span
+              data-testid="nomatch-chip"
+              className="shrink-0 rounded border border-feedback-error/50 px-1 text-[10px] font-semibold uppercase tracking-wide text-feedback-error"
+            >
+              No match
+            </span>
+          )}
         </div>
         {/* B-A021-fix-2.4.1 — state icon strip as its own row INSIDE the
             info column, below the stars/ascents line. Previously absolute-

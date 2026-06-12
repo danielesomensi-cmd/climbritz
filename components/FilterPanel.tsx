@@ -16,6 +16,10 @@ export interface Filters {
    *  (climb_uuid, angle)). A simple boolean: "exclude benchmarks" isn't a
    *  real user need, so no tri-state. */
   benchmark?: boolean;
+  /** A029 — when true, show only climbs with the setter's "no matching"
+   *  rule (climbs.is_nomatch, audit D019). Same boolean idiom as
+   *  benchmark: "exclude no-matching climbs" isn't a real user need. */
+  nomatch?: boolean;
   sort: SortField;
   /** A021.4 — tri-state chip filters surfaced ABOVE this panel on
    *  /discover, not inside it. The panel doesn't render UI for them
@@ -67,6 +71,7 @@ export function countActiveFilters(value: Filters): number {
     (value.minQuality !== undefined ? 1 : 0) +
     (value.moves !== undefined && value.moves !== 'any' ? 1 : 0) +
     (value.benchmark ? 1 : 0) +
+    (value.nomatch ? 1 : 0) +
     (value.sort !== 'popularity' ? 1 : 0) +
     (value.doneFilter !== undefined && value.doneFilter !== 'all' ? 1 : 0) +
     (value.projectFilter !== undefined && value.projectFilter !== 'all' ? 1 : 0)
@@ -85,6 +90,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
       minQuality: undefined,
       moves: 'any',
       benchmark: false,
+      nomatch: false,
       doneFilter: 'all',
       projectFilter: 'all',
     });
@@ -108,6 +114,21 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           onClick={() => onChange({ ...value, benchmark: !value.benchmark })}
         >
           Benchmarks only
+        </Chip>
+      </div>
+
+      {/* Matching (A029) — single boolean toggle on climbs.is_nomatch.
+          Climb-level setter rule, not angle-specific. */}
+      <div>
+        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+          Matching
+        </label>
+        <Chip
+          data-testid="filter-nomatch"
+          selected={!!value.nomatch}
+          onClick={() => onChange({ ...value, nomatch: !value.nomatch })}
+        >
+          No matching only
         </Chip>
       </div>
 

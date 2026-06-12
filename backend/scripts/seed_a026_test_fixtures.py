@@ -36,7 +36,8 @@ CREATE TABLE holes (id INTEGER PRIMARY KEY, x INTEGER, y INTEGER);
 CREATE TABLE placements (id INTEGER PRIMARY KEY, layout_id INTEGER, hole_id INTEGER, set_id INTEGER, default_placement_role_id INTEGER);
 CREATE TABLE climbs (
     uuid TEXT PRIMARY KEY, layout_id INTEGER, setter_username TEXT, name TEXT,
-    description TEXT, angle INTEGER, frames_count INTEGER, frames TEXT, is_listed INTEGER
+    description TEXT, angle INTEGER, frames_count INTEGER, frames TEXT, is_listed INTEGER,
+    is_nomatch INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE climb_stats (
     climb_uuid TEXT, angle INTEGER, display_difficulty REAL, benchmark_difficulty REAL,
@@ -132,8 +133,13 @@ def build():
         )
         stats.append((uuid, 20, 20.0, None, 50, 3.0))
 
+    # A029: column list is explicit so the new is_nomatch column takes its
+    # DEFAULT 0 (the generator pool doesn't care about the matching rule).
     conn.executemany(
-        "INSERT INTO climbs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", climbs
+        "INSERT INTO climbs (uuid, layout_id, setter_username, name,"
+        " description, angle, frames_count, frames, is_listed)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        climbs,
     )
     conn.executemany(
         "INSERT INTO climb_stats VALUES (?, ?, ?, ?, ?, ?)", stats

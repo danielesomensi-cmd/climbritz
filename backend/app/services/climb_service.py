@@ -43,6 +43,7 @@ def _build_search_filters(
     min_quality: float | None,
     moves: str | None,
     benchmark: bool = False,
+    nomatch: bool = False,
     include_uuids: list[str] | None = None,
     exclude_uuids: list[str] | None = None,
 ) -> tuple[str, list]:
@@ -67,6 +68,11 @@ def _build_search_filters(
     climbs are validated at ≤3 angles, and a climb's grade itself varies
     per angle). Since Discovery always sends ``angle``, this naturally
     means "benchmark at the currently selected angle".
+
+    A029: ``nomatch=True`` restricts results to climbs with the setter's
+    "no matching" rule (``climbs.is_nomatch``, climb-level — audit D019:
+    structured flag set by the official app's toggle, authoritative; no
+    description-text heuristics). False (default) applies no filter.
     """
     where_sql = """
         WHERE c.layout_id = 1
@@ -104,6 +110,10 @@ def _build_search_filters(
     # selected angle (when provided), so the NULL check is angle-specific.
     if benchmark:
         where_sql += " AND cs.benchmark_difficulty IS NOT NULL"
+
+    # A029 — "no matching" filter. Climb-level flag (not per-angle).
+    if nomatch:
+        where_sql += " AND c.is_nomatch = 1"
 
     # A019 — moves filter. Counts cyan/middle holds (role 13) by counting
     # 'r13' substrings in the frames blob: each occurrence is 3 chars, so
@@ -149,6 +159,7 @@ def search_climbs(
     min_quality: float | None = None,
     moves: str | None = None,
     benchmark: bool = False,
+    nomatch: bool = False,
     sort: str = "popularity",
     limit: int = 500,
     include_uuids: list[str] | None = None,
@@ -174,6 +185,9 @@ def search_climbs(
         benchmark: When True, only climbs flagged as a benchmark at the
                joined angle (A022). False (default) applies no benchmark
                filter.
+        nomatch: When True, only climbs with the setter's "no matching"
+               rule (A029, ``climbs.is_nomatch``). False (default)
+               applies no filter.
         sort: One of "popularity", "quality", "grade_asc", "grade_desc".
               Defaults to "popularity". Unknown values fall back to popularity.
         limit: Max results to return. Default 500 (B020). The API endpoint
@@ -192,6 +206,7 @@ def search_climbs(
         min_quality=min_quality,
         moves=moves,
         benchmark=benchmark,
+        nomatch=nomatch,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids,
     )
@@ -200,7 +215,7 @@ def search_climbs(
     order_clause = SORT_OPTIONS.get(sort, SORT_OPTIONS["popularity"])
 
     sql = f"""
-        SELECT c.uuid, c.name, c.setter_username,
+        SELECT c.uuid, c.name, c.setter_username, c.is_nomatch,
                cs.angle, cs.display_difficulty, cs.ascensionist_count,
                cs.quality_average,
                dg.boulder_name
@@ -225,6 +240,7 @@ def search_climbs(
             "angle": row["angle"],
             "ascensionist_count": row["ascensionist_count"],
             "quality_average": round(row["quality_average"], 2),
+            "is_nomatch": bool(row["is_nomatch"]),
         }
         for row in rows
     ]
@@ -239,6 +255,7 @@ def count_matching_climbs(
     min_quality: float | None = None,
     moves: str | None = None,
     benchmark: bool = False,
+    nomatch: bool = False,
     include_uuids: list[str] | None = None,
     exclude_uuids: list[str] | None = None,
 ) -> int:
@@ -259,6 +276,7 @@ def count_matching_climbs(
         min_quality=min_quality,
         moves=moves,
         benchmark=benchmark,
+        nomatch=nomatch,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids,
     )
@@ -312,7 +330,8 @@ def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
     with _get_connection() as conn:
         # Fetch climb base data
         climb_row = conn.execute(
-            "SELECT uuid, name, setter_username, description, frames, layout_id "
+            "SELECT uuid, name, setter_username, description, frames, "
+            "layout_id, is_nomatch "
             "FROM climbs WHERE uuid = ? AND is_listed = 1",
             (climb_uuid,),
         ).fetchone()
@@ -399,6 +418,7 @@ def get_climb(climb_uuid: str, angle: int | None = None) -> dict | None:
             "name": climb_row["name"],
             "setter": climb_row["setter_username"],
             "description": climb_row["description"],
+            "is_nomatch": bool(climb_row["is_nomatch"]),
             "holds": enriched_holds,
             "stats": stats,
         }

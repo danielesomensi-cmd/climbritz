@@ -40,6 +40,7 @@ const SAMPLE_RESULTS = [
     angle: 40,
     ascensionist_count: 100,
     quality_average: 3.5,
+    is_nomatch: false,
   },
   {
     uuid: 'uuid-2',
@@ -49,6 +50,7 @@ const SAMPLE_RESULTS = [
     angle: 40,
     ascensionist_count: 50,
     quality_average: 4.5,
+    is_nomatch: false,
   },
 ];
 
@@ -445,6 +447,59 @@ describe('DiscoverPage', () => {
     });
   });
 
+  describe('no-matching filter (A029)', () => {
+    it('toggling No matching only passes nomatch: true to the API', async () => {
+      render(<DiscoverPage />);
+      await waitFor(() => expect(searchClimbsMock).toHaveBeenCalled());
+      searchClimbsMock.mockClear();
+
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-nomatch'));
+
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ nomatch: true }),
+        );
+      });
+    });
+
+    it('enabling the toggle increments the active-filter badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-nomatch'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+    });
+
+    it('toggling off clears nomatch and removes the badge', async () => {
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      fireEvent.click(screen.getByTestId('filter-nomatch'));
+      await waitFor(() => {
+        expect(screen.getByTestId('filter-count-badge')).toHaveTextContent('1');
+      });
+
+      fireEvent.click(screen.getByTestId('filter-nomatch'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('filter-count-badge')).not.toBeInTheDocument();
+      });
+    });
+
+    it('initialises nomatch from a URL param', async () => {
+      searchParamsString = 'nomatch=true';
+      render(<DiscoverPage />);
+      fireEvent.click(screen.getByTestId('filter-toggle'));
+      expect(screen.getByTestId('filter-nomatch').className).toMatch(/bg-orange-500/);
+      await waitFor(() => {
+        expect(searchClimbsMock).toHaveBeenCalledWith(
+          expect.objectContaining({ nomatch: true }),
+        );
+      });
+    });
+  });
+
   describe('search cap + overflow banner (B020)', () => {
     function fakeClimb(i: number) {
       return {
@@ -455,6 +510,7 @@ describe('DiscoverPage', () => {
         angle: 40,
         ascensionist_count: 10,
         quality_average: 3.0,
+        is_nomatch: false,
       };
     }
 

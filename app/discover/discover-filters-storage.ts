@@ -98,6 +98,8 @@ function isDiscoverFilters(x: unknown): x is DiscoverFilters {
   if (f.projectFilter !== undefined && !PROJECT_VALUES.includes(f.projectFilter as string)) return false;
   // A022 — benchmark optional boolean; absent on pre-A022 entries.
   if (f.benchmark !== undefined && typeof f.benchmark !== 'boolean') return false;
+  // A029 — nomatch optional boolean; absent on pre-A029 entries.
+  if (f.nomatch !== undefined && typeof f.nomatch !== 'boolean') return false;
   for (const k of ['gradeMin', 'gradeMax', 'minAscents', 'minQuality']) {
     if (f[k] !== undefined && typeof f[k] !== 'number') return false;
   }

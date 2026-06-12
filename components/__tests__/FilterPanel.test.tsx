@@ -86,6 +86,8 @@ describe('FilterPanel', () => {
       moves: 'any',
       // A022 — reset clears the benchmark toggle.
       benchmark: false,
+      // A029 — reset clears the "no matching" toggle.
+      nomatch: false,
       // A021.4 — reset also clears the new chip filters back to 'all'.
       doneFilter: 'all',
       projectFilter: 'all',
@@ -134,6 +136,52 @@ describe('FilterPanel', () => {
       />,
     );
     const btn = screen.getByTestId('filter-benchmark');
+    expect(btn.className).toMatch(/bg-orange-500/);
+    expect(btn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  // ── A029: "no matching" toggle ────────────────────────────────────────────
+
+  it('renders the No matching toggle', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-nomatch')).toHaveTextContent('No matching only');
+  });
+
+  it('nomatch toggle is inactive by default (no nomatch on the value object)', () => {
+    render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
+    expect(screen.getByTestId('filter-nomatch').className).not.toMatch(/bg-orange-500/);
+    expect(screen.getByTestId('filter-nomatch')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('clicking the nomatch toggle emits nomatch: true', () => {
+    const onChange = jest.fn();
+    render(<FilterPanel value={DEFAULT} onChange={onChange} expanded={true} />);
+    fireEvent.click(screen.getByTestId('filter-nomatch'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ nomatch: true }));
+  });
+
+  it('clicking the nomatch toggle when active emits nomatch: false', () => {
+    const onChange = jest.fn();
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, nomatch: true }}
+        onChange={onChange}
+        expanded={true}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('filter-nomatch'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ nomatch: false }));
+  });
+
+  it('highlights the nomatch toggle when active', () => {
+    render(
+      <FilterPanel
+        value={{ ...DEFAULT, nomatch: true }}
+        onChange={() => {}}
+        expanded={true}
+      />,
+    );
+    const btn = screen.getByTestId('filter-nomatch');
     expect(btn.className).toMatch(/bg-orange-500/);
     expect(btn).toHaveAttribute('aria-pressed', 'true');
   });
@@ -247,5 +295,20 @@ describe('countActiveFilters', () => {
     expect(
       countActiveFilters({ sort: 'quality', gradeMin: 18, benchmark: true }),
     ).toBe(3);
+  });
+
+  it('counts an active nomatch toggle as one active filter (A029)', () => {
+    expect(countActiveFilters({ sort: 'popularity', nomatch: true })).toBe(1);
+  });
+
+  it('does not count nomatch when false or absent', () => {
+    expect(countActiveFilters({ sort: 'popularity', nomatch: false })).toBe(0);
+    expect(countActiveFilters({ sort: 'popularity' })).toBe(0);
+  });
+
+  it('counts nomatch alongside benchmark', () => {
+    expect(
+      countActiveFilters({ sort: 'popularity', benchmark: true, nomatch: true }),
+    ).toBe(2);
   });
 });

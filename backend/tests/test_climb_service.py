@@ -322,6 +322,60 @@ class TestBenchmarkFilter:
         assert count_matching_climbs(angle=45, benchmark=True) == 0
 
 
+class TestNomatchFilter:
+    """A029: "no matching" filter on climbs.is_nomatch (audit D019).
+    Fixture flags (seeded by seed_a029_test_fixtures.py):
+        Benchmark Alpha (UUID-BENCH-001)       → is_nomatch = 1
+        A019 Bucket 6-7 (UUID-A019-BUCKET-67)  → is_nomatch = 1
+        everything else                         → 0
+    Climb-level flag, so unlike benchmark it is NOT angle-specific."""
+
+    def test_nomatch_true_returns_only_flagged(self):
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(nomatch=True)
+        uuids = {r["uuid"] for r in results}
+        assert uuids == {"UUID-BENCH-001", "UUID-A019-BUCKET-67"}
+        assert all(r["is_nomatch"] is True for r in results)
+
+    def test_nomatch_false_is_no_filter(self):
+        from app.services.climb_service import search_climbs
+
+        off = {r["uuid"] for r in search_climbs(nomatch=False)}
+        default = {r["uuid"] for r in search_climbs()}
+        assert off == default
+
+    def test_results_carry_is_nomatch_field(self):
+        from app.services.climb_service import search_climbs
+
+        by_uuid = {r["uuid"]: r["is_nomatch"] for r in search_climbs()}
+        assert by_uuid["UUID-BENCH-001"] is True
+        assert by_uuid["UUID-BENCH-002"] is False
+
+    def test_nomatch_combined_with_benchmark(self):
+        """Alpha is both a benchmark @40° and nomatch; Crimp is benchmark
+        only — the intersection keeps Alpha alone."""
+        from app.services.climb_service import search_climbs
+
+        results = search_climbs(angle=40, benchmark=True, nomatch=True)
+        assert [r["uuid"] for r in results] == ["UUID-BENCH-001"]
+
+    def test_count_respects_nomatch(self):
+        from app.services.climb_service import (
+            count_matching_climbs,
+            search_climbs,
+        )
+
+        kwargs = dict(nomatch=True)
+        assert count_matching_climbs(**kwargs) == len(search_climbs(**kwargs))
+
+    def test_detail_carries_is_nomatch(self):
+        from app.services.climb_service import get_climb
+
+        assert get_climb("UUID-BENCH-001")["is_nomatch"] is True
+        assert get_climb("UUID-BENCH-002")["is_nomatch"] is False
+
+
 class TestCountMatchingClimbs:
     """B020: count_matching_climbs shares the same WHERE-clause builder as
     search_climbs, so the count must equal len(search_climbs(...)) when the

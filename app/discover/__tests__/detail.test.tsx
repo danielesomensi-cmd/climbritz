@@ -58,6 +58,7 @@ const SAMPLE_CLIMB = {
   name: 'The Test Send',
   setter: 'tester',
   description: 'A nice warmup problem.',
+  is_nomatch: false,
   holds: [
     { placement_id: 1001, role: 'start', x: 0, y: 152, set_id: 1 },
     { placement_id: 1002, role: 'middle', x: 8, y: 144, set_id: 1 },
@@ -115,6 +116,23 @@ describe('ClimbDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('back-link')).toHaveAttribute('href', '/discover');
     });
+  });
+
+  // A029 — prominent NO MATCHING badge in the title block.
+  it('renders the NO MATCHING badge when the climb is flagged', async () => {
+    getClimbDetailMock.mockResolvedValue({ ...SAMPLE_CLIMB, is_nomatch: true });
+    render(<ClimbDetailPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId('nomatch-badge')).toHaveTextContent('No matching');
+    });
+  });
+
+  it('renders no badge when the climb is not flagged', async () => {
+    render(<ClimbDetailPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId('climb-name')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('nomatch-badge')).not.toBeInTheDocument();
   });
 
   it('shows an error if the API rejects', async () => {

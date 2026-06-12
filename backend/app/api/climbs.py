@@ -112,6 +112,14 @@ async def search(
             "angle-specific by DB design."
         ),
     ),
+    nomatch: bool = Query(
+        default=False,
+        description=(
+            "A029 — when true, return only climbs with the setter's "
+            "'no matching' rule (climbs.is_nomatch = 1, climb-level). "
+            "False (default) applies no filter."
+        ),
+    ),
     done_filter: DoneFilter = Query(
         default="all",
         description=(
@@ -174,6 +182,7 @@ async def search(
         min_quality=min_quality,
         moves=moves,
         benchmark=benchmark,
+        nomatch=nomatch,
         sort=sort,
         limit=limit,
         include_uuids=include_uuids,
@@ -188,6 +197,7 @@ async def search(
         min_quality=min_quality,
         moves=moves,
         benchmark=benchmark,
+        nomatch=nomatch,
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids or None,
     )

@@ -173,6 +173,17 @@ function ClimbDetailPageInner() {
                   </span>
                   <span className="text-zinc-400">{stats.angle}°</span>
                 </div>
+                {/* A029 — setter's "no matching" rule. Deliberately loud:
+                    the user must see it BEFORE getting on the wall. Own
+                    line so the 360px header never wraps badly. */}
+                {climb.is_nomatch && (
+                  <div
+                    data-testid="nomatch-badge"
+                    className="mt-2 inline-flex items-center rounded-full bg-feedback-error px-3 py-1 text-xs font-bold uppercase tracking-widest text-zinc-950"
+                  >
+                    No matching
+                  </div>
+                )}
               </div>
             </div>
 

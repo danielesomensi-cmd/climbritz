@@ -11,6 +11,7 @@ const SAMPLE: ClimbSearchResult = {
   angle: 40,
   ascensionist_count: 1234,
   quality_average: 4.2,
+  is_nomatch: false,
 };
 
 describe('ClimbCard', () => {
@@ -37,6 +38,19 @@ describe('ClimbCard', () => {
     render(<ClimbCard climb={SAMPLE} />);
     const link = screen.getByTestId('climb-card-abc-123');
     expect(link).toHaveAttribute('href', '/discover/detail?id=abc-123&angle=40');
+  });
+
+  // A029 — subtle "No match" hint on flagged climbs; loud badge lives on detail.
+  describe('A029 — no-matching chip', () => {
+    it('renders the No match chip when is_nomatch is true', () => {
+      render(<ClimbCard climb={{ ...SAMPLE, is_nomatch: true }} />);
+      expect(screen.getByTestId('nomatch-chip')).toHaveTextContent('No match');
+    });
+
+    it('renders no chip when is_nomatch is false', () => {
+      render(<ClimbCard climb={SAMPLE} />);
+      expect(screen.queryByTestId('nomatch-chip')).not.toBeInTheDocument();
+    });
   });
 
   // A021.4.1 — StateIcons mount when the backend overlay attaches

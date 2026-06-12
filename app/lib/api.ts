@@ -205,6 +205,9 @@ export interface ClimbSearchResult {
   angle: number;
   ascensionist_count: number;
   quality_average: number;
+  /** A029 — setter's "no matching" rule (climbs.is_nomatch, audit D019).
+   *  Drives the "No match" badge on result cards. */
+  is_nomatch: boolean;
   /** A021.4 — populated only when the request is authenticated AND the
    *  backend found a user_climbs row for this (uuid, angle). Discovery
    *  uses it to render ⚡/✓/☆ icons on each card. */
@@ -240,6 +243,9 @@ export interface ClimbDetail {
   name: string;
   setter: string;
   description: string;
+  /** A029 — setter's "no matching" rule. Drives the prominent
+   *  NO MATCHING badge on /discover/detail. */
+  is_nomatch: boolean;
   holds: HoldPosition[];
   stats: ClimbStats[];
 }
@@ -254,6 +260,8 @@ export interface ClimbSearchParams {
   moves?: MovesFilter;
   // A022 — when true, restrict to benchmark climbs at the selected angle.
   benchmark?: boolean;
+  // A029 — when true, restrict to climbs with the "no matching" rule.
+  nomatch?: boolean;
   sort?: SortField;
   limit?: number;
   // A021.4 — chip filter params. Omit or pass 'all' to skip the filter
@@ -275,6 +283,7 @@ export async function searchClimbs(
   if (params.min_quality !== undefined) qs.set('min_quality', String(params.min_quality));
   if (params.moves && params.moves !== 'any') qs.set('moves', params.moves);
   if (params.benchmark) qs.set('benchmark', 'true');
+  if (params.nomatch) qs.set('nomatch', 'true');
   if (params.sort) qs.set('sort', params.sort);
   if (params.done_filter && params.done_filter !== 'all') qs.set('done_filter', params.done_filter);
   if (params.project_filter && params.project_filter !== 'all') qs.set('project_filter', params.project_filter);
