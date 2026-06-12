@@ -10,9 +10,9 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/ble-test',
 }));
 
-import type { BleStatus } from '../use-kilter-ble';
+import type { BleStatus } from '@/components/BleProvider';
 
-// Controllable mock for the BLE hook so we can drive status + spy on sends.
+// Controllable mock for the shared BLE context so we can drive status + spy on sends.
 const sendLEDsMock = jest.fn().mockResolvedValue(undefined);
 const sendAllOffMock = jest.fn().mockResolvedValue(undefined);
 const connectMock = jest.fn();
@@ -22,8 +22,8 @@ const clearErrorMock = jest.fn();
 let mockStatus: BleStatus = 'connected';
 let mockIsCapacitorNative = true;
 
-jest.mock('../use-kilter-ble', () => ({
-  useKilterBle: () => ({
+jest.mock('@/components/BleProvider', () => ({
+  useBle: () => ({
     status: mockStatus,
     errorMessage: null,
     lastError: null,

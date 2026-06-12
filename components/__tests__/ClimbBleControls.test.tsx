@@ -1,11 +1,11 @@
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import type { BleStatus } from '@/app/ble-test/use-kilter-ble';
+import type { BleStatus } from '@/components/BleProvider';
 import type { EncoderHold } from '@/lib/ble/kilter-protocol';
 
-// Controllable mocks for the BLE hook + Capacitor so we can drive status and
-// spy on sendLEDs / force the "native" code path in jsdom.
+// Controllable mocks for the shared BLE context + Capacitor so we can drive
+// status and spy on sendLEDs / force the "native" code path in jsdom.
 const sendLEDsMock = jest.fn().mockResolvedValue(undefined);
 const sendAllOffMock = jest.fn().mockResolvedValue(undefined);
 const connectMock = jest.fn();
@@ -15,8 +15,8 @@ const clearErrorMock = jest.fn();
 let mockStatus: BleStatus = 'connected';
 let mockIsCapacitorNative = true;
 
-jest.mock('@/app/ble-test/use-kilter-ble', () => ({
-  useKilterBle: () => ({
+jest.mock('@/components/BleProvider', () => ({
+  useBle: () => ({
     status: mockStatus,
     errorMessage: null,
     lastError: null,

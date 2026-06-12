@@ -5,7 +5,7 @@
 // (D18-2/D18-10): connected = emerald (state-send / "connected"), busy = amber,
 // sending = blue (feedback-info), error = red.
 
-import type { BleStatus } from '@/app/ble-test/use-kilter-ble';
+import type { BleStatus } from '@/components/BleProvider';
 
 export const STATUS_COLORS: Record<BleStatus, string> = {
   idle: 'bg-zinc-500',

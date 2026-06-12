@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter_Tight } from "next/font/google";
 import ClerkSpaProvider from "@/components/ClerkSpaProvider";
+import { BleProvider } from "@/components/BleProvider";
 import IosSafeArea from "@/components/IosSafeArea";
 import "./globals.css";
 import "./safe-area.css";
@@ -50,7 +51,11 @@ export default function RootLayout({
         {/* B034 — native-iOS safe-area probe; sets --safe-top fallback when the
             WKWebView fails to resolve env(safe-area-inset-top). No-op on web. */}
         <IosSafeArea />
-        <ClerkSpaProvider>{children}</ClerkSpaProvider>
+        <ClerkSpaProvider>
+          {/* B035 — BLE state lives at the root so the Kilter Board stays
+              connected across SPA navigation; pages consume it via useBle(). */}
+          <BleProvider>{children}</BleProvider>
+        </ClerkSpaProvider>
       </body>
     </html>
   );

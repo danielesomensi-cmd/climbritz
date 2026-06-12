@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { useKilterBle } from '@/app/ble-test/use-kilter-ble';
+import { useBle } from '@/components/BleProvider';
 import type { EncoderHold } from '@/lib/ble/kilter-protocol';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -25,8 +25,9 @@ interface ClimbBleControlsProps {
 }
 
 /**
- * BLE control bar for the Discover climb detail page. Reuses the same
- * BLE hook as /ble-test so connect/send/disconnect behaviour is identical.
+ * BLE control bar for the Discover climb detail page. Consumes the shared
+ * BleProvider context (B035) so connection state is global — connect here,
+ * stay connected anywhere in the app.
  */
 export default function ClimbBleControls({
   ledCommands,
@@ -44,7 +45,7 @@ export default function ClimbBleControls({
     sendAllOffLEDs,
     clearError,
     isCapacitorNative,
-  } = useKilterBle();
+  } = useBle();
 
   // Capacitor.isNativePlatform() is stable across the hook lifetime, but we
   // hydrate-mount the UI in a client-only way to avoid SSR mismatches.

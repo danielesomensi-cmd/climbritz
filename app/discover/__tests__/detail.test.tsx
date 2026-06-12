@@ -6,6 +6,24 @@ jest.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ isLoaded: true, isSignedIn: true }),
 }));
 
+// B035: ClimbBleControls consumes the shared BleProvider context, which lives
+// in the root layout — absent here. Mock the consumer hook with the same
+// non-native idle value the page sees in jsdom.
+jest.mock('@/components/BleProvider', () => ({
+  useBle: () => ({
+    status: 'idle',
+    errorMessage: null,
+    lastError: null,
+    connectedDevice: null,
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    sendLEDs: jest.fn(),
+    sendAllOffLEDs: jest.fn(),
+    clearError: jest.fn(),
+    isCapacitorNative: false,
+  }),
+}));
+
 import ClimbDetailPage from '../detail/page';
 import { saveFilteredList, clearFilteredList } from '../filtered-list-storage';
 

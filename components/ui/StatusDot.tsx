@@ -1,4 +1,4 @@
-import type { BleStatus } from '@/app/ble-test/use-kilter-ble';
+import type { BleStatus } from '@/components/BleProvider';
 import { STATUS_COLORS } from '@/lib/ble/status';
 
 // B033 Phase 3 — BLE status indicator dot (D18-11). Colour comes from the single

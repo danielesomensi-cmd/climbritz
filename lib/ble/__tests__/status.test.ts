@@ -1,5 +1,5 @@
 import { STATUS_COLORS, STATUS_LABELS, BUSY_STATUSES } from '../status';
-import type { BleStatus } from '@/app/ble-test/use-kilter-ble';
+import type { BleStatus } from '@/components/BleProvider';
 
 const ALL: BleStatus[] = [
   'idle',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useKilterBle } from './use-kilter-ble';
+import { useBle } from '@/components/BleProvider';
 import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
 import BottomNav from '@/components/BottomNav';
@@ -29,7 +29,7 @@ function BleTestContent() {
     sendAllOffLEDs,
     clearError,
     isCapacitorNative,
-  } = useKilterBle();
+  } = useBle();
   const [activePreset, setActivePreset] = useState<number | null>(null);
   const [activeHolds, setActiveHolds] = useState<LedHold[]>([]);
   const autoApplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -29,6 +29,12 @@ export async function disconnect(deviceId: string): Promise<void> {
   await BleClient.disconnect(deviceId);
 }
 
+// Read-only query of the OS's currently connected devices matching the given
+// services. Used by the app-resume state sync (B035) — never connects.
+export async function getConnectedDevices(serviceUUIDs: string[]): Promise<BleDevice[]> {
+  return BleClient.getConnectedDevices(serviceUUIDs);
+}
+
 export async function writeWithoutResponse(
   deviceId: string,
   service: string,
