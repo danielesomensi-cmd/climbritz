@@ -47,7 +47,7 @@ const TILES: Tile[] = [
     // A026: AI problem generator (remix). New top section — the most
     // "AI" thing a free user can do: pick filters → generate → light up.
     href: '/generate',
-    label: 'Create with AI',
+    label: 'AI Create',
     subtitle: 'Generate a problem',
     icon: '✨',
   },

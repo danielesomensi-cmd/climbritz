@@ -26,6 +26,7 @@ import LoadingState from '@/components/ui/LoadingState';
 import LogSection from '@/components/LogSection';
 import RecentLogs from '@/components/RecentLogs';
 import { climbToLedCommands } from '../../discover/detail/climb-to-leds';
+import { saveCreateDraft } from '../../create/draft-storage';
 
 const ROLE_LABELS: Record<string, string> = {
   start: 'Start',
@@ -138,6 +139,24 @@ function MyProblemDetailPageInner() {
     } catch {
       // revert silently
     }
+  };
+
+  // A031 — open the hold editor pre-loaded with this problem.
+  const handleEditHolds = () => {
+    if (!problem) return;
+    saveCreateDraft({
+      mode: 'edit',
+      uuid: problem.uuid,
+      name: problem.name,
+      grade: problem.grade,
+      angle: problem.angle,
+      holds: problem.holds.map((h) => ({
+        placement_id: h.placement_id,
+        role: h.role,
+      })),
+      hasLogs: problem.ascent_count > 0,
+    });
+    router.push('/create');
   };
 
   const handleDelete = async () => {
@@ -275,6 +294,16 @@ function MyProblemDetailPageInner() {
             {userClimb && userClimb.recent_logs.length > 0 && (
               <RecentLogs logs={userClimb.recent_logs} limit={10} />
             )}
+
+            {/* A031 — hold editor entry point. */}
+            <button
+              type="button"
+              data-testid="edit-holds-btn"
+              onClick={handleEditHolds}
+              className="w-full py-2 text-sm text-orange-400 hover:text-orange-300"
+            >
+              Edit holds
+            </button>
 
             <button
               type="button"

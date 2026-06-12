@@ -390,16 +390,32 @@ export interface MyClimbDetail extends MyClimb {
 
 /** POST /api/my-climbs — save a generated problem. The server validates
  *  frames, prefills the grade from the seed, and AI-names it (with a
- *  local fallback — saving never blocks on naming). */
+ *  local fallback — saving never blocks on naming). A031: optional
+ *  name/grade overrides (the generate page persists the DISPLAYED name;
+ *  the editor sets both). */
 export async function saveMyClimb(params: {
   frames: string;
   angle: number;
   seed_climb_uuid?: string | null;
+  name?: string;
+  grade?: string;
 }): Promise<MyClimb> {
   return apiFetch<MyClimb>('/api/my-climbs', {
     method: 'POST',
     body: JSON.stringify(params),
   });
+}
+
+/** A031 — name-on-generate. Server: Gemini with a 2s budget, local
+ *  adjective+noun fallback; never fails. */
+export async function proposeName(params: {
+  angle?: number;
+  grade?: string;
+}): Promise<{ name: string; source: 'ai' | 'fallback' }> {
+  return apiFetch<{ name: string; source: 'ai' | 'fallback' }>(
+    '/api/my-climbs/propose-name',
+    { method: 'POST', body: JSON.stringify(params) },
+  );
 }
 
 export async function listMyClimbs(): Promise<MyClimb[]> {
@@ -412,7 +428,7 @@ export async function getMyClimbDetail(uuid: string): Promise<MyClimbDetail> {
 
 export async function patchMyClimb(
   uuid: string,
-  body: { name?: string; grade?: string },
+  body: { name?: string; grade?: string; frames?: string },
 ): Promise<MyClimb> {
   return apiFetch<MyClimb>(`/api/my-climbs/${uuid}`, {
     method: 'PATCH',

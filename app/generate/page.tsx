@@ -8,14 +8,17 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   generateProblem,
+  proposeName,
   saveMyClimb,
   ApiError,
   type GenerateResponse,
   type HoldPosition,
   type MovesFilter,
 } from '@/app/lib/api';
+import { saveCreateDraft } from '../create/draft-storage';
 import { GRADES } from '@/app/lib/grades';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
@@ -55,6 +58,17 @@ const ROLE_LABELS: Record<string, string> = {
 const DEFAULT_GRADE_MIN = 16;
 const DEFAULT_GRADE_MAX = 20;
 
+// A031 — client-side fallback names when /propose-name itself errors.
+// Tiny on purpose; the server has the richer corpus + the Gemini path.
+const FALLBACK_ADJECTIVES = ['Sneaky', 'Crimpy', 'Spicy', 'Pumpy', 'Rowdy', 'Velvet'];
+const FALLBACK_NOUNS = ['Gaston', 'Deadpoint', 'Crux', 'Kneebar', 'Mantle', 'Traverse'];
+
+function localFallbackName(): string {
+  const a = FALLBACK_ADJECTIVES[Math.floor(Math.random() * FALLBACK_ADJECTIVES.length)];
+  const n = FALLBACK_NOUNS[Math.floor(Math.random() * FALLBACK_NOUNS.length)];
+  return `${a} ${n}`;
+}
+
 export default function GeneratePage() {
   return (
     <AuthGuard>
@@ -64,6 +78,7 @@ export default function GeneratePage() {
 }
 
 function GeneratePageInner() {
+  const router = useRouter();
   const [angle, setAngle] = useState(DEFAULT_ANGLE);
   const [gradeMin, setGradeMin] = useState(DEFAULT_GRADE_MIN);
   const [gradeMax, setGradeMax] = useState(DEFAULT_GRADE_MAX);
@@ -83,6 +98,13 @@ function GeneratePageInner() {
   const [savedGen, setSavedGen] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // A031 — name-on-generate. The board NEVER waits for the name: the name
+  // request fires in parallel and fades in. genRef is the stale guard —
+  // rapid re-rolls discard any response that isn't for the latest gen.
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [nameLoading, setNameLoading] = useState(false);
+  const genRef = useRef(0);
   useEffect(
     () => () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -104,8 +126,30 @@ function GeneratePageInner() {
         moves,
       });
       setResult(res);
-      setGenCount((c) => c + 1);
+      const gen = genRef.current + 1;
+      genRef.current = gen;
+      setGenCount(gen);
       setSavedGen(null); // fresh generation → saveable again
+
+      // A031 — fire the name request in parallel (board already rendered).
+      setDisplayName(null);
+      setNameLoading(true);
+      const midDifficulty = Math.round((gradeMin + gradeMax) / 2);
+      const gradeHint = GRADES.find((g) => g.difficulty === midDifficulty);
+      proposeName({
+        angle,
+        grade: gradeHint ? `${gradeHint.font}/${gradeHint.v}` : undefined,
+      })
+        .then((r) => {
+          if (genRef.current !== gen) return; // stale — a newer roll exists
+          setDisplayName(r.name);
+          setNameLoading(false);
+        })
+        .catch(() => {
+          if (genRef.current !== gen) return;
+          setDisplayName(localFallbackName());
+          setNameLoading(false);
+        });
     } catch (e) {
       // 422 carries the "loosen your filters" message from the backend.
       if (e instanceof ApiError) setError(e.message);
@@ -148,6 +192,9 @@ function GeneratePageInner() {
         frames,
         angle: result.meta.filters.angle,
         seed_climb_uuid: result.meta.seed_uuid,
+        // A031 — persist the name the user is LOOKING at; when it hasn't
+        // resolved yet, the server names it (v1 behavior).
+        ...(displayName ? { name: displayName } : {}),
       });
       setSavedGen(genCount);
       setToast(`Saved as “${saved.name}”`);
@@ -162,6 +209,36 @@ function GeneratePageInner() {
     }
   };
 
+  // A031 — hand the current generation to the hold editor (sessionStorage,
+  // not query string: frames can be long).
+  const handleEdit = () => {
+    if (!result) return;
+    saveCreateDraft({
+      mode: 'new',
+      name: displayName ?? '',
+      grade: null, // server prefills from seed when absent; editor can set it
+      angle: result.meta.filters.angle,
+      holds: result.holds.map((h) => ({
+        placement_id: h.placement_id,
+        role: h.role,
+      })),
+      seed_climb_uuid: result.meta.seed_uuid,
+    });
+    router.push('/create');
+  };
+
+  // A031 — blank-board entry point.
+  const handleStartBlank = () => {
+    saveCreateDraft({
+      mode: 'new',
+      name: '',
+      grade: null,
+      angle,
+      holds: [],
+    });
+    router.push('/create');
+  };
+
   const roleCounts = holdsForView.reduce<Record<string, number>>((acc, h) => {
     acc[h.role] = (acc[h.role] ?? 0) + 1;
     return acc;
@@ -169,7 +246,7 @@ function GeneratePageInner() {
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
-      <PageHeader back={{ href: '/', label: 'Home', testid: 'back-link' }} title="Create with AI" />
+      <PageHeader back={{ href: '/', label: 'Home', testid: 'back-link' }} title="AI Create" />
 
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-5">
         {/* ── Filters ───────────────────────────────────────────────── */}
@@ -285,6 +362,17 @@ function GeneratePageInner() {
             {result ? 'Generate again' : 'Generate'}
           </Button>
 
+          {/* A031 — second creation path: paint a problem from scratch. */}
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            data-testid="start-blank-btn"
+            onClick={handleStartBlank}
+          >
+            Start from blank
+          </Button>
+
           {error && (
             <p data-testid="generate-error" className="text-sm text-red-400 text-center">
               {error}
@@ -295,18 +383,49 @@ function GeneratePageInner() {
         {/* ── Result ────────────────────────────────────────────────── */}
         {result && (
           <div data-testid="generate-result" className="space-y-5">
-            {/* A030 — one-tap save; the generate loop stays untouched. */}
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-full"
-              data-testid="save-btn"
-              onClick={handleSave}
-              loading={saving}
-              disabled={savedGen === genCount}
-            >
-              {savedGen === genCount ? 'Saved ✓' : 'Save to My Problems'}
-            </Button>
+            {/* A031 — name-on-generate: big display name above the board,
+                shimmer while the (parallel) request resolves. The board
+                itself renders immediately. */}
+            <div className="text-center min-h-[2.25rem]" aria-live="polite">
+              {displayName ? (
+                <h2
+                  data-testid="generated-name"
+                  className="text-2xl font-bold text-orange-400"
+                >
+                  {displayName}
+                </h2>
+              ) : nameLoading ? (
+                <div
+                  data-testid="generated-name-skeleton"
+                  className="mx-auto h-8 w-48 rounded bg-zinc-800 animate-pulse"
+                />
+              ) : null}
+            </div>
+
+            {/* A030/A031 — Save as is keeps the one-tap loop; Edit opens
+                the hold editor pre-loaded with this generation. */}
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                data-testid="save-btn"
+                onClick={handleSave}
+                loading={saving}
+                disabled={savedGen === genCount}
+              >
+                {savedGen === genCount ? 'Saved ✓' : 'Save as is'}
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                data-testid="edit-btn"
+                onClick={handleEdit}
+              >
+                Edit
+              </Button>
+            </div>
 
             {/* BLE — light up the generated problem. genCount drives the
                 auto-send on re-roll when the board is connected. */}

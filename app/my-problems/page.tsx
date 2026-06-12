@@ -78,7 +78,7 @@ function MyProblemsPageInner() {
                 className="text-orange-400 font-semibold"
                 data-testid="empty-create-link"
               >
-                Create with AI →
+                AI Create →
               </Link>
             }
           />

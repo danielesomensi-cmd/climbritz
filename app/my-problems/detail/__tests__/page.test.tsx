@@ -48,6 +48,7 @@ import {
   patchMyClimb,
   deleteMyClimb,
 } from '@/app/lib/api';
+import { loadCreateDraft } from '../../../create/draft-storage';
 
 const detailMock = getMyClimbDetail as jest.MockedFunction<typeof getMyClimbDetail>;
 const userClimbMock = getUserClimb as jest.MockedFunction<typeof getUserClimb>;
@@ -143,6 +144,26 @@ describe('MyProblemDetailPage', () => {
     expect(confirmSpy).toHaveBeenCalled();
     expect(pushMock).toHaveBeenCalledWith('/my-problems');
     confirmSpy.mockRestore();
+  });
+
+  // A031 — hold editor entry point.
+  it('Edit holds writes an edit-mode draft and routes to /create', async () => {
+    render(<MyProblemDetailPage />);
+    await waitFor(() => screen.getByTestId('edit-holds-btn'));
+    fireEvent.click(screen.getByTestId('edit-holds-btn'));
+
+    const draft = loadCreateDraft();
+    expect(draft).not.toBeNull();
+    expect(draft!.mode).toBe('edit');
+    expect(draft!.uuid).toBe('GEN-1');
+    expect(draft!.name).toBe('Sneaky Gaston');
+    expect(draft!.hasLogs).toBe(true); // ascent_count = 1
+    expect(draft!.holds).toEqual([
+      { placement_id: 1001, role: 'start' },
+      { placement_id: 1002, role: 'middle' },
+      { placement_id: 1004, role: 'finish' },
+    ]);
+    expect(pushMock).toHaveBeenCalledWith('/create');
   });
 
   it('delete aborted at confirm does nothing', async () => {

@@ -6,14 +6,21 @@ jest.mock('@clerk/clerk-react', () => ({
 }));
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ push: pushMock, replace: jest.fn() }),
   usePathname: () => '/generate',
 }));
 
 jest.mock('@/app/lib/api', () => {
   const actual = jest.requireActual('@/app/lib/api');
-  return { ...actual, generateProblem: jest.fn(), saveMyClimb: jest.fn() };
+  return {
+    ...actual,
+    generateProblem: jest.fn(),
+    saveMyClimb: jest.fn(),
+    proposeName: jest.fn(),
+  };
 });
+
+const pushMock = jest.fn();
 
 // Heavy children → lightweight stubs (BLE / board tested elsewhere).
 jest.mock('@/components/ClimbBoardView', () => ({
@@ -31,10 +38,12 @@ jest.mock('@/components/BottomNav', () => ({
 }));
 
 import GeneratePage from '../page';
-import { generateProblem, saveMyClimb, ApiError } from '@/app/lib/api';
+import { generateProblem, proposeName, saveMyClimb, ApiError } from '@/app/lib/api';
+import { loadCreateDraft } from '../../create/draft-storage';
 
 const generateMock = generateProblem as jest.MockedFunction<typeof generateProblem>;
 const saveMock = saveMyClimb as jest.MockedFunction<typeof saveMyClimb>;
+const proposeNameMock = proposeName as jest.MockedFunction<typeof proposeName>;
 
 const SAVED = {
   uuid: 'GEN-UUID-1',
@@ -68,6 +77,11 @@ const RESULT = {
 beforeEach(() => {
   generateMock.mockReset();
   saveMock.mockReset();
+  proposeNameMock.mockReset();
+  // A031 — name-on-generate fires on every generation; default resolved.
+  proposeNameMock.mockResolvedValue({ name: 'Witty Deadpoint', source: 'ai' });
+  pushMock.mockReset();
+  window.sessionStorage.clear();
 });
 
 describe('GeneratePage', () => {
@@ -155,11 +169,13 @@ describe('GeneratePage', () => {
       await generateOnce();
       fireEvent.click(screen.getByTestId('save-btn'));
       await waitFor(() =>
-        expect(saveMock).toHaveBeenCalledWith({
-          frames: 'p1001r12p1002r13p1003r13p1004r14p1005r15',
-          angle: 40,
-          seed_climb_uuid: 'SEED-1',
-        }),
+        expect(saveMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            frames: 'p1001r12p1002r13p1003r13p1004r14p1005r15',
+            angle: 40,
+            seed_climb_uuid: 'SEED-1',
+          }),
+        ),
       );
     });
 
@@ -186,7 +202,7 @@ describe('GeneratePage', () => {
       // Re-roll → saveable again.
       fireEvent.click(screen.getByTestId('generate-btn'));
       await waitFor(() =>
-        expect(screen.getByTestId('save-btn')).toHaveTextContent('Save to My Problems'),
+        expect(screen.getByTestId('save-btn')).toHaveTextContent('Save as is'),
       );
       expect(screen.getByTestId('save-btn')).not.toBeDisabled();
     });
@@ -208,6 +224,125 @@ describe('GeneratePage', () => {
         'href',
         '/my-problems',
       );
+    });
+  });
+
+  // ── A031: name-on-generate + editor entry points + rename ─────────────
+
+  describe('A031 — name-on-generate', () => {
+    it('shows the AI name above the board after a generation', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toHaveTextContent('Witty Deadpoint'),
+      );
+      expect(proposeNameMock).toHaveBeenCalledWith(
+        expect.objectContaining({ angle: 40 }),
+      );
+    });
+
+    it('the board renders without waiting for the name (skeleton shown)', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      proposeNameMock.mockReturnValue(new Promise(() => {})); // never resolves
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generate-result')).toBeInTheDocument(),
+      );
+      expect(screen.getByTestId('mock-board')).toBeInTheDocument();
+      expect(screen.getByTestId('generated-name-skeleton')).toBeInTheDocument();
+      expect(screen.queryByTestId('generated-name')).not.toBeInTheDocument();
+    });
+
+    it('stale guard: a slow name from an old roll never lands on a new one', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      let resolveFirst!: (v: { name: string; source: 'ai' | 'fallback' }) => void;
+      proposeNameMock
+        .mockImplementationOnce(
+          () => new Promise((res) => { resolveFirst = res; }),
+        )
+        .mockResolvedValueOnce({ name: 'Fresh Name', source: 'ai' });
+
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() => expect(proposeNameMock).toHaveBeenCalledTimes(1));
+
+      // Re-roll BEFORE the first name resolves.
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toHaveTextContent('Fresh Name'),
+      );
+
+      // The stale response resolves now — it must be discarded.
+      resolveFirst({ name: 'Stale Name', source: 'ai' });
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toHaveTextContent('Fresh Name'),
+      );
+    });
+
+    it('falls back to a local client name when the request errors', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      proposeNameMock.mockRejectedValue(new Error('offline'));
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toBeInTheDocument(),
+      );
+      expect(screen.getByTestId('generated-name').textContent).toMatch(/\w+ \w+/);
+    });
+
+    it('Save as is persists the DISPLAYED name', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      saveMock.mockResolvedValue(SAVED);
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toHaveTextContent('Witty Deadpoint'),
+      );
+      fireEvent.click(screen.getByTestId('save-btn'));
+      await waitFor(() =>
+        expect(saveMock).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'Witty Deadpoint' }),
+        ),
+      );
+    });
+  });
+
+  describe('A031 — editor entry points + AI Create rename', () => {
+    it('Edit writes the draft (holds + displayed name + seed) and routes to /create', async () => {
+      generateMock.mockResolvedValue(RESULT);
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('generate-btn'));
+      await waitFor(() =>
+        expect(screen.getByTestId('generated-name')).toHaveTextContent('Witty Deadpoint'),
+      );
+      fireEvent.click(screen.getByTestId('edit-btn'));
+
+      const draft = loadCreateDraft();
+      expect(draft).not.toBeNull();
+      expect(draft!.mode).toBe('new');
+      expect(draft!.name).toBe('Witty Deadpoint');
+      expect(draft!.angle).toBe(40);
+      expect(draft!.seed_climb_uuid).toBe('SEED-1');
+      expect(draft!.holds).toHaveLength(RESULT.holds.length);
+      expect(pushMock).toHaveBeenCalledWith('/create');
+    });
+
+    it('Start from blank writes an empty draft and routes to /create', () => {
+      render(<GeneratePage />);
+      fireEvent.click(screen.getByTestId('start-blank-btn'));
+      const draft = loadCreateDraft();
+      expect(draft).not.toBeNull();
+      expect(draft!.mode).toBe('new');
+      expect(draft!.holds).toEqual([]);
+      expect(draft!.name).toBe('');
+      expect(pushMock).toHaveBeenCalledWith('/create');
+    });
+
+    it('page header says AI Create', () => {
+      render(<GeneratePage />);
+      expect(screen.getByText('AI Create')).toBeInTheDocument();
     });
   });
 });

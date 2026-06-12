@@ -39,10 +39,10 @@ describe('Home Page', () => {
     expect(screen.getByText('History')).toBeInTheDocument();
   });
 
-  // A026 — new top tile: AI problem generator.
-  it('renders the Create with AI tile pointing at /generate', () => {
+  // A026 — top tile: AI problem generator. A031 renamed it "AI Create".
+  it('renders the AI Create tile pointing at /generate', () => {
     render(<Home />);
-    const link = screen.getByText('Create with AI').closest('a');
+    const link = screen.getByText('AI Create').closest('a');
     expect(link).toHaveAttribute('href', '/generate');
     expect(screen.getByText('Generate a problem')).toBeInTheDocument();
   });
