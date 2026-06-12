@@ -15,6 +15,11 @@ MovesFilter = Literal["any", "le5", "6-7", "8-10", "gt10"]
 DoneFilter = Literal["all", "only", "exclude"]
 ProjectFilter = Literal["all", "only", "exclude"]
 
+# A030 — My Problems merge mode. "include" (default) = BoardLib results plus
+# the user's saved generated problems prepended; "only" = just the user's
+# problems. Ignored when unauthenticated (like done_filter).
+MyProblemsFilter = Literal["include", "only"]
+
 
 class HoldPosition(BaseModel):
     """A single hold on a Kilter Board problem."""
@@ -47,11 +52,16 @@ class ClimbSearchResult(BaseModel):
     setter: str
     grade: str = Field(..., description="Grade at the queried angle")
     angle: int
+    # A030 — for merged "mine" rows this is the user's flash/send log count.
     ascensionist_count: int
-    quality_average: float
+    # A030 — None for merged "mine" rows (generated problems have no stars).
+    quality_average: Optional[float] = None
     # A029 — setter's "no matching" rule (climbs.is_nomatch, audit D019).
     # Drives the "No match" badge on result cards.
     is_nomatch: bool
+    # A030 — True for the user's saved generated problems merged into the
+    # results (MY badge; routes to /my-problems/detail).
+    is_mine: bool = False
     # A021 — populated only when the caller is authenticated AND has a
     # user_climbs row for this (uuid, angle). Discovery uses it to render
     # the ⚡/✓/☆ icon strip on each card.

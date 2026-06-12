@@ -20,6 +20,7 @@ from app.api import (
     classifications,
     coach,
     generate,
+    my_climbs,
     webhooks,
 )
 
@@ -156,6 +157,7 @@ app.include_router(climbs.router, prefix="/api/climbs", tags=["climbs"])
 # A026 — POST /api/climbs/generate (mounted before the climbs GET /{uuid}
 # catch-all is irrelevant: different method, no route collision).
 app.include_router(generate.router, prefix="/api/climbs", tags=["generate"])
+app.include_router(my_climbs.router, prefix="/api/my-climbs", tags=["my-climbs"])
 app.include_router(holds.router, prefix="/api/holds", tags=["holds"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])

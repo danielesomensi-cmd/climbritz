@@ -31,7 +31,7 @@ from app.schemas.logs import (
     SessionResponse,
     UserClimbState,
 )
-from app.services import climb_service, log_service
+from app.services import climb_service, log_service, my_climbs_service
 
 router = APIRouter()
 
@@ -48,8 +48,16 @@ def create_log(
     """Create or upgrade today's log on a climb. Reject animated sequences
     (frames_count > 1) with 422 — those are circuits, not boulders, and
     they're excluded from Discovery globally.
+
+    A030: the user's own generated problems (user_generated_climbs) are
+    loggable too — checked first, owner-scoped, static by construction.
+    BoardLib guard unchanged for everything else.
     """
-    meta = climb_service.get_climb_meta(body.climb_uuid)
+    meta = my_climbs_service.get_meta_for_user(
+        db, user_id=current_user_id, uuid=body.climb_uuid
+    )
+    if meta is None:
+        meta = climb_service.get_climb_meta(body.climb_uuid)
     if meta is None:
         raise HTTPException(status_code=404, detail="Climb not found")
     if meta["frames_count"] != 1:
@@ -103,10 +111,14 @@ def list_logs(
     return [LogResponse.model_validate(r) for r in rows]
 
 
-def _session_climb_meta_resolver_factory():
+def _session_climb_meta_resolver_factory(db: Session, user_id: str):
     """A021.5 — memoised (climb_uuid, angle) → {name, grade} lookup so a
     session with many logs on the same climb hits BoardLib once. Same
-    pattern as the pyramid grade_resolver."""
+    pattern as the pyramid grade_resolver.
+
+    A030: BoardLib misses fall through to the user's generated problems,
+    so History sessions show the AI problem's name/grade instead of null.
+    """
     cache: dict[tuple[str, int], Optional[dict]] = {}
 
     def resolve(climb_uuid: str, angle: int) -> Optional[dict]:
@@ -120,6 +132,10 @@ def _session_climb_meta_resolver_factory():
             if climb.get("stats"):
                 grade = climb["stats"][0].get("grade")
             result = {"name": climb.get("name"), "grade": grade}
+        else:
+            result = my_climbs_service.get_name_grade_for_user(
+                db, user_id=user_id, uuid=climb_uuid
+            )
         cache[key] = result
         return result
 
@@ -138,7 +154,9 @@ def list_sessions(
         user_id=current_user_id,
         date_from=date_from,
         date_to=date_to,
-        climb_meta_resolver=_session_climb_meta_resolver_factory(),
+        climb_meta_resolver=_session_climb_meta_resolver_factory(
+            db, current_user_id
+        ),
     )
     return [SessionResponse(**s) for s in sessions]
 

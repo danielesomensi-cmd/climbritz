@@ -13,10 +13,11 @@ from app.schemas.climb import (
     DbStatsResponse,
     DoneFilter,
     MovesFilter,
+    MyProblemsFilter,
     ProjectFilter,
 )
 from app.schemas.logs import UserClimbState
-from app.services import log_service
+from app.services import log_service, my_climbs_service
 from app.services.climb_service import (
     count_matching_climbs,
     get_climb,
@@ -136,6 +137,14 @@ async def search(
             "unauthenticated."
         ),
     ),
+    my_problems: MyProblemsFilter = Query(
+        default="include",
+        description=(
+            "A030 — include (default): BoardLib results plus the user's "
+            "saved generated problems (prepended, flagged is_mine) | only: "
+            "just the user's problems. Ignored when unauthenticated."
+        ),
+    ),
     sort: SortField = Query(
         default="popularity",
         description="Sort field: popularity | quality | grade_asc | grade_desc",
@@ -173,6 +182,45 @@ async def search(
             db, current_user_id, done_filter, project_filter
         )
 
+    # A030 — the user's saved generated problems, filtered with
+    # Discovery-equivalent semantics (Option A: Python-side merge, the
+    # BoardLib query is untouched). Empty when unauthenticated.
+    mine: list[dict] = []
+    if current_user_id is not None:
+        mine = [
+            {
+                "uuid": m["uuid"],
+                "name": m["name"],
+                "setter": "You",
+                "grade": m["grade"] or "?",
+                "angle": m["angle"],
+                "ascensionist_count": m["ascent_count"],
+                "quality_average": None,
+                "is_nomatch": False,
+                "is_mine": True,
+            }
+            for m in my_climbs_service.search_my_climbs(
+                db,
+                user_id=current_user_id,
+                query=q,
+                angle=angle,
+                grade_min=grade_min,
+                grade_max=grade_max,
+                min_ascents=min_ascents,
+                min_quality=min_quality,
+                moves=moves,
+                benchmark=benchmark,
+                nomatch=nomatch,
+                include_uuids=include_uuids,
+                exclude_uuids=exclude_uuids or None,
+            )
+        ]
+
+    if current_user_id is not None and my_problems == "only":
+        # Skip BoardLib entirely — same envelope, just mine.
+        _overlay_user_state(db, current_user_id, mine)
+        return ClimbSearchResponse(climbs=mine, total_count=len(mine))
+
     climbs = search_climbs(
         query=q,
         angle=angle,
@@ -202,20 +250,33 @@ async def search(
         exclude_uuids=exclude_uuids or None,
     )
 
-    # Overlay user_state on each result row. Authenticated only.
+    # A030 — prepend mine (small set, always visible) without disturbing
+    # the BoardLib sort; total_count includes them.
+    if mine:
+        climbs = mine + climbs
+        total_count += len(mine)
+
+    # Overlay user_state on each result row (mine included). Authenticated only.
     if current_user_id is not None and climbs:
-        state_map = log_service.list_user_climbs_by_uuids(
-            db,
-            user_id=current_user_id,
-            climb_uuids=[c["uuid"] for c in climbs],
-        )
-        for climb in climbs:
-            state = state_map.get((climb["uuid"], climb["angle"]))
-            climb["user_state"] = (
-                UserClimbState.model_validate(state) if state else None
-            )
+        _overlay_user_state(db, current_user_id, climbs)
 
     return ClimbSearchResponse(climbs=climbs, total_count=total_count)
+
+
+def _overlay_user_state(db: Session, user_id: str, climbs: list[dict]) -> None:
+    """A021 overlay, factored out so the A030 'only' branch reuses it."""
+    if not climbs:
+        return
+    state_map = log_service.list_user_climbs_by_uuids(
+        db,
+        user_id=user_id,
+        climb_uuids=[c["uuid"] for c in climbs],
+    )
+    for climb in climbs:
+        state = state_map.get((climb["uuid"], climb["angle"]))
+        climb["user_state"] = (
+            UserClimbState.model_validate(state) if state else None
+        )
 
 
 @router.get("/stats", response_model=DbStatsResponse)
