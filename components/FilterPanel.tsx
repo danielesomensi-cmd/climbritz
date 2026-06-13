@@ -168,7 +168,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 gradeMin: e.target.value ? Number(e.target.value) : undefined,
               })
             }
-            className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white"
+            className="min-h-[48px] w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-3 text-base text-white focus:outline-none focus:border-orange-500"
           >
             <option value="">Min</option>
             {GRADES.map((g) => (
@@ -186,7 +186,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
                 gradeMax: e.target.value ? Number(e.target.value) : undefined,
               })
             }
-            className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white"
+            className="min-h-[48px] w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-3 text-base text-white focus:outline-none focus:border-orange-500"
           >
             <option value="">Max</option>
             {GRADES.map((g) => (
