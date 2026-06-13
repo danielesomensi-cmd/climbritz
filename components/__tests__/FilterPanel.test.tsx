@@ -32,25 +32,35 @@ describe('FilterPanel', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ minAscents: 100 }));
   });
 
+  // B037 — Kilter quality is a 0–3 scale; the Min stars filter caps at 3
+  // (4★/5★ were dead filters). The chips now run 1–3 only.
   it('toggles min quality filter (click to set, click again to clear)', () => {
     const onChange = jest.fn();
     const { rerender } = render(
       <FilterPanel value={DEFAULT} onChange={onChange} expanded={true} />,
     );
-    fireEvent.click(screen.getByTestId('filter-quality-4'));
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ minQuality: 4 }));
+    fireEvent.click(screen.getByTestId('filter-quality-3'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ minQuality: 3 }));
 
     rerender(
       <FilterPanel
-        value={{ ...DEFAULT, minQuality: 4 }}
+        value={{ ...DEFAULT, minQuality: 3 }}
         onChange={onChange}
         expanded={true}
       />,
     );
-    fireEvent.click(screen.getByTestId('filter-quality-4'));
+    fireEvent.click(screen.getByTestId('filter-quality-3'));
     expect(onChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ minQuality: undefined }),
     );
+  });
+
+  // B037 — the dead 4★ and 5★ chips must not render anymore.
+  it('caps the Min stars scale at 3 (no 4★/5★ chips)', () => {
+    render(<FilterPanel value={DEFAULT} onChange={jest.fn()} expanded={true} />);
+    expect(screen.getByTestId('filter-quality-3')).toBeInTheDocument();
+    expect(screen.queryByTestId('filter-quality-4')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('filter-quality-5')).not.toBeInTheDocument();
   });
 
   it('emits all four sort options', () => {

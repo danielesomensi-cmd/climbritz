@@ -3,19 +3,20 @@ import '@testing-library/jest-dom';
 import StarRating from '../StarRating';
 
 describe('StarRating', () => {
-  it('renders with an accessible aria-label', () => {
-    render(<StarRating value={3.5} />);
+  // B037 — Aurora/Kilter quality is a 0–3 scale; StarRating defaults max=3.
+  it('renders with an accessible aria-label on the 0–3 scale', () => {
+    render(<StarRating value={2.5} />);
     expect(screen.getByTestId('star-rating')).toHaveAttribute(
       'aria-label',
-      '3.5 out of 5 stars',
+      '2.5 out of 3 stars',
     );
   });
 
-  it('clamps values above 5', () => {
+  it('clamps values above the max (3)', () => {
     render(<StarRating value={9} />);
     expect(screen.getByTestId('star-rating')).toHaveAttribute(
       'aria-label',
-      '5.0 out of 5 stars',
+      '3.0 out of 3 stars',
     );
   });
 
@@ -23,15 +24,23 @@ describe('StarRating', () => {
     render(<StarRating value={-3} />);
     expect(screen.getByTestId('star-rating')).toHaveAttribute(
       'aria-label',
-      '0.0 out of 5 stars',
+      '0.0 out of 3 stars',
     );
   });
 
-  it('renders five star glyphs total', () => {
-    render(<StarRating value={2.5} />);
+  it('renders three star glyphs total by default', () => {
+    render(<StarRating value={1.5} />);
     const stars = screen.getByTestId('star-rating').textContent ?? '';
-    // Every visible glyph is '★' (full, half rendered as two, empty)
-    // We just check there are at least 5 stars rendered
-    expect((stars.match(/★/g) ?? []).length).toBeGreaterThanOrEqual(5);
+    // Every visible glyph is '★' (full, half rendered as two, empty).
+    // 1 full + 1 half (two glyphs) + 1 empty = 4 glyph nodes, ≥3 stars.
+    expect((stars.match(/★/g) ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('honours an explicit max prop', () => {
+    render(<StarRating value={4} max={5} />);
+    expect(screen.getByTestId('star-rating')).toHaveAttribute(
+      'aria-label',
+      '4.0 out of 5 stars',
+    );
   });
 });

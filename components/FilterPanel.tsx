@@ -217,13 +217,16 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
         </div>
       </div>
 
-      {/* Min quality */}
+      {/* Min quality — Aurora/Kilter uses a 0–3 quality scale (B037, verified
+          against climb_stats: MAX(quality_average) = 3). 4★/5★ were dead
+          filters (always zero results), so the scale caps at 3. Deselecting
+          the active chip = "Any" (no explicit Any chip — toggle-off idiom). */}
       <div>
         <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
           Min stars
         </label>
         <div className="flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 5].map((n) => {
+          {[1, 2, 3].map((n) => {
             const active = value.minQuality === n;
             return (
               <Chip
