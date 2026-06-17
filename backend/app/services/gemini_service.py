@@ -5,6 +5,7 @@ Uses google.genai SDK with gemini-2.5-flash to analyze climbing technique.
 
 import json
 import os
+import random
 import re
 import time
 import logging
@@ -12,11 +13,26 @@ from typing import Any
 
 from google import genai
 from google.genai import types
+from google.genai import errors as genai_errors
 
 from app.core.config import get_settings
 from app.schemas.video import FormFeedbackResponse
 
 logger = logging.getLogger(__name__)
+
+# --- Bounded retry/backoff for transient Gemini errors (B038) -----------------
+# A transient 429 (rate limited) or 5xx (overloaded) on generate_content should
+# not permanently fail a video — retry a couple of times with exponential
+# backoff. Kept small on purpose: _background_analyze runs in-process and
+# time.sleep blocks a threadpool thread, so long sleeps × concurrent uploads
+# under a traffic spike risk pool exhaustion.
+GEMINI_MAX_ATTEMPTS = 3  # 1 initial + 2 retries
+GEMINI_BACKOFF_BASE_SECONDS = 2.0  # sleeps between attempts: 2s, then 4s
+GEMINI_BACKOFF_JITTER_SECONDS = 0.5  # ± jitter to de-correlate concurrent retries
+GEMINI_RETRY_AFTER_CAP_SECONDS = 10.0  # never sleep longer than this, even if Retry-After asks
+# Discriminate on exc.code (HTTP status), NOT class — 429 is a ClientError while
+# 5xx are ServerError, but both subclass APIError.
+GEMINI_RETRIABLE_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
 
 _client: genai.Client | None = None
 
@@ -196,6 +212,67 @@ def _try_repair_json(text: str) -> dict[str, Any] | None:
     return None
 
 
+def _compute_backoff_delay(attempt: int) -> float:
+    """Exponential backoff for a 1-based attempt (2s, 4s, …) plus ± jitter, floored at 0."""
+    base = GEMINI_BACKOFF_BASE_SECONDS * (2 ** (attempt - 1))
+    jitter = random.uniform(-GEMINI_BACKOFF_JITTER_SECONDS, GEMINI_BACKOFF_JITTER_SECONDS)
+    return max(0.0, base + jitter)
+
+
+def _extract_retry_after(exc: Exception) -> float | None:
+    """
+    Best-effort parse of a Retry-After header (in seconds) off an APIError's
+    response. Returns None when the response/header is missing, the value is an
+    HTTP-date form, or anything is unparseable — caller falls back to computed
+    backoff in that case.
+    """
+    response = getattr(exc, "response", None)
+    if response is None:
+        return None
+    try:
+        value = response.headers.get("Retry-After") or response.headers.get("retry-after")
+    except (AttributeError, TypeError):
+        return None
+    if not value:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None  # HTTP-date form not supported; computed backoff takes over
+
+
+def _generate_content_with_retry(client: genai.Client, *, model, contents, config):
+    """
+    Wrap client.models.generate_content with bounded exponential backoff on
+    transient Gemini errors (429/500/502/503/504). Non-retriable APIErrors
+    (400/403/404/…) and any non-APIError exception re-raise immediately; the
+    final exhausted attempt also re-raises — so the caller's existing failure
+    path (RuntimeError wrap → background task marks the video `failed`) is
+    preserved unchanged. On first-try success generate_content is called exactly
+    once.
+    """
+    for attempt in range(1, GEMINI_MAX_ATTEMPTS + 1):
+        try:
+            return client.models.generate_content(
+                model=model, contents=contents, config=config
+            )
+        except genai_errors.APIError as exc:
+            code = getattr(exc, "code", None)
+            if code not in GEMINI_RETRIABLE_STATUS_CODES or attempt >= GEMINI_MAX_ATTEMPTS:
+                # Non-retriable, or retries exhausted → let it propagate.
+                raise
+            retry_after = _extract_retry_after(exc) if code == 429 else None
+            base_delay = retry_after if retry_after is not None else _compute_backoff_delay(attempt)
+            delay = min(base_delay, GEMINI_RETRY_AFTER_CAP_SECONDS)
+            logger.warning(
+                "Gemini transient error (code=%s) on attempt %d/%d; retrying in %.1fs",
+                code, attempt, GEMINI_MAX_ATTEMPTS, delay,
+            )
+            time.sleep(delay)
+    # Loop always returns or raises above; this is an unreachable safety net.
+    raise RuntimeError("Gemini generation retry loop exited unexpectedly")
+
+
 def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
     """
     Run climbing-form analysis on a previously uploaded Gemini file.
@@ -224,7 +301,8 @@ def analyze_climbing_form(gemini_file_id: str) -> dict[str, Any]:
         ) from exc
 
     try:
-        response = client.models.generate_content(
+        response = _generate_content_with_retry(
+            client,
             model=settings.gemini_model,
             contents=[file_ref, CLIMBING_ANALYSIS_PROMPT],
             config=types.GenerateContentConfig(

@@ -622,6 +622,100 @@ class TestGeminiService:
         finally:
             gs._client = original_client
 
+    # --- B038: bounded retry/backoff on transient Gemini errors ---
+
+    @patch("app.services.gemini_service.time.sleep")
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_retries_on_transient_503_then_succeeds(self, mock_get_client, mock_sleep):
+        """503 then a good response → succeeds after one retry, sleeps once."""
+        from app.services.gemini_service import analyze_climbing_form
+        from google.genai import errors as genai_errors
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+        client.files.get.return_value = MagicMock()
+
+        good = MagicMock()
+        good.text = json.dumps(MOCK_GEMINI_ANALYSIS)
+        client.models.generate_content.side_effect = [
+            genai_errors.ServerError(503, {"error": {"code": 503, "status": "UNAVAILABLE"}}),
+            good,
+        ]
+
+        result = analyze_climbing_form("files/abc123")
+
+        assert result["technique_score"] == 7
+        assert client.models.generate_content.call_count == 2
+        mock_sleep.assert_called_once()
+
+    @patch("app.services.gemini_service.time.sleep")
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_exhausts_retries_on_persistent_503(self, mock_get_client, mock_sleep):
+        """Persistent 503 → exhausts all attempts → terminal failure (RuntimeError)."""
+        from app.services.gemini_service import analyze_climbing_form, GEMINI_MAX_ATTEMPTS
+        from google.genai import errors as genai_errors
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+        client.files.get.return_value = MagicMock()
+        client.models.generate_content.side_effect = genai_errors.ServerError(
+            503, {"error": {"code": 503, "status": "UNAVAILABLE"}}
+        )
+
+        with pytest.raises(RuntimeError, match="Gemini generation failed"):
+            analyze_climbing_form("files/abc123")
+
+        assert client.models.generate_content.call_count == GEMINI_MAX_ATTEMPTS  # 3
+        assert mock_sleep.call_count == GEMINI_MAX_ATTEMPTS - 1  # 2 sleeps between 3 attempts
+
+    @patch("app.services.gemini_service.time.sleep")
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_no_retry_on_non_retriable_400(self, mock_get_client, mock_sleep):
+        """A non-retriable 400 fails immediately — exactly one call, no sleep."""
+        from app.services.gemini_service import analyze_climbing_form
+        from google.genai import errors as genai_errors
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+        client.files.get.return_value = MagicMock()
+        client.models.generate_content.side_effect = genai_errors.ClientError(
+            400, {"error": {"code": 400, "status": "INVALID_ARGUMENT"}}
+        )
+
+        with pytest.raises(RuntimeError, match="Gemini generation failed"):
+            analyze_climbing_form("files/abc123")
+
+        assert client.models.generate_content.call_count == 1
+        mock_sleep.assert_not_called()
+
+    @patch("app.services.gemini_service.time.sleep")
+    @patch("app.services.gemini_service._get_client")
+    def test_analyze_honors_and_caps_retry_after_on_429(self, mock_get_client, mock_sleep):
+        """A 429 Retry-After larger than the cap is honored but clamped to the cap."""
+        from app.services.gemini_service import (
+            analyze_climbing_form,
+            GEMINI_RETRY_AFTER_CAP_SECONDS,
+        )
+        from google.genai import errors as genai_errors
+
+        client = self._mock_client()
+        mock_get_client.return_value = client
+        client.files.get.return_value = MagicMock()
+
+        resp = MagicMock()
+        resp.headers = {"Retry-After": "60"}  # quota-style 429 asking for 60s
+        err = genai_errors.ClientError(429, {"error": {"code": 429}}, resp)
+
+        good = MagicMock()
+        good.text = json.dumps(MOCK_GEMINI_ANALYSIS)
+        client.models.generate_content.side_effect = [err, good]
+
+        result = analyze_climbing_form("files/abc123")
+
+        assert result["technique_score"] == 7
+        # 60s requested → clamped to the 10s cap, slept exactly once.
+        mock_sleep.assert_called_once_with(GEMINI_RETRY_AFTER_CAP_SECONDS)
+
 
 # --- Background Analysis Tests ---
 
