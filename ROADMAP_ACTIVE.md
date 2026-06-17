@@ -70,6 +70,8 @@ Three levels of coaching intelligence (Coach tier):
 
 **2026-06-06 release in volo (B034 v4 + A028 + A027 + admin/alerts):** iOS **build 11** da tagliare (`bash ~/deploy_climbritz.sh 11`; build 10 = A026/A027/B034-v1 già caricato e clippava — B034 v4 è il fix vero, provato sul Simulatore). Android **versionCode 13** AAB ribuildato con v4 (`android/app/build/outputs/bundle/release/app-release.aab`) — **da caricare** su Play Console. ⚠️ Gotcha keychain: il codesign iOS dà `errSecInternalComponent` in automatico → sbloccare il keychain prima del deploy (vedi `docs/ADMIN_RUNBOOK.md`/PROJECT_STATUS).
 
+**2026-06-17 release batched (Android `versionCode 14` / iOS build 12):** primo mobile dopo vc13/iOS11 → porta **B035** (BLE persistente) + **B036** (header Android edge-to-edge) + **A029** (No matching) + **A030** (My Problems) + **A031** (hold editor / "AI Create") + **B037** (filtri Discovery) + **B039** (videos/detail EN). Bump fatto da Claude (vc13→14, iOS 11→12, package 0.1.3), `build:mobile`+`cap sync` validati. **Android:** AAB firmato pronto (`android/app/build/outputs/bundle/release/app-release.aab`, versionCode 14 verificato) → **[ ] caricare su Play Console** (closed testing). **iOS:** **[ ] `bash ~/deploy_climbritz.sh 12` da Terminal.app** (NON dalla shell di Claude — serve la keychain interattiva per il distribution signing; sbloccare il keychain se dà `errSecInternalComponent`). Tag `android-v1.0.0-build14` / `ios-v1.0.0-build12` a upload confermato.
+
 **Recently shipped — June 2026 (ops/polish, fuori dalle fasi):**
 - [x] **A027 Contact tile** — homepage "Send feedback" → mailto nativo (zero backend).
 - [x] **A028 BLE preset "All White (max)"** — preset #12, tutti i 476 LED a bianco pieno (max luminosità) accanto al rainbow #11.
