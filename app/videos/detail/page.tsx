@@ -50,8 +50,8 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
     return (
       <div className="bg-zinc-900 border border-yellow-500/30 rounded-2xl p-8 text-center">
         <div className="text-5xl mb-4">&#9888;&#65039;</div>
-        <h2 className="text-lg font-semibold text-white mb-2">Non Kilter Board</h2>
-        <p className="text-zinc-400">{analysis.message || 'Questo video non sembra mostrare una Kilter Board.'}</p>
+        <h2 className="text-lg font-semibold text-white mb-2">Not a Kilter Board</h2>
+        <p className="text-zinc-400">{analysis.message || "This video doesn't appear to show a Kilter Board."}</p>
       </div>
     );
   }
@@ -62,14 +62,14 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
     <div className="space-y-4">
       {analysis.overall_impression && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-400 mb-2">Impressione</p>
+          <p className="text-sm text-zinc-400 mb-2">Impression</p>
           <ImpressionBadge impression={analysis.overall_impression} />
         </div>
       )}
 
       {!isNewFormat && analysis.overall_grade_estimate && (
         <div className="bg-zinc-900 border border-orange-500/40 rounded-2xl p-6 text-center">
-          <p className="text-sm text-zinc-400 mb-2">Grado stimato</p>
+          <p className="text-sm text-zinc-400 mb-2">Estimated grade</p>
           <span className="inline-block px-6 py-3 bg-orange-500 text-zinc-950 text-3xl font-black rounded-xl">
             {analysis.overall_grade_estimate}
           </span>
@@ -78,27 +78,27 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {analysis.summary && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Valutazione</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Assessment</h3>
           <p className="text-zinc-200 leading-relaxed">{analysis.summary}</p>
         </div>
       )}
 
       {(analysis.technique_score || analysis.body_tension_score || analysis.footwork_score) && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-4">Punteggi</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-4">Scores</h3>
           <div className="space-y-3">
-            {analysis.technique_score && <ScoreBar label="Tecnica" score={analysis.technique_score} />}
-            {analysis.body_tension_score && <ScoreBar label="Tensione corporea" score={analysis.body_tension_score} />}
+            {analysis.technique_score && <ScoreBar label="Technique" score={analysis.technique_score} />}
+            {analysis.body_tension_score && <ScoreBar label="Body tension" score={analysis.body_tension_score} />}
             {analysis.footwork_score && <ScoreBar label="Footwork" score={analysis.footwork_score} />}
-            {analysis.hip_positioning_score && <ScoreBar label="Posizione fianchi" score={analysis.hip_positioning_score} />}
-            {analysis.power_management_score && <ScoreBar label="Gestione potenza" score={analysis.power_management_score} />}
+            {analysis.hip_positioning_score && <ScoreBar label="Hip positioning" score={analysis.hip_positioning_score} />}
+            {analysis.power_management_score && <ScoreBar label="Power management" score={analysis.power_management_score} />}
           </div>
         </div>
       )}
 
       {analysis.strengths && analysis.strengths.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-green-400 uppercase tracking-wide mb-3">Punti di forza</h3>
+          <h3 className="text-sm font-semibold text-green-400 uppercase tracking-wide mb-3">Strengths</h3>
           <ul className="space-y-2">
             {analysis.strengths.map((s, i) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
@@ -112,7 +112,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {analysis.improvements && analysis.improvements.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">Da migliorare</h3>
+          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">Areas to improve</h3>
           <div className="space-y-4">
             {analysis.improvements.map((item: ImprovementItem, i: number) => (
               <div key={i} className="border-l-2 border-yellow-500/40 pl-4">
@@ -127,7 +127,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {!isNewFormat && analysis.weaknesses && analysis.weaknesses.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">Da migliorare</h3>
+          <h3 className="text-sm font-semibold text-yellow-400 uppercase tracking-wide mb-3">Areas to improve</h3>
           <ul className="space-y-2">
             {analysis.weaknesses.map((w: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
@@ -141,7 +141,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {!isNewFormat && analysis.drills_recommended && analysis.drills_recommended.length > 0 && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Esercizi consigliati</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-3">Recommended drills</h3>
           <ul className="space-y-2">
             {analysis.drills_recommended.map((drill: string, i: number) => (
               <li key={i} className="flex items-start gap-3 text-zinc-300">
@@ -155,7 +155,7 @@ function AnalysisResults({ analysis }: { analysis: FormAnalysis }) {
 
       {!isNewFormat && analysis.next_steps && (
         <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-6">
-          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-2">Prossimo passo</h3>
+          <h3 className="text-sm font-semibold text-orange-500 uppercase tracking-wide mb-2">Next step</h3>
           <p className="text-zinc-200 leading-relaxed">{analysis.next_steps}</p>
         </div>
       )}
@@ -211,8 +211,8 @@ function VideoContent() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-zinc-400 mb-4">Video non trovato</p>
-          <Link href="/dashboard" className="text-orange-500 hover:underline">Torna alla dashboard</Link>
+          <p className="text-zinc-400 mb-4">Video not found</p>
+          <Link href="/dashboard" className="text-orange-500 hover:underline">Back to dashboard</Link>
         </div>
       </div>
     );
@@ -231,8 +231,8 @@ function VideoContent() {
         <div className="mb-6">
           <h1 className="text-xl font-bold text-white truncate">{video.title || video.filename || 'Video'}</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {new Date(video.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-            {video.grade_attempted && <span className="ml-3 text-zinc-400">Grado tentato: {video.grade_attempted}</span>}
+            {new Date(video.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            {video.grade_attempted && <span className="ml-3 text-zinc-400">Grade attempted: {video.grade_attempted}</span>}
           </p>
         </div>
 
@@ -243,8 +243,8 @@ function VideoContent() {
         {video.processing_status === 'pending' && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
             <div className="text-5xl mb-4">&#127916;</div>
-            <h2 className="text-lg font-semibold text-white mb-2">Video in coda</h2>
-            <p className="text-zinc-400">L&apos;analisi partir&agrave; a breve...</p>
+            <h2 className="text-lg font-semibold text-white mb-2">Video queued</h2>
+            <p className="text-zinc-400">Analysis will start shortly…</p>
           </div>
         )}
 
