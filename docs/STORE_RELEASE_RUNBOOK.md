@@ -30,10 +30,22 @@ is always lower than the cost of guessing.
 ### A2 — Reviewer demo account
 
 - Provision **two** accounts, not one (see Part D, 2026-07-23).
-- Supply credentials in App Store Connect → *App Review Information*.
-- Seed each with real content: a few logged climbs, one saved generated
-  problem, one completed video analysis. A reviewer on an empty account
-  cannot evaluate the app and may reject for incomplete functionality.
+- **Automated:** `backend/scripts/seed_review_accounts.py` creates both Clerk
+  users and populates them through the real API (logs across several grades
+  and angles, projects, hold classifications), then prints a paste-ready
+  credentials block. Idempotent — re-running never mints a third account.
+
+  ```
+  CLERK_SECRET_KEY=sk_live_… API_BASE=https://web-production-cea9.up.railway.app \
+      python backend/scripts/seed_review_accounts.py --dry-run   # then without --dry-run
+  ```
+
+  Pass the secret inline for one shot. Never write it into `backend/.env`.
+  The script refuses to run against an `sk_test_` key.
+- **Manual:** the video analysis. It needs a real video file and a live
+  Gemini round-trip, so upload one per account by hand — a reviewer on an
+  account with no completed analysis cannot evaluate the Coach feature.
+- Supply credentials in App Store Connect → *App Review Information* (B0.3).
 - BLE board control cannot be reviewed without hardware — say so explicitly
   in the review notes so its absence doesn't read as a broken feature.
 
@@ -46,6 +58,54 @@ is always lower than the cost of guessing.
 - `npx cap sync ios` + `npx cap sync android`.
 - Spot-check that new routes actually reached the native bundle:
   `ls ios/App/App/public/<route>.html android/app/src/main/assets/public/<route>.html`.
+
+---
+
+## Part B0 — App Store Connect metadata
+
+### B0.1 — Third-party trademarks (Guideline 5.2.1)
+
+Climbritz interoperates with the **Kilter Board** (trademark of Setter Closet)
+and serves data derived from that ecosystem. That combination invites a 5.2.1
+challenge, so pre-empt it rather than answering it after a rejection:
+
+- **Keep the trademark out of the app name.** "Climbritz" — never
+  "Climbritz for Kilter Board".
+- **Description uses "compatible with" phrasing.** Never possessive
+  ("Kilter Board's companion app"), never implied endorsement
+  ("official", "partnered", "approved").
+- **Non-affiliation disclaimer at the end of the description**, e.g.
+  *"Climbritz is an independent app and is not affiliated with, endorsed by,
+  or sponsored by Setter Closet or Kilter Board. Kilter Board is a trademark
+  of its respective owner."*
+- **Raise it first in App Review Notes.** Explain the relationship on your own
+  terms in the submission; do not wait to be asked.
+
+### B0.2 — Screenshots
+
+- **Three is the floor, five is better** — the first 3 are what appear in the
+  install sheet, so they carry the pitch.
+- **Verify the required device size in Media Manager before generating.**
+  Apple retires sizes without much notice; a set built against last year's
+  spec gets bounced.
+- **Screenshots must depict the app as it actually is.** Mocked or
+  aspirational UI is a **2.3.3** rejection.
+
+### B0.3 — App Review Notes
+
+**This is the highest-leverage field in the whole submission.** Any core
+feature that needs hardware the reviewer does not have must be declared
+explicitly, or the reviewer sees a broken feature and closes with 2.1.
+
+For Climbritz that means **BLE board control**:
+
+- Declare it in the notes text.
+- Back it with a **screen recording**, uploaded as an *App Review Attachment*.
+- Add a **redundant link** to the recording in the notes text itself —
+  attachments are occasionally missed.
+
+Demo account credentials go in this section too — see A2, and generate the
+paste-ready block with `backend/scripts/seed_review_accounts.py`.
 
 ---
 
@@ -70,6 +130,9 @@ Tag every release commit: `git tag v<marketing>-build<N>`.
 ---
 
 ## Part C — Submission
+
+> **Never submit on a Friday.** A rejection sits unactioned over the weekend
+> and costs three days instead of one. Submit early in the week.
 
 1. **iOS archive + upload runs from Terminal.app interactively** —
    `bash ~/deploy_climbritz.sh <build>`. Code-signing for distribution needs
