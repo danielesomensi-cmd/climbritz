@@ -162,3 +162,38 @@ def get_user_devices(secret_key: str, clerk_user_id: str) -> list[dict]:
             }
         )
     return devices
+
+
+def delete_user(secret_key: str, clerk_user_id: str) -> bool:
+    """Delete a Clerk user. Backs ``DELETE /api/users/me``.
+
+    This is the one write call in this module — it lives here rather than in
+    ``core/clerk.py`` on purpose: that module owns JWT/session verification
+    and is a STOP-gate file, while this one already owns the outbound
+    secret-key REST surface (A-STORE-PROD-001 §A(b)).
+
+    Returns True when Clerk deleted the user, False when Clerk reports it
+    already gone (404) — the caller treats both as success so a retried
+    account deletion stays idempotent.
+
+    Raises ClerkApiError on transport failure or any other non-2xx, so the
+    caller can surface a retryable error instead of silently orphaning a
+    Clerk account whose local data is already erased.
+    """
+    try:
+        resp = httpx.delete(
+            f"{CLERK_API_BASE}/users/{clerk_user_id}",
+            headers=_headers(secret_key),
+            timeout=_TIMEOUT,
+        )
+    except httpx.HTTPError as exc:
+        raise ClerkApiError(f"request to Clerk failed: {exc}") from exc
+
+    if resp.status_code == 404:
+        return False
+    if resp.status_code // 100 != 2:
+        raise ClerkApiError(
+            f"DELETE /users/{clerk_user_id} -> {resp.status_code}: "
+            f"{resp.text[:200]}"
+        )
+    return True

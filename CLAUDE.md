@@ -66,6 +66,9 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 - `GET /api/my-climbs` → list, newest first, each with `ascent_count` (user's flash/send logs) · `GET /api/my-climbs/{uuid}` → detail incl. BoardLib-shaped `holds` · `PATCH /api/my-climbs/{uuid}` `{name?, grade?, frames?}` (A031 — frames fully re-validated; logs stay attached, uuid-keyed) · `DELETE` → 204. Cross-user access → 404.
 - Generated uuids are loggable: `POST /api/logs` checks `user_generated_climbs` (owner-scoped) before the BoardLib meta guard; `GET /api/logs/sessions` resolves their name/grade too.
 
+**Users** (A-STORE-PROD-001 — App Store Guideline 5.1.1(v))
+- `DELETE /api/users/me` (JWT) → 204. Permanently erases the caller's account. **Contract: local data first, Clerk identity last** — a Clerk failure leaves a working login on an empty account (recoverable, retry finishes it) rather than an orphaned Clerk user. Deletes explicitly, child-first (`climb_logs` → `user_climbs` → `user_hold_classifications` → `user_generated_climbs` → `video_uploads` → `users`) and **never relies on `ON DELETE CASCADE`** — SQLite FK enforcement is off, so the declared cascades are no-ops (ticket **B-FK-ENFORCE**); explicit deletes are also what the Postgres move needs. Purges video files from the Railway volume. Gemini File API uploads are deliberately *not* deleted (Google's 48h TTL handles them; not worth opening `gemini_service.py`). Idempotent → second call 204. Clerk unreachable → **502**, `CLERK_SECRET_KEY` unset → **503**, both with a generic detail (no stack trace, no Clerk body). Erasure in `services/account_service.py`; the Clerk `DELETE /v1/users/{id}` call lives in `clerk_admin_service.py` — `core/clerk.py` is untouched.
+
 **Holds**
 - `GET /api/holds/board-image` · `GET /api/holds/{placement_id}/image`
 
@@ -133,11 +136,11 @@ When a change touches a fact shared across docs (model version, deploy status, r
 ```
 climbritz/
 ├── backend/app/
-│   ├── api/            videos · climbs · generate(A026) · my_climbs(A030) · holds · admin · logs · user_climbs · stats · coach · classifications · webhooks(clerk→telegram) · circuits(stub)
+│   ├── api/            videos · climbs · generate(A026) · my_climbs(A030) · holds · admin · logs · user_climbs · users(DELETE /me — account erasure) · stats · coach · classifications · webhooks(clerk→telegram) · circuits(stub)
 │   ├── core/           config (prod guard on CLERK_JWKS_URL) · database · clerk (JWKS verify + shadow-row + cache) · deps (get_current_user_id / get_optional_user_id)
 │   ├── models/         user (Clerk shadow row) · video · climb_log · user_climb · user_hold_classification · user_generated_climb (A030)
 │   ├── schemas/        user · video · climb · generate(A026) · my_climbs(A030) · logs · classifications
-│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · problem_name_service (A030 AI naming + local fallback) · clerk_admin_service (admin recent-users, httpx Clerk API) · telegram_service (signup alert) · problem_generator (A026 pure remix) · my_climbs_service (A030 CRUD + Discovery merge + logs guard) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
+│   ├── services/       gemini_service · coach_summary_service (A025 text-only) · problem_name_service (A030 AI naming + local fallback) · account_service (full account erasure + video-file purge) · clerk_admin_service (admin recent-users + user delete, httpx Clerk API) · telegram_service (signup alert) · problem_generator (A026 pure remix) · my_climbs_service (A030 CRUD + Discovery merge + logs guard) · climb_service (read-only BoardLib) · log_service · classification_service · video_service · storage_service
 │   ├── utils/          kilter_parser
 │   └── main.py
 ├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications · 006 user_generated_climbs (A030)

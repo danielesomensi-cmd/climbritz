@@ -209,6 +209,17 @@ Three levels of coaching intelligence (Coach tier):
 ### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026)
 Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. Remaining: iOS TestFlight build 5 (see Action Items).
 
+### B-FK-ENFORCE — SQLite FK enforcement is off; declared CASCADE constraints are no-ops
+Discovered during **A-STORE-PROD-001 Phase 0**. `core/database.py` builds the engine with no `PRAGMA foreign_keys=ON` listener, so every `ondelete="CASCADE"` in migrations 004/005/006 is decorative — deleting a `users` row leaves all child rows behind. `video_uploads` (migration 001) has no `ondelete` at all.
+
+Must be resolved (**pragma listener + orphan audit**) **before** the PostgreSQL migration at ~200 users: Postgres enforces FKs from day one, so any orphans accumulated until then become a data-integrity problem at exactly the wrong moment.
+
+- [ ] Add a `PRAGMA foreign_keys=ON` connect listener + verify no query path depends on the current lax behaviour
+- [ ] Audit + purge existing orphaned rows across `climb_logs` / `user_climbs` / `user_hold_classifications` / `user_generated_climbs` / `video_uploads`
+- [ ] Add `ondelete="CASCADE"` to `video_uploads.user_id` (migration 001 shipped a bare FK)
+
+> Not a blocker for account deletion: `DELETE /api/users/me` (A-STORE-PROD-001 Phase 1) deletes every table explicitly, child-first, and never relies on cascade.
+
 ### Post-audit UX polish — D017 deferred (B028–B030) → folded into D018 + shipped in B033 ✅
 Source: `docs/audit-2026-05-19/AUDIT_REPORT.md` → re-scoped by the D018 audit (`docs/design-audit-2026-06-04/`). The design-system spec (`DESIGN-SYSTEM-DRAFT.md`) was implemented in **B033 (2026-06-04, 5 phases, → `main`)**. See `PROJECT_STATUS.md` B033.
 

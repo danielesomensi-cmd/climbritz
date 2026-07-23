@@ -21,6 +21,7 @@ from app.api import (
     coach,
     generate,
     my_climbs,
+    users,
     webhooks,
 )
 
@@ -171,6 +172,8 @@ app.include_router(
     tags=["classifications"],
 )
 app.include_router(coach.router, prefix="/api/coach", tags=["coach"])
+# A-STORE-PROD-001 — DELETE /api/users/me (App Store Guideline 5.1.1(v)).
+app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 
 
