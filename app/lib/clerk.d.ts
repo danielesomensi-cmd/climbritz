@@ -13,6 +13,10 @@ declare global {
       session?: {
         getToken: () => Promise<string | null>;
       };
+      // A-STORE-PROD-001: the Settings delete-account flow signs out through
+      // the global rather than <UserButton>, so the redirect happens only
+      // after the backend confirms the erasure.
+      signOut?: () => Promise<void>;
     };
   }
 }

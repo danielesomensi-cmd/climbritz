@@ -12,8 +12,10 @@ interface NavItem {
 }
 
 // B021 (2026-05-19): Coach slot removed pending Coach tier production
-// readiness — the Video Analysis tile on the homepage carries a COMING
-// SOON badge instead. Future revert restores the 5th slot at /upload.
+// readiness. A-STORE-PROD-001 (2026-07-23) dropped the matching COMING SOON
+// pill from the homepage tile — analysis is live — but the nav stays at 4
+// slots: /upload is reachable from the Video Analysis tile, and a 5th slot
+// is a layout decision, not a release blocker.
 const ITEMS: NavItem[] = [
   { href: '/', label: 'Home', icon: '🏠', match: '/' },
   { href: '/discover', label: 'Discover', icon: '🔍', match: '/discover' },

@@ -681,3 +681,13 @@ export async function bulkImportClassifications(
     body: JSON.stringify({ classifications: items }),
   });
 }
+
+// --- Account (A-STORE-PROD-001) ---
+
+/** Permanently delete the signed-in user's account and all of their data.
+ *  Backs the Settings → Delete account flow required by App Store
+ *  Guideline 5.1.1(v). Resolves on 204; throws ApiError otherwise (502 =
+ *  local data gone but Clerk unreachable, safe to retry). */
+export async function deleteAccount(): Promise<void> {
+  return apiFetch<void>('/api/users/me', { method: 'DELETE' });
+}

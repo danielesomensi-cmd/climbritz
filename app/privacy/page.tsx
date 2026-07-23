@@ -17,7 +17,7 @@ export default function PrivacyPolicy() {
           Privacy Policy
         </h1>
         <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
-          Last updated: April 2026
+          Last updated: July 2026
         </p>
 
         <section style={{ marginBottom: '28px' }}>
@@ -65,8 +65,25 @@ export default function PrivacyPolicy() {
             Data deletion
           </h2>
           <p style={{ lineHeight: 1.8 }}>
-            You may request deletion of your account and all associated data at any time by
-            contacting us. We will process deletion requests within 30 days.
+            You can delete your account from inside the app at any time:{' '}
+            <strong style={{ color: '#e2e8f0' }}>Settings → Delete account</strong>.
+            No request or waiting period is involved — the deletion happens
+            immediately.
+          </p>
+          <p style={{ lineHeight: 1.8, marginTop: '12px' }}>Deleting your account permanently removes:</p>
+          <ul style={{ paddingLeft: '20px', lineHeight: 1.8 }}>
+            <li>your logged climbs and attempt history</li>
+            <li>your projects and saved climb states</li>
+            <li>your hold classifications</li>
+            <li>your saved generated problems</li>
+            <li>your uploaded videos and their AI analyses</li>
+            <li>your login credentials, held by our authentication provider</li>
+          </ul>
+          <p style={{ lineHeight: 1.8, marginTop: '12px' }}>
+            This is permanent. Deleted data cannot be recovered, and we keep no
+            backup copy of it. If you would rather have us do it for you, you
+            can still email the address below and we will process the deletion
+            within 30 days.
           </p>
         </section>
 

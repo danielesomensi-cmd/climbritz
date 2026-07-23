@@ -10,7 +10,6 @@ interface Tile {
   label: string;
   subtitle: string;
   icon: string;
-  locked?: boolean;
   // A027: `external` tiles open a non-route URL (mailto:) via a plain <a> the
   // OS/WebView delegates to the system handler — NOT SPA navigation.
   external?: boolean;
@@ -88,16 +87,15 @@ const TILES: Tile[] = [
     icon: '💡',
   },
   {
-    // B021 (2026-05-19): Coach tier not production-ready (prompt tuning
-    // incomplete, no Stripe paywall). `locked: true` now renders a
-    // COMING SOON pill instead of the 🔒 lock so testers don't expect
-    // working analysis. Tile stays clickable → /upload remains URL-
-    // reachable for power users / debugging.
+    // A-STORE-PROD-001 Phase 2: the COMING SOON pill is gone and the tile is
+    // a normal entry point. Coach L1 analysis has been live for a while, so
+    // the pill was factually wrong — and a placeholder in a shipping build is
+    // an App Store Guideline 2.1 rejection trigger. (History: B021 added the
+    // pill in May 2026 while the Coach tier was still being tuned.)
     href: '/upload',
     label: 'Video Analysis',
     subtitle: 'AI technique coaching',
     icon: '🎬',
-    locked: true,
   },
   ...(IS_PRODUCTION_BUILD
     ? []
@@ -153,7 +151,19 @@ function HomeContent() {
       {/* B032 — account / sign-out entry point. Clerk's hosted menu owns
           profile management + sign-out (afterSignOutUrl → /sign-in), purely
           client-side. Anchored top-right (safe-area aware). */}
-      <div className="absolute right-4 top-[calc(var(--safe-top)_+_0.75rem)] z-10">
+      {/* A-STORE-PROD-001 Phase 2 — the gear sits NEXT TO the avatar, not
+          inside its menu: App Review needs to reach account deletion in one
+          tap from the main screen, and a link inside a popover is the kind of
+          thing a reviewer reports as missing. */}
+      <div className="absolute right-4 top-[calc(var(--safe-top)_+_0.75rem)] z-10 flex items-center gap-3">
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          data-testid="home-settings-link"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-zinc-400 hover:bg-orange-500/10 hover:text-orange-400 transition-colors"
+        >
+          <span aria-hidden>⚙️</span>
+        </Link>
         <UserButton afterSignOutUrl="/sign-in" />
       </div>
 
@@ -183,14 +193,6 @@ function HomeContent() {
               <span className="mt-1 text-xs text-center text-zinc-400">
                 {tile.subtitle}
               </span>
-              {tile.locked && (
-                <span
-                  data-testid="tile-video-analysis-coming-soon"
-                  className="absolute right-2 top-2 inline-block px-2 py-0.5 rounded-pill bg-orange-500 text-zinc-950 text-[10px] font-bold uppercase tracking-wider"
-                >
-                  Coming Soon
-                </span>
-              )}
             </>
           );
 

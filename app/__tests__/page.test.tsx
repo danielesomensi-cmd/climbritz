@@ -94,19 +94,29 @@ describe('Home Page', () => {
     expect(screen.getByText('Debug')).toBeInTheDocument();
   });
 
-  // B021 (2026-05-19): Coach tier not production-ready; the Video Analysis
-  // tile carries a COMING SOON pill instead of the previous 🔒 lock. Tile
-  // stays clickable so /upload remains URL-reachable for power users.
-  it('shows COMING SOON badge on Video Analysis tile', () => {
+  // A-STORE-PROD-001 Phase 2 — inverted from the B021 assertion. Coach L1
+  // analysis is live, so the COMING SOON pill was factually wrong and a
+  // placeholder in a shipping build trips App Store Guideline 2.1.
+  it('shows no COMING SOON placeholder anywhere on the home screen', () => {
     render(<Home />);
-    const badge = screen.getByTestId('tile-video-analysis-coming-soon');
-    expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/coming soon/i);
+    expect(
+      screen.queryByTestId('tile-video-analysis-coming-soon'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
-  it('Video Analysis tile remains clickable and points at /upload', () => {
+  it('Video Analysis tile is an active link to /upload', () => {
     render(<Home />);
     const videoLink = screen.getByText('Video Analysis').closest('a');
     expect(videoLink).toHaveAttribute('href', '/upload');
+  });
+
+  // Guideline 5.1.1(v): App Review must reach account deletion quickly. The
+  // gear is a sibling of the avatar, not an item inside its popover menu.
+  it('exposes a Settings entry point one tap from the home screen', () => {
+    render(<Home />);
+    const gear = screen.getByTestId('home-settings-link');
+    expect(gear).toHaveAttribute('href', '/settings');
+    expect(gear).toHaveAccessibleName('Settings');
   });
 });
