@@ -164,7 +164,7 @@ climbritz/
 │   └── ui/             B033 design-system primitives: Button · Chip · Card · PageHeader · EmptyState · LoadingState · StatusDot (no ComingSoonBadge — dropped)
 ├── capacitor.config.ts · android/ · ios/
 ├── CLAUDE.md (this) · PROJECT_STATUS.md (decisions log) · ROADMAP_ACTIVE.md (plan) · ARCHITECTURE.md · RESEARCH.md · README.md
-└── docs/               CLERK_CAPACITOR_AUTH.md · IOS_DEPLOY_RUNBOOK.md · ADMIN_RUNBOOK.md (recent-users check) · DISCOVERY_DESIGN.md · lessons.md · archive/
+└── docs/               CLERK_CAPACITOR_AUTH.md · IOS_DEPLOY_RUNBOOK.md · STORE_RELEASE_RUNBOOK.md (App Store/Play pre-submission gate + lessons) · ADMIN_RUNBOOK.md (recent-users check) · DISCOVERY_DESIGN.md · lessons.md · archive/
 ```
 
 Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) exist for Capacitor compat → query-param routes.

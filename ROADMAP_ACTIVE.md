@@ -206,8 +206,19 @@ Three levels of coaching intelligence (Coach tier):
 
 > Items that don't block dev but must land before App Store submission / inviting >5 testers.
 
-### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026)
-Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. Remaining: iOS TestFlight build 5 (see Action Items).
+### A-STORE-PROD-001 — App Store 1.0 production pre-flight ✅ DONE (2026-07-23)
+Promotes the app from TestFlight/closed-testing to a submittable public 1.0. See `PROJECT_STATUS.md` + `docs/STORE_RELEASE_RUNBOOK.md`.
+
+- [x] **Phase 1** — `DELETE /api/users/me`: explicit child-first erasure of every user-owned table + video-file purge from the Railway volume + Clerk user delete last. Idempotent; 502/503 on Clerk trouble, never a 500. No migration (explicit deletes cover it).
+- [x] **C1** — pre-existing leak fixed: `DELETE /api/videos/{id}` now purges the file, not just the row.
+- [x] **Phase 2** — `/settings` page + `Delete account` (two-step, type-DELETE), 1 tap from home via the ⚙️; "Coming Soon" pill removed from the Video Analysis tile (Guideline 2.1); privacy policy rewritten to describe in-app deletion.
+- [x] **Phase 3** — Clerk key verification (read-only): Vercel serves `pk_live`, Railway's secret resolves the production instance, no social providers ⇒ **Guideline 4.8 / Sign in with Apple not required**.
+- [x] **Phase 4** — versions aligned to 1.0.0 / vc15 / iOS build 13, `build:mobile` + `cap sync` ×2 green, tagged `v1.0.0-build13`.
+- [ ] **Daniele (dashboard/manual):** rotate `sk_live` (exposed in a screenshot); provision **two** reviewer demo accounts; iOS archive+upload from Terminal.app (`bash ~/deploy_climbritz.sh 13`); App Store Connect metadata + screenshots + privacy questionnaire (privacy URL = apex `https://climbritz.app/privacy`, the `app.` subdomain does not resolve).
+- [ ] **Second pass:** Play Store production promotion.
+
+### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026) — superseded by A-STORE-PROD-001 Phase 3
+Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. **Closed** — A-STORE-PROD-001 Phase 3 re-verified the live instance (production, `pk_live` on Vercel, prod secret on Railway) and supersedes this item.
 
 ### B-FK-ENFORCE — SQLite FK enforcement is off; declared CASCADE constraints are no-ops
 Discovered during **A-STORE-PROD-001 Phase 0**. `core/database.py` builds the engine with no `PRAGMA foreign_keys=ON` listener, so every `ondelete="CASCADE"` in migrations 004/005/006 is decorative — deleting a `users` row leaves all child rows behind. `video_uploads` (migration 001) has no `ondelete` at all.
