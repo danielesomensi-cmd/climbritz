@@ -214,8 +214,18 @@ Promotes the app from TestFlight/closed-testing to a submittable public 1.0. See
 - [x] **Phase 2** — `/settings` page + `Delete account` (two-step, type-DELETE), 1 tap from home via the ⚙️; "Coming Soon" pill removed from the Video Analysis tile (Guideline 2.1); privacy policy rewritten to describe in-app deletion.
 - [x] **Phase 3** — Clerk key verification (read-only): Vercel serves `pk_live`, Railway's secret resolves the production instance, no social providers ⇒ **Guideline 4.8 / Sign in with Apple not required**.
 - [x] **Phase 4** — versions aligned to 1.0.0 / vc15 / iOS build 13, `build:mobile` + `cap sync` ×2 green, tagged `v1.0.0-build13`.
-- [ ] **Daniele (dashboard/manual):** rotate `sk_live` (exposed in a screenshot); provision **two** reviewer demo accounts; iOS archive+upload from Terminal.app (`bash ~/deploy_climbritz.sh 13`); App Store Connect metadata + screenshots + privacy questionnaire (privacy URL = apex `https://climbritz.app/privacy`, the `app.` subdomain does not resolve).
+- [x] **`sk_live` rotated** — old `default` key deleted, `railway-prod-2026-07` live (Daniele, 2026-07-23).
+- [ ] **Daniele (dashboard/manual):** iOS archive+upload from Terminal.app (`bash ~/deploy_climbritz.sh 13`); App Store Connect metadata + screenshots + privacy questionnaire (privacy URL = apex `https://climbritz.app/privacy`, the `app.` subdomain does not resolve); screen recordings of BLE + video analysis for App Review Attachments.
 - [ ] **Second pass:** Play Store production promotion.
+
+### A-STORE-PROD-002 — Pre-submission automation ✅ DONE (2026-07-23)
+
+- [x] **Phase 1** — free-analysis path audit: **no quota exists anywhere**. Upload is ungated; no tier/credit/counter fields in any model; the only `disabled` on the upload page is during an in-flight upload. No Guideline 2.1 dead end ⇒ the daily-rate-limit decision gate did not fire and nothing was changed.
+- [x] **Phase 2** — env verified via CLI (prefixes only). Railway `sk_live_…` + JWKS on `clerk.climbritz.app` + `ENVIRONMENT=production`, Vercel `pk_live_…`, zero `*_test_` on either platform.
+- [x] **Phase 3** — `backend/scripts/seed_review_accounts.py`: idempotent, exactly-two-accounts, seeds through the real API (prod DB is unreachable from a laptop), `--dry-run`, refuses `sk_test_` keys, prints a paste-ready App Store Connect block.
+- [x] **Phase 4** — runbook gains Part B0 (trademark 5.2.1 / screenshots / App Review Notes) and the never-submit-on-a-Friday rule.
+- [ ] **Follow-up — `CLERK_WEBHOOK_SECRET` is NOT set on Railway** ⇒ `POST /api/webhooks/clerk` returns 503 and **new-signup Telegram alerts never fire**. Not a submission blocker. Fix: Clerk dashboard → Webhooks → signing secret → set the var on Railway.
+- [ ] **Follow-up — no cost cap on video analysis.** A consequence of Phase 1's finding: with no quota *and* no rate limit, Gemini spend is unbounded per user. Not a review risk, but worth a bound before any Reddit-scale launch.
 
 ### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026) — superseded by A-STORE-PROD-001 Phase 3
 Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. **Closed** — A-STORE-PROD-001 Phase 3 re-verified the live instance (production, `pk_live` on Vercel, prod secret on Railway) and supersedes this item.

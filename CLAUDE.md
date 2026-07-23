@@ -146,7 +146,7 @@ climbritz/
 │   └── main.py
 ├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications · 006 user_generated_climbs (A030)
 ├── backend/tests/              one test_*.py per api/service + fixtures/test_kilter.db
-├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot)
+├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot) · seed_review_accounts (A-STORE-PROD-002 — App Store reviewer accounts; idempotent, seeds via the live API, `--dry-run`, refuses `sk_test_`)
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
 │   ├── generate/       page ("AI Create": A026 filters → remix → board + BLE → re-roll; A030 one-tap Save; A031 name-on-generate + Edit + Start-from-blank)
