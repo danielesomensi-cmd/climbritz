@@ -51,7 +51,7 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 
 **Videos**
 - `POST /api/videos/upload` → 202 (background Gemini analysis)
-- `GET /api/videos/{id}` → video + status/results · `GET /api/videos` → paginated list · `DELETE /api/videos/{id}`
+- `GET /api/videos/{id}` → video + status/results · `GET /api/videos` → paginated list · `DELETE /api/videos/{id}` → 204, also purges the file from the Railway volume (best-effort; a missing file never blocks the row deletion)
 
 **Climbs** (BoardLib, read-only)
 - `GET /api/climbs/search?q=&angle=&grade_min=&grade_max=&min_ascents=&min_quality=&moves=&benchmark=&nomatch=&my_problems=&sort=&limit=&done_filter=&project_filter=`

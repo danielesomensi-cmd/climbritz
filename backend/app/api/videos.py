@@ -9,6 +9,7 @@ from app.core.database import get_db, SessionLocal
 from app.core.deps import get_current_user_id
 from app.models.video import VideoUpload
 from app.schemas.video import VideoResponse
+from app.services.account_service import purge_video_files
 from app.services.storage_service import save_uploaded_file
 from app.services.gemini_service import upload_video_to_gemini, analyze_climbing_form
 
@@ -144,7 +145,13 @@ async def delete_video(
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    """Delete a video record."""
+    """Delete a video record and its file on disk.
+
+    The file purge matters: uploads are up to 500 MB and live on the Railway
+    persistent volume, so dropping only the DB row leaked storage with no way
+    left to find the orphan (A-STORE-PROD-001 C1). Purge is best-effort —
+    a missing or unreadable file never blocks the row deletion.
+    """
     video_record = db.execute(
         select(VideoUpload).where(
             VideoUpload.id == video_id,
@@ -154,6 +161,8 @@ async def delete_video(
 
     if not video_record:
         raise HTTPException(status_code=404, detail="Video not found")
+
+    purge_video_files(video_record)
 
     db.delete(video_record)
     db.commit()

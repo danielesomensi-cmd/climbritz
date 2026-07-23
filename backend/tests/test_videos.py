@@ -419,6 +419,49 @@ class TestDeleteVideoEndpoint:
         resp = client.delete(f"/api/videos/{uuid.uuid4()}")
         assert resp.status_code in (401, 403)
 
+    def test_delete_purges_file_from_disk(self, tmp_path):
+        """A-STORE-PROD-001 C1: uploads are up to 500 MB on the Railway
+        volume — dropping only the DB row leaked storage unrecoverably."""
+        real_file = tmp_path / "climb.mp4"
+        real_file.write_bytes(b"fake video bytes")
+
+        db = TestingSessionLocal()
+        user = _create_user(db)
+        vid = _seed_video(
+            db,
+            user.id,
+            file_path=str(real_file),
+            original_file_path=str(real_file),
+        )
+        uid = user.id
+        db.close()
+
+        assert real_file.exists()
+
+        resp = client.delete(f"/api/videos/{vid}", headers=_auth_header(uid))
+
+        assert resp.status_code == 204
+        assert not real_file.exists(), "video file survived delete"
+
+    def test_delete_succeeds_when_file_already_gone(self, tmp_path):
+        """A stale path (volume remounted, file cleaned out-of-band) must not
+        block the row deletion."""
+        missing = tmp_path / "never-written.mp4"
+
+        db = TestingSessionLocal()
+        user = _create_user(db)
+        vid = _seed_video(db, user.id, file_path=str(missing))
+        uid = user.id
+        db.close()
+
+        resp = client.delete(f"/api/videos/{vid}", headers=_auth_header(uid))
+
+        assert resp.status_code == 204
+        assert (
+            client.get(f"/api/videos/{vid}", headers=_auth_header(uid)).status_code
+            == 404
+        )
+
 
 # --- Storage Service Unit Tests ---
 
