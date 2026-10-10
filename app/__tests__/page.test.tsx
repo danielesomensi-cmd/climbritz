@@ -132,4 +132,19 @@ describe('Home Page', () => {
     expect(gear).toHaveAttribute('href', '/settings');
     expect(gear).toHaveAccessibleName('Settings');
   });
+
+  // UX-HOME: Discover + AI Create are the hero tiles; everything else is a
+  // compact row tile, History first.
+  it('renders Discover and AI Create as hero tiles above the compact grid', () => {
+    render(<Home />);
+    const [hero, compact] = Array.from(
+      screen.getByTestId('home-tiles').children,
+    ) as HTMLElement[];
+    const heroHrefs = Array.from(hero.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(heroHrefs).toEqual(['/generate', '/discover']);
+    const compactHrefs = Array.from(compact.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(compactHrefs[0]).toBe('/history');
+    expect(compactHrefs).toEqual(expect.arrayContaining(['/play', '/arcade', '/upload', '/classify', '/ble-test']));
+    expect(compactHrefs).not.toContain('/discover');
+  });
 });

@@ -13,6 +13,9 @@ interface Tile {
   // A027: `external` tiles open a non-route URL (mailto:) via a plain <a> the
   // OS/WebView delegates to the system handler — NOT SPA navigation.
   external?: boolean;
+  // UX-HOME: hero tiles (the core find/create → light → climb loop) render
+  // large on top; everything else is a compact row tile below.
+  primary?: boolean;
 }
 
 // A027 — Contact tile. No backend: tapping opens the native mail composer via
@@ -49,6 +52,7 @@ const TILES: Tile[] = [
     label: 'AI Create',
     subtitle: 'Generate a problem',
     icon: '✨',
+    primary: true,
   },
   {
     // B033: Discover is the hero — the core find → light → climb loop, and the
@@ -57,12 +61,13 @@ const TILES: Tile[] = [
     label: 'Discover',
     subtitle: 'Search & light up climbs',
     icon: '🔍',
+    primary: true,
   },
   {
     // GAME-001: Add-On party game — playable without a board or login.
     href: '/play',
     label: 'Play',
-    subtitle: 'Add-On game for 2–6',
+    subtitle: 'Add-On game, 2–6 players',
     icon: '🎲',
   },
   {
@@ -122,6 +127,57 @@ const TILES: Tile[] = [
         },
       ]),
 ];
+
+const PRIMARY_TILES = TILES.filter((t) => t.primary);
+// Secondary order = rough frequency of use at the wall: logbook and the
+// party game first, utilities and feedback last.
+const SECONDARY_ORDER = ['/history', '/play', '/upload', '/arcade', '/classify', '/ble-test', CONTACT_TILE_HREF, '/debug'];
+const SECONDARY_TILES = TILES.filter((t) => !t.primary).sort(
+  (a, b) => SECONDARY_ORDER.indexOf(a.href) - SECONDARY_ORDER.indexOf(b.href),
+);
+
+const TILE_BASE =
+  'relative rounded-card border border-orange-500/20 bg-orange-500/[0.06] touch-manipulation select-none transition-[background-color,border-color,transform] hover:bg-orange-500/10 hover:border-orange-500/40 active:scale-[0.98]';
+
+function renderTile(tile: Tile, mailtoHref: string, fullWidth: boolean) {
+  const className = tile.primary
+    ? `${TILE_BASE} flex min-h-[132px] flex-col items-center justify-center px-3 py-5`
+    : `${TILE_BASE} flex min-h-[64px] items-center gap-3 px-3 py-3 ${fullWidth ? 'col-span-2' : ''}`;
+  const inner = tile.primary ? (
+    <>
+      <span className="mb-2 text-[40px] leading-none" aria-hidden>
+        {tile.icon}
+      </span>
+      <span className="text-center text-base font-bold text-zinc-100">{tile.label}</span>
+      <span className="mt-1 text-center text-xs text-zinc-400">{tile.subtitle}</span>
+    </>
+  ) : (
+    <>
+      <span className="shrink-0 text-[26px] leading-none" aria-hidden>
+        {tile.icon}
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <span className="text-[15px] font-bold leading-tight text-zinc-200">{tile.label}</span>
+        <span className="mt-0.5 text-xs leading-snug text-zinc-400">{tile.subtitle}</span>
+      </span>
+    </>
+  );
+
+  // A027: external (mailto) tiles render a plain <a> so the OS handles the
+  // scheme; internal tiles stay SPA <Link>s.
+  if (tile.external) {
+    return (
+      <a key={tile.href} href={mailtoHref} data-testid="tile-contact" className={className}>
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <Link key={tile.href} href={tile.href} className={className}>
+      {inner}
+    </Link>
+  );
+}
 
 function HomeContent() {
   // A027 — default to the web/no-version mailto; upgrade to a version-stamped
@@ -185,51 +241,29 @@ function HomeContent() {
       <h1 className="font-display text-display m-0 text-center tracking-[-2px] text-[color:var(--brand-orange)] [text-shadow:0_0_40px_rgba(255,107,53,0.6)]">
         CLIMBRITZ
       </h1>
-      <p className="mt-2 mb-8 text-center text-base font-medium text-zinc-400">
+      <p className="mt-2 mb-6 text-center text-base font-medium text-zinc-400">
         AI Climbing Companion
       </p>
 
-      {/* Tile Grid */}
-      <div className="grid grid-cols-2 gap-4 w-full max-w-[420px]">
-        {TILES.map((tile, i) => {
-          // Odd tile count leaves a gap in the 2-col grid — let the last tile
-          // span both columns so the grid reads as deliberate, not orphaned.
-          const fullWidth = i === TILES.length - 1 && TILES.length % 2 === 1;
-          const className = `relative flex flex-col items-center justify-center min-h-[140px] px-4 py-6 rounded-card bg-orange-500/[0.06] border border-orange-500/20 hover:bg-orange-500/10 hover:border-orange-500/40 transition-colors ${
-            fullWidth ? 'col-span-2' : ''
-          }`;
-          const inner = (
-            <>
-              <span className="text-[40px] mb-3">{tile.icon}</span>
-              <span className="text-[15px] font-bold text-center text-zinc-200">
-                {tile.label}
-              </span>
-              <span className="mt-1 text-xs text-center text-zinc-400">
-                {tile.subtitle}
-              </span>
-            </>
-          );
-
-          // A027: external (mailto) tiles render a plain <a> so the OS handles
-          // the scheme; internal tiles stay SPA <Link>s.
-          if (tile.external) {
-            return (
-              <a
-                key={tile.href}
-                href={mailtoHref}
-                data-testid="tile-contact"
-                className={className}
-              >
-                {inner}
-              </a>
-            );
-          }
-          return (
-            <Link key={tile.href} href={tile.href} className={className}>
-              {inner}
-            </Link>
-          );
-        })}
+      {/* Tile grid — UX-HOME: with 9 entry points the old uniform 140px
+          tiles made home ~3 screens tall. The two hero tiles stay big; the
+          rest are compact 2-col rows (icon left, ≥64px tap target), so the
+          whole menu fits in about one phone screen. */}
+      <div className="w-full max-w-[420px]" data-testid="home-tiles">
+        <div className="grid grid-cols-2 gap-3">
+          {PRIMARY_TILES.map((tile) => renderTile(tile, mailtoHref, false))}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {SECONDARY_TILES.map((tile, i) =>
+            renderTile(
+              tile,
+              mailtoHref,
+              // Odd count leaves a gap in the 2-col grid — the last tile
+              // spans both columns so the grid reads as deliberate.
+              i === SECONDARY_TILES.length - 1 && SECONDARY_TILES.length % 2 === 1,
+            ),
+          )}
+        </div>
       </div>
     </div>
   );
