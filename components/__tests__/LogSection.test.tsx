@@ -492,3 +492,21 @@ describe('LogSection — B027 Project label + destructive modal', () => {
     expect(keepBtn.className).toMatch(/bg-orange-/);
   });
 });
+
+// UX-002 / QW5 — bigger log buttons, no sub-12px labels.
+describe('LogSection — tap targets', () => {
+  it('every log button is min-h-14 and no label uses text-[10px]', () => {
+    const { container } = render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ recent_logs: [mkLog()] })}
+        onMutated={jest.fn()}
+      />,
+    );
+    const buttons = screen.getByTestId('log-grid').querySelectorAll('button');
+    expect(buttons).toHaveLength(5);
+    buttons.forEach((b) => expect(b).toHaveClass('min-h-14'));
+    expect(container.querySelector('[class*="text-[10px]"]')).toBeNull();
+  });
+});

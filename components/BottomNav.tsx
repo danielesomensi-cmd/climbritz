@@ -7,8 +7,8 @@ interface NavItem {
   href: string;
   label: string;
   icon: string;
-  /** If set, this tab is active when the path starts with this prefix. */
-  match?: string;
+  /** Path prefixes that mark this tab active (defaults to `href`). */
+  match?: string[];
 }
 
 // B021 (2026-05-19): Coach slot removed pending Coach tier production
@@ -16,17 +16,20 @@ interface NavItem {
 // pill from the homepage tile — analysis is live — but the nav stays at 4
 // slots: /upload is reachable from the Video Analysis tile, and a 5th slot
 // is a layout decision, not a release blocker.
+// UX-002 / QW8: the 4th tab was labelled "Profile" but /dashboard is the
+// video list ("Your videos") — renamed to "Videos" and it now also lights up
+// on the video detail + upload screens it leads to.
 const ITEMS: NavItem[] = [
-  { href: '/', label: 'Home', icon: '🏠', match: '/' },
-  { href: '/discover', label: 'Discover', icon: '🔍', match: '/discover' },
-  { href: '/history', label: 'History', icon: '📊', match: '/history' },
-  { href: '/dashboard', label: 'Profile', icon: '👤', match: '/dashboard' },
+  { href: '/', label: 'Home', icon: '🏠' },
+  { href: '/discover', label: 'Discover', icon: '🔍' },
+  { href: '/history', label: 'History', icon: '📊' },
+  { href: '/dashboard', label: 'Videos', icon: '🎬', match: ['/dashboard', '/videos', '/upload'] },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
   if (item.href === '/') return pathname === '/';
-  const prefix = item.match ?? item.href;
-  return pathname.startsWith(prefix);
+  const prefixes = item.match ?? [item.href];
+  return prefixes.some((prefix) => pathname.startsWith(prefix));
 }
 
 export default function BottomNav() {
@@ -45,10 +48,20 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               data-testid={`nav-${item.label.toLowerCase()}`}
-              className={`flex flex-col items-center justify-center py-2 text-xs transition-colors ${
-                active ? 'text-orange-400' : 'text-zinc-400 hover:text-zinc-200'
+              aria-current={active ? 'page' : undefined}
+              className={`relative flex min-h-[52px] flex-col items-center justify-center py-2 text-xs touch-manipulation select-none transition-colors ${
+                active ? 'text-orange-400 font-semibold' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
+              {/* Active indicator — a short brand-orange bar on the top edge,
+                  so the current tab doesn't rely on colour alone. */}
+              {active && (
+                <span
+                  data-testid="bottom-nav-active-indicator"
+                  aria-hidden="true"
+                  className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-orange-500"
+                />
+              )}
               <span className="text-lg leading-none mb-0.5" aria-hidden="true">
                 {item.icon}
               </span>

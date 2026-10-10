@@ -281,7 +281,7 @@ function GeneratePageInner() {
                 data-testid="grade-min"
                 value={gradeMin}
                 onChange={(e) => setGradeMin(Number(e.target.value))}
-                className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white"
+                className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
               >
                 {GRADES.map((g) => (
                   <option key={g.difficulty} value={g.difficulty}>
@@ -293,7 +293,7 @@ function GeneratePageInner() {
                 data-testid="grade-max"
                 value={gradeMax}
                 onChange={(e) => setGradeMax(Number(e.target.value))}
-                className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white"
+                className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
               >
                 {GRADES.map((g) => (
                   <option key={g.difficulty} value={g.difficulty}>

@@ -188,7 +188,7 @@ describe('ClassifyPage', () => {
 
   it('shows the "click a hold" hint when nothing is selected', () => {
     render(<ClassifyPage />);
-    expect(screen.getByText(/Click a hold on the board/)).toBeInTheDocument();
+    expect(screen.getByText(/Tap a hold on the board/)).toBeInTheDocument();
   });
 
   it('clicking a hold on the board opens the detail panel with its crop', () => {

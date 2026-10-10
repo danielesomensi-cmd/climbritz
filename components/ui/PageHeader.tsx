@@ -36,7 +36,7 @@ export default function PageHeader({
             href={back.href}
             data-testid={back.testid}
             aria-label={back.label ? `Back to ${back.label}` : 'Back'}
-            className={`inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-orange-400 ${title ? 'mb-1' : ''}`}
+            className={`-ml-2 inline-flex min-h-[44px] min-w-[44px] items-center gap-1 px-2 touch-manipulation select-none text-sm text-text-tertiary hover:text-orange-400 ${title ? 'mb-1' : ''}`}
           >
             <span aria-hidden className="text-2xl leading-none">←</span>
             {back.label}

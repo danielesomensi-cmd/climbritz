@@ -304,7 +304,7 @@ function DiscoverPageInner() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search climbs by name…"
-            className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
+            className="w-full min-h-[48px] px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
 
           {/* A021.4 — tri-state chip filters above the Filters button.

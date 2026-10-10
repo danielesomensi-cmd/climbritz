@@ -119,7 +119,7 @@ function SessionClimbRow({ climb }: { climb: SessionClimb }) {
     <Link
       href={`/discover/detail?id=${climb.climb_uuid}&angle=${climb.angle}`}
       data-testid={`session-climb-${climb.log_id}`}
-      className="flex items-center gap-3 py-2 text-sm hover:bg-zinc-800/40 rounded transition-colors"
+      className="flex min-h-[44px] items-center gap-3 py-2 text-sm touch-manipulation hover:bg-zinc-800/40 active:bg-zinc-800/60 rounded transition-colors"
     >
       <span className={`text-base leading-none ${ICON_COLOR[climb.result_type]}`}>
         {ICONS[climb.result_type]}

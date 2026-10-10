@@ -1,6 +1,7 @@
 'use client';
 
 import { type ButtonHTMLAttributes } from 'react';
+import { PRESSABLE_CLASSES } from './pressable';
 
 // B033 Phase 3 — filter / toggle / segmented-option primitive. ONE selected
 // style (soft outline) — the single active vocabulary that closes D18-3 — and a
@@ -22,11 +23,12 @@ export default function Chip({
       aria-pressed={selected}
       disabled={disabled}
       className={[
-        'inline-flex items-center justify-center min-h-[44px] px-3 rounded-pill text-sm border transition-colors',
+        'inline-flex items-center justify-center min-h-[44px] px-3 rounded-pill text-sm border',
+        PRESSABLE_CLASSES,
         selected
           ? 'bg-orange-500/15 border-orange-500 text-orange-200 font-semibold'
           : 'bg-surface-overlay border-border-strong text-text-secondary hover:border-zinc-600',
-        disabled ? 'opacity-50 cursor-not-allowed' : '',
+        disabled ? 'opacity-50 cursor-not-allowed active:scale-100' : '',
         className,
       ].join(' ')}
       {...rest}

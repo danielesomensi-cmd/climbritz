@@ -250,7 +250,7 @@ function ClassifyContent() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-page-title font-display">Hold Classification</h1>
-            <p className="text-xs text-zinc-400">Click any hold to classify or reclassify it.</p>
+            <p className="text-xs text-zinc-400">Tap any hold to classify or reclassify it.</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* B033: Next is navigation, not a category — moved off blue (blue is
@@ -362,7 +362,7 @@ function ClassifyContent() {
                   <EmptyState
                     title={
                       <span>
-                        Click a hold on the board to classify it, or tap{' '}
+                        Tap a hold on the board to classify it, or tap{' '}
                         <strong>Next unclassified</strong> to jump to the first untouched hold.
                       </span>
                     }

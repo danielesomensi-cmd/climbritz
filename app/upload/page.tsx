@@ -142,7 +142,7 @@ function UploadContent() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Slab session V4, Red problem gym"
-              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors"
+              className="w-full min-h-[48px] px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-base text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors"
             />
           </div>
         )}

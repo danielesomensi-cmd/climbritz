@@ -24,6 +24,7 @@ import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { PRESSABLE_CLASSES } from '@/components/ui/pressable';
 import BoardMap, { type Placement } from '@/components/BoardMap';
 import { useBle } from '@/components/BleProvider';
 import { PLACEMENT_ROLES } from '@/lib/ble/kilter-protocol';
@@ -215,7 +216,7 @@ function CreatePageInner() {
             }}
             maxLength={60}
             placeholder="Problem name (leave empty for an AI name)"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-base font-semibold text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
+            className="w-full min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-base font-semibold text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
           <div className="grid grid-cols-2 gap-2">
             <select
@@ -225,7 +226,7 @@ function CreatePageInner() {
                 setGrade(e.target.value);
                 setDirty(true);
               }}
-              className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white"
+              className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
             >
               <option value="">Grade — set later</option>
               {GRADES.map((g) => (
@@ -244,7 +245,7 @@ function CreatePageInner() {
               // Angle is part of the logging key (uuid, angle) — changing it
               // on an existing problem would orphan logs, so edit mode pins it.
               disabled={isEdit}
-              className="bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-sm text-white disabled:opacity-60"
+              className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white disabled:opacity-60"
             >
               {ANGLES.map((a) => (
                 <option key={a} value={a}>
@@ -277,7 +278,7 @@ function CreatePageInner() {
                 data-testid={`palette-${role}`}
                 aria-pressed={selected}
                 onClick={() => setActiveRole(role)}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium border transition-colors ${
+                className={`flex min-h-[44px] items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium border ${PRESSABLE_CLASSES} ${
                   selected
                     ? 'border-orange-500 bg-zinc-800 text-white'
                     : 'border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500'

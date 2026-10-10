@@ -101,6 +101,12 @@
   --text-micro: 10px;
   --text-micro--line-height: 1.2;
   --text-micro--font-weight: 600;
+
+  /* Motion (UX-002 / QW2) — one press curve for every pressable primitive.
+     `--ease-*` generates the `ease-press` utility; the duration is consumed via
+     `duration-(--motion-duration-press)`, which collapses to 0ms under
+     prefers-reduced-motion (guard below the :root block). */
+  --ease-press: cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* Display face (Space Grotesk) — wordmark + page titles. The --font-display var
@@ -139,8 +145,21 @@
      native iOS IosSafeArea.tsx still overrides --safe-top inline (plain px),
      which beats this :root rule. Do NOT reduce this back to env()-only. */
   --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+
+  /* UX-002 motion tokens (paired with --ease-press in @theme above). */
+  --motion-duration-press: 120ms;
+  --motion-duration-standard: 200ms;
   /* (No --safe-bottom token on purpose: the bottom utilities in safe-area.css
      keep env() DIRECT at the usage site — see the B036 note there.) */
+}
+
+/* UX-002 — reduced-motion guard: zero the motion tokens so press feedback and
+   transitions become instant for users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-press: 0ms;
+    --motion-duration-standard: 0ms;
+  }
 }
 
 /* Spacing convention (D18-4.1.4): adopt Tailwind's existing 4px scale AS-IS —
@@ -171,5 +190,8 @@ body {
      matches the pages. */
   background: var(--color-surface-base);
   color: var(--color-text-secondary);
+  /* UX-002 / QW2 — kill the grey WebView tap flash; primitives provide their
+     own active:scale press feedback instead. */
+  -webkit-tap-highlight-color: transparent;
 }
 

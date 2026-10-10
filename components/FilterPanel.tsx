@@ -288,7 +288,7 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
           type="button"
           data-testid="filter-reset"
           onClick={reset}
-          className="text-sm text-zinc-400 hover:text-orange-400"
+          className="inline-flex min-h-[44px] items-center touch-manipulation text-sm text-zinc-400 hover:text-orange-400"
         >
           Clear filters
         </button>

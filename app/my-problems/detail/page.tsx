@@ -205,7 +205,7 @@ function MyProblemDetailPageInner() {
                   onChange={(e) => setDraftGrade(e.target.value)}
                   onBlur={commitGrade}
                   onKeyDown={(e) => e.key === 'Enter' && commitGrade()}
-                  className="w-20 bg-zinc-800 border border-orange-500 rounded px-2 py-2 text-sm text-white"
+                  className="w-20 min-h-[48px] bg-zinc-800 border border-orange-500 rounded px-2 py-2 text-base text-white"
                 />
               ) : (
                 <button
@@ -229,7 +229,7 @@ function MyProblemDetailPageInner() {
                     onChange={(e) => setDraftName(e.target.value)}
                     onBlur={commitName}
                     onKeyDown={(e) => e.key === 'Enter' && commitName()}
-                    className="w-full bg-zinc-800 border border-orange-500 rounded px-2 py-1 text-xl font-bold text-white"
+                    className="w-full min-h-[48px] bg-zinc-800 border border-orange-500 rounded px-2 py-1 text-xl font-bold text-white"
                   />
                 ) : (
                   <h1
@@ -300,7 +300,7 @@ function MyProblemDetailPageInner() {
               type="button"
               data-testid="edit-holds-btn"
               onClick={handleEditHolds}
-              className="w-full py-2 text-sm text-orange-400 hover:text-orange-300"
+              className="w-full min-h-[44px] touch-manipulation py-2 text-sm text-orange-400 hover:text-orange-300"
             >
               Edit holds
             </button>
@@ -310,7 +310,7 @@ function MyProblemDetailPageInner() {
               data-testid="delete-btn"
               onClick={handleDelete}
               disabled={deleting}
-              className="w-full py-2 text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
+              className="w-full min-h-[44px] touch-manipulation py-2 text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
             >
               {deleting ? 'Deleting…' : 'Delete problem'}
             </button>

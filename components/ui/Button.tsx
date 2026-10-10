@@ -1,10 +1,14 @@
 'use client';
 
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { PRESSABLE_CLASSES } from './pressable';
 
 // B033 Phase 3 — commit-action button primitive. Closes the solid-fill side of
 // D18-3 (commit vs filter) and bakes in the D18-8 contrast fix: `primary` is
 // brand orange with near-black text (~6.8:1, passes AA at every size).
+// UX-002: loading keeps the label (or `loadingLabel`) next to a spinner and
+// sets aria-busy; press state (active:scale) + touch-manipulation +
+// select-none for a native-feeling tap.
 type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost';
 type ButtonSize = 'md' | 'lg';
 
@@ -24,26 +28,56 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  /** Text shown next to the spinner while loading. Defaults to `children`. */
+  loadingLabel?: string;
+}
+
+function Spinner() {
+  return (
+    <span
+      data-testid="button-spinner"
+      aria-hidden="true"
+      className="inline-block h-4 w-4 shrink-0 rounded-full border-2 border-current border-r-transparent animate-spin motion-reduce:animate-none"
+    />
+  );
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'primary', size = 'md', loading = false, disabled, className = '', children, ...rest },
+  {
+    variant = 'primary',
+    size = 'md',
+    loading = false,
+    loadingLabel,
+    disabled,
+    className = '',
+    children,
+    ...rest
+  },
   ref,
 ) {
   return (
     <button
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={[
-        'inline-flex items-center justify-center gap-2 rounded-card font-semibold transition-colors',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 rounded-card font-semibold',
+        PRESSABLE_CLASSES,
+        'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,
       ].join(' ')}
       {...rest}
     >
-      {loading ? '…' : children}
+      {loading ? (
+        <>
+          <Spinner />
+          {loadingLabel ?? children}
+        </>
+      ) : (
+        children
+      )}
     </button>
   );
 });

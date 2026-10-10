@@ -160,7 +160,7 @@ function HomeContent() {
           href="/settings"
           aria-label="Settings"
           data-testid="home-settings-link"
-          className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-zinc-400 hover:bg-orange-500/10 hover:text-orange-400 transition-colors"
+          className="flex h-11 w-11 touch-manipulation items-center justify-center rounded-full text-xl text-zinc-400 hover:bg-orange-500/10 hover:text-orange-400 transition-colors"
         >
           <span aria-hidden>⚙️</span>
         </Link>

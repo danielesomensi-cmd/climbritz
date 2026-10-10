@@ -235,7 +235,7 @@ export default function LogSection({
               onClick={() => handleResultButton(btn.result)}
               disabled={pending !== null}
               className={[
-                'min-h-12 px-1 rounded-lg text-white font-bold',
+                'min-h-14 px-1 touch-manipulation select-none active:scale-[0.97] motion-reduce:active:scale-100 rounded-lg text-white font-bold',
                 'border-2 transition-all flex flex-col items-center justify-center gap-0',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 btn.color,
@@ -243,7 +243,7 @@ export default function LogSection({
               ].join(' ')}
             >
               <span className="text-xl leading-none">{btn.icon}</span>
-              <span className="text-[10px] leading-tight">
+              <span className="max-w-full truncate text-xs leading-tight">
                 {isPending ? '…' : btn.label}
                 {isTodaysResult && todaysLog && todaysLog.attempts_count > 1
                   ? ` ×${todaysLog.attempts_count}`
@@ -259,7 +259,7 @@ export default function LogSection({
           onClick={handleProjectToggle}
           disabled={pending !== null}
           className={[
-            'min-h-12 px-1 rounded-lg border-2 font-bold',
+            'min-h-14 px-1 touch-manipulation select-none active:scale-[0.97] motion-reduce:active:scale-100 rounded-lg border-2 font-bold',
             'flex flex-col items-center justify-center gap-0 transition-all',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             isProject
@@ -271,7 +271,7 @@ export default function LogSection({
           {/* B027: dynamic label so the button is unambiguous — when the
               climb is already a project, tapping toggles it off, so we
               reflect that in the label instead of always saying "Project". */}
-          <span className="text-[10px] leading-tight">
+          <span className="max-w-full truncate text-xs leading-tight">
             {pending === 'project'
               ? '…'
               : isProject
@@ -286,10 +286,10 @@ export default function LogSection({
             data-testid="log-btn-remove"
             onClick={handleRemoveTodaysLog}
             disabled={pending !== null}
-            className="min-h-12 px-1 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-h-14 px-1 touch-manipulation select-none active:scale-[0.97] motion-reduce:active:scale-100 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="text-xl leading-none">🗑</span>
-            <span className="text-[10px] leading-tight">
+            <span className="max-w-full truncate text-xs leading-tight">
               {pending === 'remove' ? '…' : 'Remove'}
             </span>
           </button>
