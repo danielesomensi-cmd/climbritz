@@ -19,6 +19,7 @@ import {
   ApiError,
 } from '@/app/lib/api';
 import { GRADES } from '@/app/lib/grades';
+import { ANGLES } from '@/app/lib/angles';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/ui/PageHeader';
@@ -65,7 +66,6 @@ const PALETTE: Array<{ role: PaletteRole; label: string }> = [
   { role: 'erase', label: 'Erase' },
 ];
 
-const ANGLES = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
 const PAINT_BLE_DEBOUNCE_MS = 300;
 
 const BLANK_DRAFT: CreateDraft = {

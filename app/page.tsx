@@ -59,6 +59,13 @@ const TILES: Tile[] = [
     icon: '🔍',
   },
   {
+    // GAME-001: Add-On party game — playable without a board or login.
+    href: '/play',
+    label: 'Play',
+    subtitle: 'Add-On game for 2–6',
+    icon: '🎲',
+  },
+  {
     href: '/history',
     label: 'History',
     subtitle: 'Sessions, pyramid, trend',

@@ -47,6 +47,13 @@ describe('Home Page', () => {
     expect(screen.getByText('Generate a problem')).toBeInTheDocument();
   });
 
+  // GAME-001 — Add-On game entry point.
+  it('renders the Play tile pointing at /play', () => {
+    render(<Home />);
+    const link = screen.getByText('Play').closest('a');
+    expect(link).toHaveAttribute('href', '/play');
+  });
+
   // B034 v4 — the hero's top safe-area padding MUST come from an inline style,
   // NEVER a Tailwind `pt-*` utility. globals.css has an unlayered
   // `* { padding: 0 }` reset that beats `@layer utilities` in the CSS cascade,
