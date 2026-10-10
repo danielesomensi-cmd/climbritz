@@ -210,13 +210,12 @@ function ClimbDetailPageInner() {
               onMutated={setUserClimb}
             />
 
-            {/* Board visualization — capped at 280px wide so it doesn't
-                dominate the viewport above the role legend + RecentLogs
-                + action buttons. BoardMap uses width:100% + aspectRatio,
-                so the constraint is enough. Bump to max-w-xs (320px)
-                or max-w-sm (384px) if cyan middle-holds become hard to
-                tap at this size. */}
-            <div className="mx-auto max-w-[280px]">
+            {/* Board visualization — full content width (358pt on a 390pt
+                phone), capped at max-w-md on tablets. The old 280px cap
+                dated from the global CSS reset era (no page gutter); at
+                the wall, readable holds beat a compact layout. BoardMap
+                uses width:100% + aspectRatio, so the wrapper is enough. */}
+            <div className="mx-auto w-full max-w-md">
               <ClimbBoardView holds={climb.holds} />
             </div>
 

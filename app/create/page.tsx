@@ -215,7 +215,7 @@ function CreatePageInner() {
               setDirty(true);
             }}
             maxLength={60}
-            placeholder="Problem name (leave empty for an AI name)"
+            placeholder="Name (leave blank for an AI name)"
             className="w-full min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-base font-semibold text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
           <div className="grid grid-cols-2 gap-2">

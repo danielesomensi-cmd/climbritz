@@ -47,7 +47,7 @@ function ChipRow({ label, testidPrefix, value, onChange }: ChipRowProps) {
       <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide shrink-0 w-16">
         {label}
       </span>
-      <div className="flex gap-1 flex-1">
+      <div className="flex gap-2 flex-1">
         {CHIP_OPTIONS.map((opt) => (
           <Chip
             key={opt.value}
@@ -280,10 +280,20 @@ function DiscoverPageInner() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-nav">
       {/* Header */}
+      {/* B-CSS-RESET — only title + angle stay sticky. With real padding
+          the full control stack (search, Done/Project, Filters) made the
+          sticky header ~350pt tall on a 390pt phone, leaving half the
+          screen for results while scrolling. The rest now scrolls away
+          with the list; the angle (the one thing that changes at the
+          wall) stays one tap away. */}
       <PageHeader title="Discover">
-        <div className="space-y-3 mt-3">
-          {/* Angle selector */}
-          <div className="flex gap-1 overflow-x-auto pb-1" data-testid="angle-selector">
+        <div className="mt-3">
+          {/* Angle selector — bleeds to the screen edge so a clipped chip
+              reads as "scroll for more". */}
+          <div
+            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+            data-testid="angle-selector"
+          >
             {ANGLES.map((a) => (
               <Chip
                 key={a}
@@ -296,7 +306,11 @@ function DiscoverPageInner() {
               </Chip>
             ))}
           </div>
+        </div>
+      </PageHeader>
 
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-6 space-y-4">
+        <div className="space-y-3">
           {/* Search input */}
           <input
             type="text"
@@ -385,10 +399,10 @@ function DiscoverPageInner() {
             </svg>
           </button>
         </div>
-      </PageHeader>
 
-      <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        <div id="discover-filter-panel">
+        {/* empty:hidden — the collapsed panel renders nothing; without it the
+            empty wrapper still took a space-y-4 gap above the results. */}
+        <div id="discover-filter-panel" className="empty:hidden">
           <FilterPanel value={filters} onChange={setFilters} expanded={isFilterPanelOpen} />
         </div>
 

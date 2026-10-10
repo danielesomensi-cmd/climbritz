@@ -23,6 +23,7 @@ import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
+import Button from '@/components/ui/Button';
 import LogSection from '@/components/LogSection';
 import RecentLogs from '@/components/RecentLogs';
 import { climbToLedCommands } from '../../discover/detail/climb-to-leds';
@@ -271,7 +272,7 @@ function MyProblemDetailPageInner() {
               }}
             />
 
-            <div className="mx-auto max-w-[280px]">
+            <div className="mx-auto w-full max-w-md">
               <ClimbBoardView holds={problem.holds} />
             </div>
 
@@ -295,25 +296,27 @@ function MyProblemDetailPageInner() {
               <RecentLogs logs={userClimb.recent_logs} limit={10} />
             )}
 
-            {/* A031 — hold editor entry point. */}
-            <button
-              type="button"
-              data-testid="edit-holds-btn"
-              onClick={handleEditHolds}
-              className="w-full min-h-[44px] touch-manipulation py-2 text-sm text-orange-400 hover:text-orange-300"
-            >
-              Edit holds
-            </button>
-
-            <button
-              type="button"
-              data-testid="delete-btn"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="w-full min-h-[44px] touch-manipulation py-2 text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
-            >
-              {deleting ? 'Deleting…' : 'Delete problem'}
-            </button>
+            {/* A031 — hold editor entry point + delete, side by side as
+                real buttons (they used to be two loose text links with a
+                big gap between them once the reset stopped eating padding). */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <Button
+                variant="secondary"
+                data-testid="edit-holds-btn"
+                onClick={handleEditHolds}
+              >
+                Edit holds
+              </Button>
+              <Button
+                variant="ghost"
+                data-testid="delete-btn"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="border border-red-900/70 text-red-400! hover:text-red-300!"
+              >
+                {deleting ? 'Deleting…' : 'Delete problem'}
+              </Button>
+            </div>
           </>
         )}
       </main>

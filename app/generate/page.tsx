@@ -256,7 +256,7 @@ function GeneratePageInner() {
             <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
               Angle
             </label>
-            <div className="flex gap-1 overflow-x-auto pb-1" data-testid="angle-selector">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" data-testid="angle-selector">
               {ANGLES.map((a) => (
                 <Chip
                   key={a}
@@ -413,7 +413,7 @@ function GeneratePageInner() {
               autoSendOnKeyChange
             />
 
-            <div className="mx-auto max-w-[280px]">
+            <div className="mx-auto w-full max-w-md">
               <ClimbBoardView holds={holdsForView} />
             </div>
 
