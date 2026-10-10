@@ -38,3 +38,13 @@
     6rem + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))
   );
 }
+
+/* UX-004 (lite) — `bottom` offset for sticky/fixed bars that must park just
+   ABOVE the BottomNav (52px row + 1px border + bottom safe area, same max()
+   pair as .pb-safe). Used by the climb-detail Prev/Next bar. If BottomNav
+   resizes, change it here together with .pb-nav. */
+.bottom-above-nav {
+  bottom: calc(
+    53px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))
+  );
+}

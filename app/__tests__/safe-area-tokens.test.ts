@@ -40,7 +40,7 @@ describe('safe-area insets (B036)', () => {
     // and .pb-safe/.pb-nav work on iOS today). Each bottom rule must carry
     // both sources inline; a --safe-bottom token would re-add the indirection.
     const bottomRules = safeAreaRules.match(/max\([^)]*safe-area-inset-bottom[^;]*/g) ?? [];
-    expect(bottomRules.length).toBe(2); // .pb-safe + .pb-nav
+    expect(bottomRules.length).toBe(3); // .pb-safe + .pb-nav + .bottom-above-nav (UX-004)
     for (const rule of bottomRules) {
       expect(rule).toContain('env(safe-area-inset-bottom');
       expect(rule).toContain('var(--safe-area-inset-bottom');

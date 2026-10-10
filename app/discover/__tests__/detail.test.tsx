@@ -172,6 +172,19 @@ describe('ClimbDetailPage', () => {
       expect(screen.getByTestId('list-nav-next')).not.toBeDisabled();
     });
 
+    // UX-004 (lite): Prev/Next is a sticky bar parked above the BottomNav
+    // (offset includes the bottom safe area), with accessible names.
+    it('keeps the Next/Prev bar sticky above the BottomNav', async () => {
+      withList(1);
+      render(<ClimbDetailPage />);
+      const bar = await screen.findByTestId('list-nav');
+      expect(bar.className).toMatch(/\bsticky\b/);
+      expect(bar.className).toMatch(/\bbottom-above-nav\b/);
+      expect(screen.getByRole('button', { name: 'Next climb' })).toBe(
+        screen.getByTestId('list-nav-next'),
+      );
+    });
+
     it('disables Prev on the first climb in the list', async () => {
       withList(0);
       render(<ClimbDetailPage />);

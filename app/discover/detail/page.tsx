@@ -271,24 +271,32 @@ function ClimbDetailPageInner() {
                 "Light up" already lives in ClimbBleControls above. */}
 
             {/* A014: Next/Prev through the saved filtered list. Hidden on
-                deep links (no saved list OR current uuid not in it). */}
+                deep links (no saved list OR current uuid not in it).
+                UX-004 (lite): the row is sticky just above the BottomNav, so
+                "Next →" is always under the thumb — at the wall the loop is
+                look → (auto) light up → Next, and scrolling past the board
+                every time was the main friction. Sticky (not fixed) keeps it
+                in flow: it settles at the end of the page when scrolled
+                there, and it never overlaps the log buttons at the top.
+                BLE is untouched — Next still only flips autoSendOnNav. */}
             {hasNav && (
               <div
                 data-testid="list-nav"
-                className="flex items-center gap-3"
+                className="bottom-above-nav sticky z-20 -mx-4 flex items-center gap-3 border-t border-zinc-800 bg-zinc-950/95 px-4 py-2 backdrop-blur"
               >
                 <button
                   type="button"
                   data-testid="list-nav-prev"
                   onClick={() => navigateToNeighbour(-1)}
                   disabled={!canPrev}
-                  className="flex-1 min-h-16 px-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-xl font-bold hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                  aria-label="Previous climb"
+                  className="min-h-14 shrink-0 basis-1/3 touch-manipulation select-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-lg font-bold text-zinc-100 transition-[border-color,color,transform] hover:border-zinc-600 hover:text-white active:scale-[0.97] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   ← Prev
                 </button>
                 <span
                   data-testid="list-nav-position"
-                  className="text-sm font-semibold text-zinc-400 shrink-0 tabular-nums"
+                  className="flex-1 text-center text-sm font-semibold text-zinc-400 tabular-nums"
                 >
                   {position.index + 1} of {position.list.climbIds.length}
                 </span>
@@ -297,13 +305,13 @@ function ClimbDetailPageInner() {
                   data-testid="list-nav-next"
                   onClick={() => navigateToNeighbour(1)}
                   disabled={!canNext}
-                  className="flex-1 min-h-16 px-4 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-xl font-bold hover:border-zinc-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
+                  aria-label="Next climb"
+                  className="min-h-14 shrink-0 basis-1/3 touch-manipulation select-none rounded-lg bg-orange-500 px-3 text-lg font-bold text-zinc-950 transition-[background-color,transform] hover:bg-orange-400 active:scale-[0.97] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>
               </div>
             )}
-
           </>
         )}
       </main>
