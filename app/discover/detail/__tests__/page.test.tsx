@@ -42,6 +42,9 @@ jest.mock('@/components/RecentLogs', () => ({
   __esModule: true,
   default: () => <div data-testid="mock-recentlogs" />,
 }));
+jest.mock('@/components/BleProvider', () => ({
+  useBle: () => ({ status: 'idle', sendLEDs: jest.fn() }),
+}));
 jest.mock('@/components/BottomNav', () => ({
   __esModule: true,
   default: () => <nav data-testid="mock-bottomnav" />,

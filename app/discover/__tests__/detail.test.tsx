@@ -9,15 +9,22 @@ jest.mock('@clerk/clerk-react', () => ({
 // B035: ClimbBleControls consumes the shared BleProvider context, which lives
 // in the root layout — absent here. Mock the consumer hook with the same
 // non-native idle value the page sees in jsdom.
+// Fixture placements aren't in the real LED map — give the page one command
+// so the action-bar Light button has something to send.
+jest.mock('../detail/climb-to-leds', () => ({
+  climbToLedCommands: () => [{ position: 1, r: 0, g: 255, b: 0 }],
+}));
+const mockSendLEDs = jest.fn();
+let mockBleStatus = 'idle';
 jest.mock('@/components/BleProvider', () => ({
   useBle: () => ({
-    status: 'idle',
+    status: mockBleStatus,
     errorMessage: null,
     lastError: null,
     connectedDevice: null,
     connect: jest.fn(),
     disconnect: jest.fn(),
-    sendLEDs: jest.fn(),
+    sendLEDs: mockSendLEDs,
     sendAllOffLEDs: jest.fn(),
     clearError: jest.fn(),
     isCapacitorNative: false,
@@ -165,9 +172,9 @@ describe('ClimbDetailPage', () => {
       withList(1);
       render(<ClimbDetailPage />);
       await waitFor(() => {
-        expect(screen.getByTestId('list-nav')).toBeInTheDocument();
+        expect(screen.getByTestId('list-nav-next')).toBeInTheDocument();
       });
-      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('2 of 3');
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('2/3');
       expect(screen.getByTestId('list-nav-prev')).not.toBeDisabled();
       expect(screen.getByTestId('list-nav-next')).not.toBeDisabled();
     });
@@ -177,7 +184,7 @@ describe('ClimbDetailPage', () => {
     it('keeps the Next/Prev bar sticky above the BottomNav', async () => {
       withList(1);
       render(<ClimbDetailPage />);
-      const bar = await screen.findByTestId('list-nav');
+      const bar = await screen.findByTestId('action-bar');
       expect(bar.className).toMatch(/\bsticky\b/);
       expect(bar.className).toMatch(/\bbottom-above-nav\b/);
       expect(screen.getByRole('button', { name: 'Next climb' })).toBe(
@@ -192,7 +199,7 @@ describe('ClimbDetailPage', () => {
         expect(screen.getByTestId('list-nav-prev')).toBeDisabled();
       });
       expect(screen.getByTestId('list-nav-next')).not.toBeDisabled();
-      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('1 of 3');
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('1/3');
     });
 
     it('disables Next on the last climb in the list', async () => {
@@ -202,7 +209,28 @@ describe('ClimbDetailPage', () => {
         expect(screen.getByTestId('list-nav-next')).toBeDisabled();
       });
       expect(screen.getByTestId('list-nav-prev')).not.toBeDisabled();
-      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('3 of 3');
+      expect(screen.getByTestId('list-nav-position')).toHaveTextContent('3/3');
+    });
+
+    it('shows Log + Light (when connected) on the action bar, Light re-sends the climb', async () => {
+      withList(1);
+      mockBleStatus = 'connected';
+      mockSendLEDs.mockClear();
+      try {
+        render(<ClimbDetailPage />);
+        fireEvent.click(await screen.findByTestId('action-light'));
+        expect(mockSendLEDs).toHaveBeenCalledTimes(1);
+        expect(screen.getByTestId('action-log')).toBeInTheDocument();
+      } finally {
+        mockBleStatus = 'idle';
+      }
+    });
+
+    it('hides Light while the board is not connected', async () => {
+      withList(1);
+      render(<ClimbDetailPage />);
+      await screen.findByTestId('action-log');
+      expect(screen.queryByTestId('action-light')).not.toBeInTheDocument();
     });
 
     it('hides the whole row on a deep link (no saved list)', async () => {
@@ -211,7 +239,7 @@ describe('ClimbDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('climb-name')).toBeInTheDocument();
       });
-      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('list-nav-next')).not.toBeInTheDocument();
     });
 
     it('hides the row when the uuid is not in the saved list', async () => {
@@ -224,7 +252,7 @@ describe('ClimbDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('climb-name')).toBeInTheDocument();
       });
-      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('list-nav-next')).not.toBeInTheDocument();
     });
 
     it('hides the row when the saved list is stale (>24h) and clears it', async () => {
@@ -238,7 +266,7 @@ describe('ClimbDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('climb-name')).toBeInTheDocument();
       });
-      expect(screen.queryByTestId('list-nav')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('list-nav-next')).not.toBeInTheDocument();
       expect(window.sessionStorage.getItem('climbritz:discover:filtered-list')).toBeNull();
     });
 

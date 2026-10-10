@@ -245,6 +245,7 @@ Version 1.1.0 · Android versionCode 16 · iOS build 14 (the previous TestFlight
 - [x] **UX-POLISH** — home hero + compact tiles (fits ~1 screen); climb detail sticky Prev/Next above BottomNav (UX-004 lite, BLE untouched); /generate filters collapse to a summary after the first generate (UX-005); Videos/Upload on the shared PageHeader + phone-first upload copy.
 - [x] **B-CSS-RESET review** — batch review: no 360pt overflow, BottomNav/safe-area/BLE contracts intact; fixes for `/videos/detail` header (shared PageHeader), `/create` grade select width, History session-row icon alignment.
 - [x] **UX-QUICK** — search cap includes My Problems (no "first 501"), no per-card ANGLE column, empty-state CTAs (Discover / History / My Problems), line-icon BottomNav, compact BLE card.
+- [x] **UX-006** — climb detail sticky action bar: ← · n/N · ✓ Log (scrolls to the log buttons) · 💡 re-light (connected only) · Next →; Log + Light also on deep links.
 - [x] **ARCADE-001** — Deadpoint in the mobile app at `/arcade` (Deadpoint tile): vendored single-file build in `public/arcade/` (`scripts/sync-deadpoint.sh`), same-origin iframe with `?lang=en&embed=1`; the web `/gioco` rewrite stays Italian and untouched. Branch `feat/arcade-deadpoint`, not merged yet.
 - [ ] **ARCADE-001 follow-up:** on-device check — WebGL frame rate (the game steps quality down on its own) and iframe touch/tap latency on iOS WKWebView + Android WebView; re-run `scripts/sync-deadpoint.sh` after Deadpoint changes before a release.
 

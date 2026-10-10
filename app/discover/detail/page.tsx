@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -11,6 +11,7 @@ import {
 } from '@/app/lib/api';
 import ClimbBoardView, { ROLE_COLORS } from '@/components/ClimbBoardView';
 import ClimbBleControls from '@/components/ClimbBleControls';
+import { useBle } from '@/components/BleProvider';
 import GradeDisplay from '@/components/GradeDisplay';
 import StarRating from '@/components/StarRating';
 import BottomNav from '@/components/BottomNav';
@@ -28,6 +29,10 @@ const ROLE_LABELS: Record<string, string> = {
   finish: 'Finish',
   foot_only: 'Foot',
 };
+
+// UX-006 — shared look for the sticky action-bar buttons (56pt tall).
+const BAR_BTN =
+  'min-h-14 touch-manipulation select-none rounded-lg text-lg font-bold transition-[background-color,border-color,transform] active:scale-[0.97] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40';
 
 function formatAscents(count: number): string {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
@@ -139,6 +144,14 @@ function ClimbDetailPageInner() {
     [climb],
   );
 
+  // UX-006 — action bar: Light re-sends this climb (connected only; never
+  // connects on its own), Log scrolls back to the log buttons above the board.
+  const { status: bleStatus, sendLEDs } = useBle();
+  const bleConnected = bleStatus === 'connected' || bleStatus === 'sending';
+  const logRef = useRef<HTMLDivElement>(null);
+  const scrollToLog = () =>
+    logRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+
   return (
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
       <PageHeader back={{ href: '/discover', label: 'Discover', testid: 'back-link' }} />
@@ -203,12 +216,14 @@ function ClimbDetailPageInner() {
             {/* A021 — log section: record what the user did, plus the
                 project toggle. Mounted above the board so it's reachable
                 without scrolling on a phone. */}
-            <LogSection
-              climbUuid={climb.uuid}
-              angle={angle ?? climb.stats[0].angle}
-              detail={userClimb}
-              onMutated={setUserClimb}
-            />
+            <div ref={logRef} className="scroll-mt-24">
+              <LogSection
+                climbUuid={climb.uuid}
+                angle={angle ?? climb.stats[0].angle}
+                detail={userClimb}
+                onMutated={setUserClimb}
+              />
+            </div>
 
             {/* Board visualization — full content width (358pt on a 390pt
                 phone), capped at max-w-md on tablets. The old 280px cap
@@ -279,39 +294,66 @@ function ClimbDetailPageInner() {
                 in flow: it settles at the end of the page when scrolled
                 there, and it never overlaps the log buttons at the top.
                 BLE is untouched — Next still only flips autoSendOnNav. */}
-            {hasNav && (
-              <div
-                data-testid="list-nav"
-                className="bottom-above-nav sticky z-20 -mx-4 flex items-center gap-3 border-t border-zinc-800 bg-zinc-950/95 px-4 py-2 backdrop-blur"
+            {/* UX-006 — full sticky action bar (was Prev/Next only). Always
+                shown: on deep links (no saved list) it carries just Log +
+                Light. Sticky (not fixed) above the BottomNav, in flow. */}
+            <div
+              data-testid="action-bar"
+              className="bottom-above-nav sticky z-20 -mx-4 flex items-center gap-2 border-t border-zinc-800 bg-zinc-950/95 px-4 py-2 backdrop-blur"
+            >
+              {hasNav && (
+                <>
+                  <button
+                    type="button"
+                    data-testid="list-nav-prev"
+                    onClick={() => navigateToNeighbour(-1)}
+                    disabled={!canPrev}
+                    aria-label="Previous climb"
+                    className={`${BAR_BTN} w-12 shrink-0 border border-zinc-800 bg-zinc-900 text-zinc-100 hover:border-zinc-600`}
+                  >
+                    ←
+                  </button>
+                  <span
+                    data-testid="list-nav-position"
+                    className="shrink-0 text-center text-xs font-semibold text-zinc-400 tabular-nums"
+                  >
+                    {position.index + 1}/{position.list.climbIds.length}
+                  </span>
+                </>
+              )}
+              <button
+                type="button"
+                data-testid="action-log"
+                onClick={scrollToLog}
+                className={`${BAR_BTN} border border-zinc-800 bg-zinc-900 px-3 text-base text-zinc-100 hover:border-zinc-600 ${hasNav ? 'shrink-0' : 'flex-1'}`}
               >
+                ✓ Log
+              </button>
+              {bleConnected && (
                 <button
                   type="button"
-                  data-testid="list-nav-prev"
-                  onClick={() => navigateToNeighbour(-1)}
-                  disabled={!canPrev}
-                  aria-label="Previous climb"
-                  className="min-h-14 shrink-0 basis-1/3 touch-manipulation select-none rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-lg font-bold text-zinc-100 transition-[border-color,color,transform] hover:border-zinc-600 hover:text-white active:scale-[0.97] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
+                  data-testid="action-light"
+                  onClick={() => sendLEDs(ledCommands)}
+                  disabled={bleStatus === 'sending' || ledCommands.length === 0}
+                  aria-label="Light up this climb"
+                  className={`${BAR_BTN} border border-orange-500/60 bg-zinc-900 px-3 text-orange-300 ${hasNav ? 'w-12 shrink-0' : 'flex-1'}`}
                 >
-                  ← Prev
+                  {hasNav ? '💡' : '💡 Light up'}
                 </button>
-                <span
-                  data-testid="list-nav-position"
-                  className="flex-1 text-center text-sm font-semibold text-zinc-400 tabular-nums"
-                >
-                  {position.index + 1} of {position.list.climbIds.length}
-                </span>
+              )}
+              {hasNav && (
                 <button
                   type="button"
                   data-testid="list-nav-next"
                   onClick={() => navigateToNeighbour(1)}
                   disabled={!canNext}
                   aria-label="Next climb"
-                  className="min-h-14 shrink-0 basis-1/3 touch-manipulation select-none rounded-lg bg-orange-500 px-3 text-lg font-bold text-zinc-950 transition-[background-color,transform] hover:bg-orange-400 active:scale-[0.97] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
+                  className={`${BAR_BTN} flex-1 bg-orange-500 px-3 text-zinc-950 hover:bg-orange-400`}
                 >
                   Next →
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
       </main>
