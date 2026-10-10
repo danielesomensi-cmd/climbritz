@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { UserButton } from '@clerk/clerk-react';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/ui/PageHeader';
 import { getVideos, Video } from '@/app/lib/api';
 
 const STATUS_BADGE: Record<Video['processing_status'], { bg: string; label: string }> = {
@@ -42,26 +42,23 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-nav">
-      {/* Header */}
-      <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
-          {/* A019: Clerk's hosted menu — account management + sign-out. */}
-          <UserButton afterSignOutUrl="/sign-in" />
-        </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Your videos</h1>
+      {/* UX-VIDEOS: same PageHeader as every other tab (it used to be a
+          one-off "CLIMBRITZ" wordmark bar). The account menu lives on Home
+          (avatar + ⚙️ Settings), so the tab header carries the page action. */}
+      <PageHeader
+        title="Videos"
+        right={
           <Link
             href="/upload"
-            className="px-4 py-2.5 bg-orange-500 hover:bg-orange-400 text-zinc-950 font-semibold rounded-xl transition-colors text-sm"
+            data-testid="upload-video-link"
+            className="inline-flex min-h-[44px] items-center rounded-xl bg-orange-500 px-4 text-sm font-semibold text-zinc-950 touch-manipulation select-none transition-colors hover:bg-orange-400 active:scale-[0.97]"
           >
             + Upload video
           </Link>
-        </div>
+        }
+      />
 
+      <main className="max-w-2xl mx-auto px-4 py-4">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full" />

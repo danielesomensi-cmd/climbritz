@@ -2,10 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useDropzone } from 'react-dropzone';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/ui/PageHeader';
 import { uploadVideo, ApiError } from '@/app/lib/api';
 
 const MAX_SIZE = 500 * 1024 * 1024; // 500MB
@@ -76,18 +76,9 @@ function UploadContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-nav">
-      <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
-          <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white transition-colors">
-            &larr; Dashboard
-          </Link>
-        </div>
-      </header>
+      <PageHeader back={{ href: '/dashboard', label: 'Videos' }} title="Upload a video" />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-white mb-6">Upload a video</h1>
-
+      <main className="max-w-2xl mx-auto px-4 py-4">
         {/* Drop zone */}
         <div
           {...getRootProps()}
@@ -120,11 +111,12 @@ function UploadContent() {
           ) : (
             <div>
               <div className="text-5xl mb-4">🎬</div>
+              {/* Phone-first copy: there is no drag & drop in the app. */}
               <p className="text-white font-semibold text-lg mb-1">
-                Drag your video here
+                Tap to choose a video
               </p>
               <p className="text-zinc-400 text-sm">
-                or click to select
+                From your camera roll or files
               </p>
               <p className="text-zinc-600 text-xs mt-3">
                 MP4, MOV, WebM &bull; Max 500MB
