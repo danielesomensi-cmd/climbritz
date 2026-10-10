@@ -1,0 +1,1687 @@
+{
+ "version": 1,
+ "generated": "2026-10-10",
+ "method": "AI draft from hold drawings + size + Kilter DB usage (hand share, difficulty of climbs using the hold). Confirm or correct in /classify review mode.",
+ "suggestions": {
+  "1090": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold, small."
+  },
+  "1091": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold, small."
+  },
+  "1092": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold, wide flat shape."
+  },
+  "1093": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold."
+  },
+  "1094": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold."
+  },
+  "1095": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Rarely a hand, hard climbs when used."
+  },
+  "1096": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Kicker-area foot hold."
+  },
+  "1097": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Wide bowl shape, but almost always a foot."
+  },
+  "1098": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Bottom-row foot hold."
+  },
+  "1099": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall shape, mostly a foot."
+  },
+  "1100": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Bottom-row foot hold."
+  },
+  "1101": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Rarely a hand, hard climbs when used."
+  },
+  "1102": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall shape on hard climbs, pinch-style pack."
+  },
+  "1103": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small bottom-row foot hold."
+  },
+  "1104": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Bottom-row foot hold, flat shape."
+  },
+  "1105": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Bottom-row foot hold."
+  },
+  "1106": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Bottom-row foot hold."
+  },
+  "1107": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, mostly used as a foot."
+  },
+  "1108": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Mostly used as a foot, mid difficulty."
+  },
+  "1109": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with top lip, mid-high difficulty."
+  },
+  "1110": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Mostly a foot hold."
+  },
+  "1111": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Smallish, mostly foot, harder climbs."
+  },
+  "1112": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large rounded hold on hard climbs."
+  },
+  "1113": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small, almost always a foot."
+  },
+  "1114": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with thick top lip."
+  },
+  "1115": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium-large, mid difficulty."
+  },
+  "1116": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large rounded hold, harder climbs."
+  },
+  "1117": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Mostly foot use, mid-high difficulty."
+  },
+  "1118": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, mostly used as a foot."
+  },
+  "1119": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large rounded hold on hard climbs."
+  },
+  "1120": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Mostly used as a foot."
+  },
+  "1121": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with top lip, mid difficulty."
+  },
+  "1122": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Mostly used as a foot."
+  },
+  "1123": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape on hard climbs."
+  },
+  "1124": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape on hard climbs."
+  },
+  "1125": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Irregular medium shape, mid-high difficulty."
+  },
+  "1126": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large rounded hold, mid-high difficulty."
+  },
+  "1127": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall shape on hard climbs."
+  },
+  "1128": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Very large, mid difficulty; may be sloper."
+  },
+  "1129": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Large teardrop, mid difficulty."
+  },
+  "1130": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-large, mostly foot, mid difficulty."
+  },
+  "1131": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy usage, often a foot."
+  },
+  "1132": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large rounded dome, mid difficulty."
+  },
+  "1133": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, mostly used as a foot."
+  },
+  "1134": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with top lip, mid difficulty."
+  },
+  "1135": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large rounded hold, mid difficulty."
+  },
+  "1136": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Large square shape, mid difficulty."
+  },
+  "1137": {
+   "category": "crimp",
+   "confidence": "high",
+   "why": "Very small, mostly used as a foot."
+  },
+  "1138": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall D-shape, side-facing, mid-high difficulty."
+  },
+  "1139": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall narrow shape, harder climbs."
+  },
+  "1140": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Hard climbs, mostly used as a foot."
+  },
+  "1141": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1142": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep side, used on very easy climbs."
+  },
+  "1143": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, thick top lip, easy usage."
+  },
+  "1144": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Smallish but used on very easy climbs."
+  },
+  "1145": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1146": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-large, mid difficulty, often a foot."
+  },
+  "1147": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium triangle with deep side, mid difficulty."
+  },
+  "1148": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape on hard climbs."
+  },
+  "1149": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Biggest hold, thick top lip, easy usage."
+  },
+  "1150": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Large D-shape, easy usage; could be undercling."
+  },
+  "1151": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1152": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Large-ish, mid difficulty."
+  },
+  "1153": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium triangle, mid difficulty."
+  },
+  "1154": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small but used on easy climbs."
+  },
+  "1155": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, thick top side, easy usage."
+  },
+  "1156": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1157": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep side, used on easy climbs."
+  },
+  "1158": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, deep side, mid difficulty."
+  },
+  "1159": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep rim, used on easy climbs."
+  },
+  "1160": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, defined rim, average difficulty."
+  },
+  "1161": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large wide hold, used on easy climbs."
+  },
+  "1162": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-small, average difficulty."
+  },
+  "1163": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Very popular, used on easy climbs."
+  },
+  "1164": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-large, mid difficulty."
+  },
+  "1165": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1166": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Wide hold, used on easy climbs."
+  },
+  "1167": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large rounded shape, mid difficulty."
+  },
+  "1168": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with lip, fairly easy usage."
+  },
+  "1169": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Small but used on easy climbs."
+  },
+  "1170": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium-large, deep sides, easy usage."
+  },
+  "1171": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1172": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Medium size but used on hard climbs."
+  },
+  "1173": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep side, used on easy climbs."
+  },
+  "1174": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with deep side, easy usage."
+  },
+  "1175": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate depth, average difficulty."
+  },
+  "1176": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape on hard climbs, pinch-style pack."
+  },
+  "1177": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-large, deep side, mid difficulty."
+  },
+  "1178": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with an edge, mid difficulty."
+  },
+  "1179": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, mid difficulty, mostly hand use."
+  },
+  "1180": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Rounded oval, thin outline, mid difficulty."
+  },
+  "1181": {
+   "category": "undercling",
+   "confidence": "low",
+   "why": "Small, deep side on bottom, mounted ~180°."
+  },
+  "1182": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, defined edge, mid difficulty."
+  },
+  "1183": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Wide deep rim, used on easy climbs."
+  },
+  "1184": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, mid difficulty."
+  },
+  "1185": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with deep top side, fairly easy usage."
+  },
+  "1186": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall rectangular shape, harder climbs, pinch-style pack."
+  },
+  "1187": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with side lip, mid difficulty."
+  },
+  "1188": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, frequent foot use, mid-high difficulty."
+  },
+  "1189": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large rounded hold on harder climbs."
+  },
+  "1190": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Medium-large, deep side, used on easy climbs."
+  },
+  "1191": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large but used on hard climbs."
+  },
+  "1192": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lip, very easy climbs."
+  },
+  "1193": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1194": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Medium, rotated ~180, but easy climbs."
+  },
+  "1195": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Smallish but used on easy climbs."
+  },
+  "1196": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Vertical oval, used on hard climbs."
+  },
+  "1197": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Vertical elongated shape, moderate difficulty."
+  },
+  "1198": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Very large, deep side, easy climbs."
+  },
+  "1199": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1200": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large wide lip, very easy climbs."
+  },
+  "1201": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1202": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, near-average difficulty."
+  },
+  "1203": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "V-shaped top edge, moderately hard climbs."
+  },
+  "1204": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1205": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size but very easy climbs."
+  },
+  "1206": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Mid-size but used on very easy climbs."
+  },
+  "1207": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large hold with deep side, easy-climb usage."
+  },
+  "1208": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Deep side visible, used on very easy climbs."
+  },
+  "1209": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium-large, moderately hard climbs."
+  },
+  "1210": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Thick side visible, easy climbs."
+  },
+  "1211": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Lens-shaped, moderately hard climbs."
+  },
+  "1212": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep lip, easy climbs."
+  },
+  "1213": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-small, easy-ish climbs."
+  },
+  "1214": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, often a foot hold."
+  },
+  "1215": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Smallish but used on easy climbs."
+  },
+  "1216": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall rectangular shape, harder climbs."
+  },
+  "1217": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Very large dome, used on harder climbs."
+  },
+  "1218": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, often a foot hold."
+  },
+  "1219": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1220": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, often a foot hold."
+  },
+  "1221": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lip, very easy climbs."
+  },
+  "1222": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Side-facing D shape, used on hard climbs."
+  },
+  "1223": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep side, very easy climbs."
+  },
+  "1224": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-small, average difficulty."
+  },
+  "1225": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1226": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Smallish, half foot use, but easy climbs."
+  },
+  "1227": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Large, moderate difficulty."
+  },
+  "1228": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Blocky edge, used on harder climbs."
+  },
+  "1229": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-small, average difficulty."
+  },
+  "1230": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Crescent edge, used on hard climbs."
+  },
+  "1231": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Flat top, thick lower lip, easy climbs."
+  },
+  "1232": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Vertical teardrop, harder climbs."
+  },
+  "1233": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Big rounded shape, thin outline."
+  },
+  "1234": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Wide deep lip, very easy climbs."
+  },
+  "1235": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Big rounded dome, thin outline, moderate difficulty."
+  },
+  "1236": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep side, easy climbs."
+  },
+  "1237": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Wide hold with thick lip, easy-ish climbs."
+  },
+  "1238": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Rounded, fairly large, used on hard climbs."
+  },
+  "1239": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Smallish but used on easy climbs."
+  },
+  "1240": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Small, used on easy-ish climbs."
+  },
+  "1241": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Rectangular edge, used on hard climbs."
+  },
+  "1242": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small, mostly a foot hold."
+  },
+  "1243": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lower lip, very easy climbs."
+  },
+  "1244": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium, often a foot, easy-ish climbs."
+  },
+  "1245": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep side, easy climbs."
+  },
+  "1246": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium-large, used on easy climbs."
+  },
+  "1247": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1248": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold on moderately hard climbs."
+  },
+  "1249": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-small, moderate difficulty."
+  },
+  "1250": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Wide top edge, moderately hard climbs."
+  },
+  "1251": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Smallish but very easy climbs."
+  },
+  "1252": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Smallish, near-average difficulty."
+  },
+  "1253": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium size, moderately hard climbs."
+  },
+  "1254": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape, harder climbs."
+  },
+  "1255": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small, often a foot, average difficulty."
+  },
+  "1256": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium, thick side left, moderate difficulty."
+  },
+  "1257": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lower lip, very easy climbs."
+  },
+  "1258": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium triangle with depth, moderate difficulty."
+  },
+  "1259": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lip, very easy climbs."
+  },
+  "1260": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep lower lip, very easy climbs."
+  },
+  "1261": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Smallish, used on hard climbs."
+  },
+  "1262": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Thick lower lip, used on easy climbs."
+  },
+  "1263": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small but moderate difficulty, often a foot."
+  },
+  "1264": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large triangle, thin outline, harder climbs."
+  },
+  "1265": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small triangular hold on harder climbs."
+  },
+  "1266": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, thick side, easy climbs."
+  },
+  "1267": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size but used on easy climbs."
+  },
+  "1268": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large round hold on easy climbs."
+  },
+  "1269": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Large, average difficulty climbs."
+  },
+  "1270": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1271": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Big rounded dome, moderately hard climbs."
+  },
+  "1272": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, near-average difficulty."
+  },
+  "1273": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "V-shaped edge, moderately hard climbs."
+  },
+  "1274": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Smallish teardrop, moderate difficulty."
+  },
+  "1275": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Thick lower lip, very easy climbs."
+  },
+  "1276": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Very large, deep side, easy climbs."
+  },
+  "1277": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with visible depth, mid difficulty."
+  },
+  "1278": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty climbs."
+  },
+  "1279": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with thick side, used on easy climbs."
+  },
+  "1280": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Very large, deep profile, easy climbs."
+  },
+  "1281": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, thick side visible, easy climbs."
+  },
+  "1282": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, near-average difficulty."
+  },
+  "1283": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Angular, thin outline, used on harder climbs."
+  },
+  "1284": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Very large, deep lower lip, easy climbs."
+  },
+  "1285": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow oval, thin outline, harder climbs."
+  },
+  "1286": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1287": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Irregular medium shape, moderate difficulty."
+  },
+  "1288": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Thick lower lip, used on easy climbs."
+  },
+  "1289": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Small but appears on easy climbs, deep lip."
+  },
+  "1290": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Side-facing D shape, used on hard climbs."
+  },
+  "1291": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Blocky edge, used on harder climbs."
+  },
+  "1292": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep profile, very easy climbs."
+  },
+  "1293": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, average difficulty."
+  },
+  "1294": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on very easy climbs."
+  },
+  "1295": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Narrow vertical shape, hard climbs."
+  },
+  "1296": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1297": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large wide, used on easy climbs."
+  },
+  "1298": {
+   "category": "sloper",
+   "confidence": "high",
+   "why": "Large, thin outline, very hard climbs."
+  },
+  "1299": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1300": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size, used on easy climbs."
+  },
+  "1301": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Large thin outline yet easy climbs; unclear."
+  },
+  "1302": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Heavily used on easy climbs."
+  },
+  "1303": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small but fairly easy climbs."
+  },
+  "1304": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, fairly easy climbs."
+  },
+  "1305": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, fairly easy climbs."
+  },
+  "1306": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large wide, used on easy climbs."
+  },
+  "1307": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, some foot use, moderate climbs."
+  },
+  "1308": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on very easy climbs."
+  },
+  "1309": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small, some foot use, mid-hard climbs."
+  },
+  "1310": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Smallish but used on easy climbs, deep lower lip."
+  },
+  "1311": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size, used on easy climbs."
+  },
+  "1312": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size, used on very easy climbs."
+  },
+  "1313": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small, easy climbs, some foot use."
+  },
+  "1314": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Medium size, used on hard climbs."
+  },
+  "1315": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size, used on easy climbs."
+  },
+  "1316": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small, fairly easy climbs."
+  },
+  "1317": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Small but used on easy climbs."
+  },
+  "1318": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Thin outline, rounded, hard climbs."
+  },
+  "1319": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on easy climbs."
+  },
+  "1320": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Thin outline, mid-hard climbs."
+  },
+  "1321": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, moderate difficulty."
+  },
+  "1322": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large rounded shape, mid-hard climbs."
+  },
+  "1323": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium-large, fairly easy climbs."
+  },
+  "1324": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, some foot use."
+  },
+  "1325": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Medium-small, used on hard climbs."
+  },
+  "1326": {
+   "category": "pinch",
+   "confidence": "low",
+   "why": "Tall shape, mid-hard climbs."
+  },
+  "1327": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small hold, some foot use."
+  },
+  "1328": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, moderate difficulty."
+  },
+  "1329": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium size, sideways mount, mid-hard climbs."
+  },
+  "1330": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small but easy usage; some foot use."
+  },
+  "1331": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on easy climbs."
+  },
+  "1332": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow, thin outline, hard climbs."
+  },
+  "1333": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Wide elongated edge, easy-ish climbs."
+  },
+  "1334": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy-ish usage."
+  },
+  "1335": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy-ish usage."
+  },
+  "1336": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Small flat-topped edge but easy climbs."
+  },
+  "1337": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1338": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1339": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Medium-small, harder climbs; band on top edge."
+  },
+  "1340": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1341": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, deep, used on easy climbs."
+  },
+  "1342": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1343": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size but used on easy climbs."
+  },
+  "1344": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Median size, rounded, harder climbs."
+  },
+  "1345": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large flat face, used on hard climbs."
+  },
+  "1346": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy-ish usage."
+  },
+  "1347": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on very easy climbs."
+  },
+  "1348": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1349": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy-ish usage."
+  },
+  "1350": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1351": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Below-median size, fairly easy climbs."
+  },
+  "1352": {
+   "category": "undercling",
+   "confidence": "low",
+   "why": "Dark band on top and rotated 180; hard climbs."
+  },
+  "1353": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Very large, heavily used on easy climbs."
+  },
+  "1354": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, used on easy climbs."
+  },
+  "1355": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with deep band, easy climbs."
+  },
+  "1356": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size but used on easy climbs."
+  },
+  "1357": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Thin uniform outline, mid-hard climbs."
+  },
+  "1358": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Below-median size, mid-hard climbs."
+  },
+  "1359": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Large, used on very easy climbs."
+  },
+  "1360": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium size, mid-hard; few uses."
+  },
+  "1361": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, thick side, easy-ish climbs."
+  },
+  "1362": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Median size but harder climbs, rounded face."
+  },
+  "1363": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Medium size, deep, used on very easy climbs."
+  },
+  "1364": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Wide edge, moderate difficulty."
+  },
+  "1365": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium size, somewhat harder climbs."
+  },
+  "1366": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, easy-ish usage."
+  },
+  "1367": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Triangular, mid difficulty; edge direction unclear."
+  },
+  "1368": {
+   "category": "sloper",
+   "confidence": "medium",
+   "why": "Large, thin outline, harder climbs."
+  },
+  "1369": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, moderate difficulty."
+  },
+  "1370": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1371": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Tall-ish shape, moderate difficulty; maybe pinch."
+  },
+  "1372": {
+   "category": "sloper",
+   "confidence": "high",
+   "why": "Biggest round dome, thin outline, harder climbs."
+  },
+  "1373": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Small hold, moderate difficulty."
+  },
+  "1374": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Below-median size, fairly easy climbs."
+  },
+  "1375": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Medium size but harder climbs; maybe crimp."
+  },
+  "1376": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with thick side, easy climbs."
+  },
+  "1377": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Smallish but very thick profile, easy climbs."
+  },
+  "1378": {
+   "category": "crimp",
+   "confidence": "medium",
+   "why": "Medium-small, used on hard climbs."
+  },
+  "1379": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Rounded tilted shape, mid-hard climbs; could be edge."
+  },
+  "1380": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large with deep lower band, used on easy climbs."
+  },
+  "1381": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Very large, thick profile, fairly easy usage."
+  },
+  "1382": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep profile, moderate difficulty."
+  },
+  "1383": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, mid-range difficulty."
+  },
+  "1384": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size with thick side, easy-ish climbs."
+  },
+  "1385": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep profile, used on easy climbs."
+  },
+  "1386": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Large but thin outline; moderate difficulty."
+  },
+  "1387": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Heavily used on easy climbs, deep band."
+  },
+  "1388": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, wide, deep lower band."
+  },
+  "1389": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep profile, easy usage."
+  },
+  "1390": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Medium size but thick side and easy climbs."
+  },
+  "1391": {
+   "category": "good_crimp",
+   "confidence": "medium",
+   "why": "Medium size, moderate difficulty."
+  },
+  "1392": {
+   "category": "sloper",
+   "confidence": "low",
+   "why": "Large flat-topped dome on mid-hard climbs."
+  },
+  "1393": {
+   "category": "jug",
+   "confidence": "high",
+   "why": "Very large, thick profile, used on easy climbs."
+  },
+  "1394": {
+   "category": "jug",
+   "confidence": "medium",
+   "why": "Large, deep lower band, easy usage."
+  },
+  "1395": {
+   "category": "pinch",
+   "confidence": "medium",
+   "why": "Tall narrow shape on harder climbs."
+  },
+  "4685": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4686": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4687": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4688": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, little usage data."
+  },
+  "4689": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, little usage data."
+  },
+  "4690": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Clipped edge hold, used on easy climbs."
+  },
+  "4691": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, never used as a hand."
+  },
+  "4692": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, little usage data."
+  },
+  "4693": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, small, little usage data."
+  },
+  "4694": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; little data."
+  },
+  "4695": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; almost no usage data."
+  },
+  "4696": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped tiny edge hold; little data."
+  },
+  "4697": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Clipped edge hold; used on easy climbs."
+  },
+  "4698": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; almost no usage data."
+  },
+  "4699": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Clipped edge hold; used on easy climbs."
+  },
+  "4742": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4743": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4744": {
+   "category": "jug",
+   "confidence": "low",
+   "why": "Clipped edge hold, easy usage, little data."
+  },
+  "4745": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Small clipped edge hold, little data."
+  },
+  "4746": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, small, moderate difficulty."
+  },
+  "4747": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, tiny drawing, easy climbs."
+  },
+  "4748": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, mostly used as a foot."
+  },
+  "4749": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, little usage data."
+  },
+  "4750": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold, small, little data."
+  },
+  "4751": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Edge hold, clipped in drawing; small area."
+  },
+  "4752": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped tiny edge hold; almost no data."
+  },
+  "4753": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; little data."
+  },
+  "4754": {
+   "category": "crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; mostly hand, little data."
+  },
+  "4755": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; almost no usage data."
+  },
+  "4756": {
+   "category": "good_crimp",
+   "confidence": "low",
+   "why": "Clipped edge hold; little data."
+  }
+ }
+}

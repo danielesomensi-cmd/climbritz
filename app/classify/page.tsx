@@ -28,6 +28,19 @@ import {
   type Category,
   type ClassifyState,
 } from './state';
+import {
+  SUGGESTIONS,
+  buildReviewQueue,
+  loadReviewStats,
+  saveReviewStats,
+  type Confidence,
+} from './review';
+
+const CONFIDENCE_LABEL: Record<Confidence, string> = {
+  high: 'fairly sure',
+  medium: 'likely',
+  low: 'rough guess',
+};
 
 const VALID_CATEGORIES = new Set<string>(CATEGORIES.map((c) => c.value));
 
@@ -52,6 +65,10 @@ function ClassifyContent() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // HC-REVIEW — a batch of AI suggestions being confirmed/corrected.
+  const [reviewQueue, setReviewQueue] = useState<number[] | null>(null);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [batchStats, setBatchStats] = useState({ confirmed: 0, changed: 0 });
 
   // Auto-dismiss the toast.
   useEffect(() => {
@@ -126,9 +143,7 @@ function ClassifyContent() {
     if (next) setSelected(next);
   };
 
-  const handleClassify = async (category: Category) => {
-    if (!selected) return;
-    const placementId = selected.placement_id;
+  const classifyHold = async (placementId: number, category: Category) => {
     const prev = state;
     dispatch({ type: 'CLASSIFY', placementId, category });
     try {
@@ -137,6 +152,56 @@ function ClassifyContent() {
       dispatch({ type: 'RESTORE', state: prev });
       setToast('Could not save — please retry.');
     }
+  };
+
+  const handleClassify = (category: Category) => {
+    if (selected) void classifyHold(selected.placement_id, category);
+  };
+
+  // ── HC-REVIEW ──────────────────────────────────────────────────────────────
+  const pendingSuggestions = useMemo(
+    () =>
+      ALL_HOLDS.filter(
+        (h) =>
+          SUGGESTIONS[h.placement_id] !== undefined &&
+          state.classifications[h.placement_id] === undefined &&
+          !state.skipped.includes(h.placement_id),
+      ).length,
+    [state.classifications, state.skipped],
+  );
+  const reviewId = reviewQueue ? reviewQueue[reviewIndex] : undefined;
+  const reviewHold = reviewId !== undefined ? ALL_HOLDS.find((h) => h.placement_id === reviewId) : undefined;
+  const reviewSuggestion = reviewId !== undefined ? SUGGESTIONS[reviewId] : undefined;
+  const reviewDone = reviewQueue !== null && reviewIndex >= reviewQueue.length;
+
+  const reviewRef = useRef<HTMLDivElement | null>(null);
+  const startReview = () => {
+    setSelected(null);
+    // Bring the question into view (it sits below the header + board on phones).
+    setTimeout(() => reviewRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), 50);
+    setReviewQueue(buildReviewQueue(ALL_HOLDS, state.classifications, state.skipped));
+    setReviewIndex(0);
+    setBatchStats({ confirmed: 0, changed: 0 });
+  };
+
+  const answerReview = (category: Category | null) => {
+    if (reviewId === undefined || !reviewSuggestion) return;
+    if (category === null) {
+      dispatch({ type: 'SKIP', placementId: reviewId });
+    } else {
+      void classifyHold(reviewId, category);
+      const agreed = category === reviewSuggestion.category;
+      setBatchStats((b) => ({
+        confirmed: b.confirmed + (agreed ? 1 : 0),
+        changed: b.changed + (agreed ? 0 : 1),
+      }));
+      const total = loadReviewStats();
+      saveReviewStats({
+        confirmed: total.confirmed + (agreed ? 1 : 0),
+        changed: total.changed + (agreed ? 0 : 1),
+      });
+    }
+    setReviewIndex((i) => i + 1);
   };
 
   const handleSkip = async () => {
@@ -257,10 +322,15 @@ function ClassifyContent() {
         <div className="flex items-center gap-2 flex-wrap">
           {/* B033: Next is navigation, not a category — moved off blue (blue is
               reserved for the good_crimp category swatch) to a neutral button. */}
+          {pendingSuggestions > 0 && (
+            <Button variant="primary" data-testid="btn-review" onClick={startReview}>
+              ✨ Review AI suggestions
+            </Button>
+          )}
           <Button variant="secondary" data-testid="btn-next" onClick={jumpToNext} disabled={isDone}>
             Next unclassified →
           </Button>
-          <Button variant="primary" data-testid="btn-send-export" onClick={handleSendExport}>
+          <Button variant="secondary" data-testid="btn-send-export" onClick={handleSendExport}>
             Send my export
           </Button>
           <Button variant="secondary" data-testid="btn-export" onClick={handleExport}>
@@ -335,14 +405,128 @@ function ClassifyContent() {
           <div>
             <BoardMap
               placements={ALL_HOLDS}
-              highlightId={selected?.placement_id}
+              highlightId={reviewQueue && !reviewDone ? reviewId : selected?.placement_id}
               holdColors={holdColors}
               size="full"
-              onHoldClick={setSelected}
+              onHoldClick={(h) => {
+                if (reviewQueue) return; // the review card drives the selection
+                setSelected(h);
+              }}
             />
           </div>
 
+          {/* HC-REVIEW card — first on mobile so the question sits above the board. */}
+          {reviewQueue && (
+            <div ref={reviewRef} className="order-first md:order-none scroll-mt-4">
+            <Card
+              data-testid="review-panel"
+              className="border-orange-500/60 p-4 flex flex-col gap-3"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="font-semibold text-lg">AI suggestions</h2>
+                  <p className="text-xs text-zinc-400" data-testid="review-progress">
+                    {reviewDone
+                      ? 'Batch done'
+                      : `${reviewIndex + 1} of ${reviewQueue.length}${
+                          classifiedCount > 0 ? ' · near the holds you already did' : ''
+                        }`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setReviewQueue(null)}
+                  className="text-zinc-400 hover:text-zinc-100 text-2xl leading-none min-h-11 min-w-11"
+                  aria-label="Close review"
+                >
+                  ×
+                </button>
+              </div>
+
+              {reviewDone ? (
+                <div className="space-y-3" data-testid="review-summary">
+                  <p className="text-lg font-semibold">
+                    AI was right on {batchStats.confirmed} of {batchStats.confirmed + batchStats.changed}
+                  </p>
+                  <p className="text-sm text-zinc-400">
+                    Every answer is saved as your classification. Changed ones teach us where the
+                    drawings mislead.
+                  </p>
+                  <div className="flex gap-2">
+                    {pendingSuggestions > 0 && (
+                      <Button variant="primary" className="flex-1" data-testid="btn-review-more" onClick={startReview}>
+                        Review 20 more
+                      </Button>
+                    )}
+                    <Button variant="secondary" className="flex-1" onClick={() => setReviewQueue(null)}>
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              ) : reviewHold && reviewSuggestion ? (
+                <>
+                  <div className="flex gap-3 items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getHoldImageUrl(reviewHold.placement_id)}
+                      alt={`Hold ${reviewHold.placement_id}`}
+                      className="w-32 h-32 shrink-0 object-contain rounded-lg bg-zinc-800 border border-zinc-700"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs text-zinc-500">
+                        Hold #{reviewHold.placement_id} · {reviewHold.hole_name}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-300">AI suggests</p>
+                      <span
+                        data-testid="review-suggestion"
+                        className="mt-1 inline-block rounded px-2 py-0.5 text-base font-bold text-white"
+                        style={{ backgroundColor: CATEGORY_FILL[reviewSuggestion.category] }}
+                      >
+                        {CATEGORIES.find((c) => c.value === reviewSuggestion.category)?.label}
+                      </span>
+                      <span className="ml-2 text-xs text-zinc-400">
+                        {CONFIDENCE_LABEL[reviewSuggestion.confidence]}
+                      </span>
+                      <p className="mt-1 text-xs text-zinc-500">{reviewSuggestion.why}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    data-testid="btn-review-confirm"
+                    onClick={() => answerReview(reviewSuggestion.category)}
+                    className="min-h-14 w-full rounded-lg text-base font-bold text-white transition active:scale-[0.98] touch-manipulation select-none"
+                    style={{ backgroundColor: CATEGORY_FILL[reviewSuggestion.category] }}
+                  >
+                    ✓ Yes, {CATEGORIES.find((c) => c.value === reviewSuggestion.category)?.label}
+                  </button>
+
+                  <p className="text-xs text-zinc-400">No — it&apos;s a…</p>
+                  <div className="grid grid-cols-3 gap-2" data-testid="review-alternatives">
+                    {CATEGORIES.filter((c) => c.value !== reviewSuggestion.category).map((cat) => (
+                      <button
+                        key={cat.value}
+                        data-testid={`review-${cat.value}`}
+                        onClick={() => answerReview(cat.value)}
+                        className={`min-h-12 rounded-lg text-sm font-semibold transition active:scale-95 touch-manipulation select-none ${cat.color}`}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                    <button
+                      data-testid="review-skip"
+                      onClick={() => answerReview(null)}
+                      className="min-h-12 rounded-lg border border-zinc-700 text-sm text-zinc-300 transition active:scale-95 touch-manipulation select-none"
+                    >
+                      Skip
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </Card>
+            </div>
+          )}
+
           {/* Detail panel */}
+          {!reviewQueue && (
           <Card
             data-testid="classify-panel"
             className="border-border-strong p-4 min-h-[320px] flex flex-col gap-3"
@@ -443,6 +627,7 @@ function ClassifyContent() {
               </>
             )}
           </Card>
+          )}
         </div>
 
         {/* Reset confirmation modal */}

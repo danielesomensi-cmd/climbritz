@@ -25,6 +25,15 @@ jest.mock('@/app/lib/api', () => ({
   bulkImportClassifications: jest.fn(() => Promise.resolve({ total: 0 })),
 }));
 
+// HC-REVIEW: two AI suggestions for the mocked holds (1003 has none).
+jest.mock('@/app/data/hold_suggestions.json', () => ({
+  version: 1,
+  suggestions: {
+    '1001': { category: 'jug', confidence: 'high', why: 'Big incut lip.' },
+    '1002': { category: 'crimp', confidence: 'low', why: 'Thin edge.' },
+  },
+}));
+
 import ClassifyPage from '../page';
 import {
   listClassifications,
@@ -437,5 +446,45 @@ describe('A023 — growth messages, Send/Import, backend hydration', () => {
     await waitFor(() =>
       expect(screen.getByTestId('progress-text').textContent).toBe('3 / 3'),
     );
+  });
+});
+
+
+describe('HC-REVIEW — AI suggestion review', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    (listClassifications as jest.Mock).mockResolvedValue([]);
+  });
+
+  it('confirms with one tap, corrects with one tap, then shows the score', async () => {
+    const { upsertClassification } = jest.requireMock('@/app/lib/api');
+    render(<ClassifyPage />);
+    fireEvent.click(await screen.findByTestId('btn-review'));
+
+    expect(screen.getByTestId('review-progress')).toHaveTextContent('1 of 2');
+    // 1002 sits lower on the board → it comes first (bottom-left start).
+    expect(screen.getByTestId('review-suggestion')).toHaveTextContent('Crimp');
+    fireEvent.click(screen.getByTestId('review-good_crimp'));
+    expect(upsertClassification).toHaveBeenCalledWith(1002, 'good_crimp');
+
+    expect(screen.getByTestId('review-suggestion')).toHaveTextContent('Jug');
+    fireEvent.click(screen.getByTestId('btn-review-confirm'));
+    expect(upsertClassification).toHaveBeenCalledWith(1001, 'jug');
+
+    expect(screen.getByTestId('review-summary')).toHaveTextContent('AI was right on 1 of 2');
+    expect(JSON.parse(localStorageMock.getItem('climbritz.classify.review')!)).toEqual({
+      confirmed: 1,
+      changed: 1,
+    });
+  });
+
+  it('hides the review button when every suggested hold is done', async () => {
+    (listClassifications as jest.Mock).mockResolvedValue([
+      { placement_id: 1001, category: 'jug' },
+      { placement_id: 1002, category: 'crimp' },
+    ]);
+    render(<ClassifyPage />);
+    await waitFor(() => expect(screen.getByTestId('progress-text')).toHaveTextContent('2 /'));
+    expect(screen.queryByTestId('btn-review')).not.toBeInTheDocument();
   });
 });

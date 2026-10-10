@@ -108,6 +108,7 @@ Three levels of coaching intelligence (Coach tier):
 | HC-3 | Validate taxonomy with Christie (20 random holds) | Daniele | ⏳ (>80% agreement → confirmed) |
 | HC-5 | Mobile classification UI (`/classify`) | Claude Code | ✅ |
 | HC-6 | Daniele + Christie classify all holds via `/classify` (in gym) | Daniele | ⏳ |
+| HC-REVIEW | AI draft for the 336 bolt-ons (drawings + size + DB usage + official hold numbers) + `/classify` review mode: one tap ✓ confirm or pick the right type, 20 at a time near holds already done, AI score at the end | Claude Code | ✅ test batch of 20 → Daniele |
 | HC-7 | Store classifications in canonical DB + apply to board sizes | Claude Code | ⏳ STOP gate |
 
 > HC-4 (AI batch classification) removed — manual classification by experts is faster/cheaper/more accurate for ~336 holds. May revisit AI batch when expanding to other boards. A023 shipped per-user cloud-synced classification (the crowdsource collection layer); HC-7 is the future cross-user canonical aggregation.
