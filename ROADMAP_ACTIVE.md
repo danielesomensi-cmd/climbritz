@@ -238,7 +238,8 @@ Version 1.1.0 · Android versionCode 16 · iOS build 14 (the previous TestFlight
 - [x] Version bump, suites green, `build:mobile` + `cap sync`, signed AAB built.
 - [ ] **Daniele (manual):** iOS archive+upload (`bash ~/deploy_climbritz.sh 14`); upload the AAB (versionCode 16) to Play Console and roll it out to the closed-testing track.
 - [ ] **Future:** optional max turn time that auto-fails a turn (timer is informative only for now).
-- [ ] **Future:** Deadpoint (own repo) is already served on the web at `climbritz.app/gioco` (WEB-GIOCO, web build only) — evaluate bringing it into the mobile app too (static export has no rewrites).
+- [x] **ARCADE-001** — Deadpoint in the mobile app at `/arcade` (Deadpoint tile): vendored single-file build in `public/arcade/` (`scripts/sync-deadpoint.sh`), same-origin iframe with `?lang=en&embed=1`; the web `/gioco` rewrite stays Italian and untouched. Branch `feat/arcade-deadpoint`, not merged yet.
+- [ ] **ARCADE-001 follow-up:** on-device check — WebGL frame rate (the game steps quality down on its own) and iframe touch/tap latency on iOS WKWebView + Android WebView; re-run `scripts/sync-deadpoint.sh` after Deadpoint changes before a release.
 
 ### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026) — superseded by A-STORE-PROD-001 Phase 3
 Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. **Closed** — A-STORE-PROD-001 Phase 3 re-verified the live instance (production, `pk_live` on Vercel, prod secret on Railway) and supersedes this item.
