@@ -89,7 +89,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
 
   const connect = useCallback(async () => {
     if (!isCapacitorNative) {
-      setErrorMessage('Questa funzione richiede l’app Climbritz installata.');
+      setErrorMessage('This feature requires the Climbritz app.');
       setStatus('error');
       return;
     }

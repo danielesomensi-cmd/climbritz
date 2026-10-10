@@ -24,8 +24,9 @@ jest.mock('@/lib/ble/transport', () => ({
   getConnectedDevices: (...args: unknown[]) => getConnectedDevicesMock(...args),
 }));
 
+let mockIsNative = true;
 jest.mock('@capacitor/core', () => ({
-  Capacitor: { isNativePlatform: () => true },
+  Capacitor: { isNativePlatform: () => mockIsNative },
 }));
 
 // Capture the 'resume' handler the provider registers so tests can simulate
@@ -69,6 +70,7 @@ async function connectVia(label: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockIsNative = true;
   resumeHandler = null;
   transportOnDisconnect = null;
   connectToKilterBoardMock.mockImplementation(async (onDisconnect: () => void) => {
@@ -228,5 +230,31 @@ describe('BleProvider — shared connection state (B035)', () => {
     const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Consumer label="x" />)).toThrow(/BleProvider/);
     errSpy.mockRestore();
+  });
+});
+
+describe('BleProvider — non-native web build', () => {
+  function ErrorConsumer() {
+    const { status, errorMessage, connect } = useBle();
+    return (
+      <div>
+        <span data-testid="status">{status}</span>
+        <span data-testid="error">{errorMessage ?? ''}</span>
+        <button onClick={() => void connect()}>connect</button>
+      </div>
+    );
+  }
+
+  it('shows an English error and never touches the transport', async () => {
+    mockIsNative = false;
+    render(
+      <BleProvider>
+        <ErrorConsumer />
+      </BleProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'connect' }));
+    await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('error'));
+    expect(screen.getByTestId('error')).toHaveTextContent('This feature requires the Climbritz app.');
+    expect(connectToKilterBoardMock).not.toHaveBeenCalled();
   });
 });

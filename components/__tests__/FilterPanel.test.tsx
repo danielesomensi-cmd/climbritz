@@ -72,9 +72,11 @@ describe('FilterPanel', () => {
     }
   });
 
-  it('renders grip-type chips as disabled', () => {
+  it('does not render grip-type chips or a "Coming soon" label', () => {
     render(<FilterPanel value={DEFAULT} onChange={() => {}} expanded={true} />);
-    expect(screen.getByTestId('filter-grip-Jug')).toBeDisabled();
+    expect(screen.queryByTestId('filter-grip-Jug')).not.toBeInTheDocument();
+    expect(screen.queryByText(/grip type/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
   it('reset clears all filters and resets sort to popularity', () => {

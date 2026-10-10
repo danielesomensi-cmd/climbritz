@@ -65,8 +65,6 @@ const MOVES_OPTIONS: Array<{ label: string; value: MovesFilter }> = [
   { label: '>10', value: 'gt10' },
 ];
 
-const GRIP_TYPES = ['Jug', 'Good Crimp', 'Crimp', 'Sloper', 'Undercling', 'Pinch'];
-
 export function countActiveFilters(value: Filters): number {
   return (
     (value.gradeMin !== undefined ? 1 : 0) +
@@ -280,28 +278,6 @@ export default function FilterPanel({ value, onChange, expanded }: FilterPanelPr
               onClick={() => onChange({ ...value, sort: o.value })}
             >
               {o.label}
-            </Chip>
-          ))}
-        </div>
-      </div>
-
-      {/* Grip type (disabled — coming soon) */}
-      <div>
-        <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-          Grip type
-          <span className="ml-2 text-[0.65rem] font-normal text-orange-400/80 normal-case">
-            Coming soon
-          </span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {GRIP_TYPES.map((g) => (
-            <Chip
-              key={g}
-              disabled
-              data-testid={`filter-grip-${g}`}
-              title="Grip type classification is in progress — coming soon"
-            >
-              {g}
             </Chip>
           ))}
         </div>

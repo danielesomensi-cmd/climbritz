@@ -41,10 +41,10 @@ const config: CapacitorConfig = {
     },
     BluetoothLe: {
       displayStrings: {
-        scanning: 'Cerco Kilter Board...',
-        cancel: 'Annulla',
-        availableDevices: 'Dispositivi trovati',
-        noDeviceFound: 'Nessun dispositivo trovato',
+        scanning: 'Searching for Kilter Board…',
+        cancel: 'Cancel',
+        availableDevices: 'Devices found',
+        noDeviceFound: 'No device found',
       },
     },
   },

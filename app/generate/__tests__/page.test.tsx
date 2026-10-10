@@ -85,14 +85,14 @@ beforeEach(() => {
 });
 
 describe('GeneratePage', () => {
-  it('renders the filter controls + disabled grip-type chips', () => {
+  it('renders the filter controls without grip-type chips', () => {
     render(<GeneratePage />);
     expect(screen.getByTestId('angle-selector')).toBeInTheDocument();
     expect(screen.getByTestId('grade-min')).toBeInTheDocument();
     expect(screen.getByTestId('moves-any')).toBeInTheDocument();
-    expect(screen.getByText('Coming soon')).toBeInTheDocument();
-    // Grip chips are disabled.
-    expect(screen.getByTestId('grip-Crimp')).toBeDisabled();
+    // Grip-type UI is hidden until HC-7 (no "Coming soon" surface).
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('grip-Crimp')).not.toBeInTheDocument();
     expect(screen.getByTestId('generate-btn')).toHaveTextContent('Generate');
   });
 
