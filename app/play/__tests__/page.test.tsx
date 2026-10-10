@@ -308,4 +308,38 @@ describe('/play', () => {
       rematch.compareDocumentPosition(screen.getByTestId('play-sign-in')) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
+  it('undo right after a knock-out cancels the pending winner fanfare', async () => {
+    jest.useFakeTimers({ doNotFake: ['Date'] });
+    try {
+      await startTwoPlayerGame();
+      tapHold(h2);
+      confirmHold();
+      fireEvent.click(screen.getByTestId('play-fell'));
+      expect(screen.getByTestId('play-winner')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId('play-undo-over'));
+      expect(screen.getByTestId('play-sent')).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(3000);
+      });
+      expect(playCue).not.toHaveBeenCalledWith('winner');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('feet mode: resuming a start pick with both hands set lands on the foot step', async () => {
+    const { unmount } = render(<PlayPage />);
+    await screen.findByTestId('play-pick-starts');
+    fireEvent.click(screen.getByTestId('play-feet-toggle'));
+    fireEvent.change(screen.getByTestId('play-name-0'), { target: { value: 'Dani' } });
+    fireEvent.change(screen.getByTestId('play-name-1'), { target: { value: 'Marco' } });
+    fireEvent.click(screen.getByTestId('play-pick-starts'));
+    tapHold(h1);
+    tapHold(h2);
+    unmount();
+    render(<PlayPage />);
+    fireEvent.click(await screen.findByTestId('play-resume'));
+    expect(screen.getByTestId('play-step-foot')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('play-starts-instruction')).toHaveTextContent('Pick 1 start foot');
+  });
 });

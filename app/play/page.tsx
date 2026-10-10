@@ -570,8 +570,27 @@ export default function PlayPage() {
     if (!next.error) void haptic('light');
   };
 
+  // Delayed cues (fanfare / next-turn chime). Cancelled on undo, new game,
+  // rematch and unmount so a stale fanfare never plays over the wrong screen.
+  const cueTimersRef = useRef(new Set<ReturnType<typeof setTimeout>>());
+  const later = (fn: () => void, delayMs: number) => {
+    const t = setTimeout(() => {
+      cueTimersRef.current.delete(t);
+      fn();
+    }, delayMs);
+    cueTimersRef.current.add(t);
+  };
+  const cancelCues = () => {
+    cueTimersRef.current.forEach(clearTimeout);
+    cueTimersRef.current.clear();
+  };
+  useEffect(() => {
+    const timers = cueTimersRef.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   const celebrate = (delayMs: number) => {
-    setTimeout(() => {
+    later(() => {
       playCue('winner');
       void haptic('success');
     }, delayMs);
@@ -613,11 +632,12 @@ export default function PlayPage() {
       // Let the elimination cue finish before the fanfare.
       celebrate(eliminated ? 1350 : 450);
     } else {
-      setTimeout(() => playCue('turn'), eliminated ? 1350 : 600);
+      later(() => playCue('turn'), eliminated ? 1350 : 600);
     }
   };
 
   const undoLastTurn = () => {
+    cancelCues();
     setMenuOpen(false);
     setSavedUuid(null);
     act({ type: 'UNDO_LAST_TURN', now: Date.now() });
@@ -637,6 +657,7 @@ export default function PlayPage() {
   };
 
   const newGame = () => {
+    cancelCues();
     setMenuOpen(false);
     setSavedUuid(null);
     act({ type: 'RESET' });
@@ -646,6 +667,7 @@ export default function PlayPage() {
   };
 
   const rematch = () => {
+    cancelCues();
     setSavedUuid(null);
     setSaveError(null);
     setStartStep('hands');
@@ -714,6 +736,10 @@ export default function PlayPage() {
               data-testid="play-resume"
               onClick={() => {
                 setGame({ ...resumable, error: null });
+                // Feet mode resumed with both start hands picked → foot step.
+                setStartStep(
+                  resumable.feet && resumable.starts.length >= FEET_START_HANDS ? 'foot' : 'hands',
+                );
                 setResumable(null);
                 unlockAudio();
               }}

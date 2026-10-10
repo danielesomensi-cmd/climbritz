@@ -196,4 +196,29 @@ describe('playback without Web Audio', () => {
     expect(createDynamicsCompressor).toHaveBeenCalledTimes(1);
     delete (window as unknown as { AudioContext?: unknown }).AudioContext;
   });
+  it('resumes a suspended/interrupted context before playing (iOS after background)', () => {
+    setSoundEnabled(true);
+    const param = () => ({ setValueAtTime: jest.fn(), exponentialRampToValueAtTime: jest.fn() });
+    const resume = jest.fn(() => Promise.resolve());
+    const Ctor = jest.fn().mockImplementation(() => ({
+      state: 'interrupted',
+      currentTime: 0,
+      destination: {},
+      resume,
+      createBuffer: jest.fn(() => ({})),
+      createBufferSource: jest.fn(() => ({ connect: jest.fn(), start: jest.fn() })),
+      createOscillator: jest.fn(() => ({
+        type: 'sine',
+        frequency: param(),
+        connect: jest.fn(),
+        start: jest.fn(),
+        stop: jest.fn(),
+      })),
+      createGain: jest.fn(() => ({ gain: param(), connect: jest.fn() })),
+    }));
+    (window as unknown as { AudioContext: unknown }).AudioContext = Ctor;
+    expect(() => playCue('sent')).not.toThrow();
+    expect(resume).toHaveBeenCalled();
+    delete (window as unknown as { AudioContext?: unknown }).AudioContext;
+  });
 });

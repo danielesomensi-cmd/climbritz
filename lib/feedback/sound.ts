@@ -268,6 +268,9 @@ export function playCue(cue: SoundCue): void {
   try {
     if (!ctx) unlockAudio();
     if (!ctx) return;
+    // iOS suspends/"interrupts" the context when the app is backgrounded:
+    // resume it (works when called from a tap, e.g. SENT/FELL).
+    if (ctx.state !== 'running') void ctx.resume().catch(() => undefined);
     const t0 = ctx.currentTime + 0.01;
     const out = getBus(ctx);
     for (const step of getCueSteps(cue)) scheduleStep(ctx, out, t0, step);
