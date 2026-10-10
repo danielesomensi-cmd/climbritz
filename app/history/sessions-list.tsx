@@ -121,7 +121,9 @@ function SessionClimbRow({ climb }: { climb: SessionClimb }) {
       data-testid={`session-climb-${climb.log_id}`}
       className="flex min-h-[44px] items-center gap-3 py-2 text-sm touch-manipulation hover:bg-zinc-800/40 active:bg-zinc-800/60 rounded transition-colors"
     >
-      <span className={`text-base leading-none ${ICON_COLOR[climb.result_type]}`}>
+      {/* Fixed-width icon column so names line up whatever the glyph width
+          (⚡ renders wider than ✓ / •). */}
+      <span className={`w-5 shrink-0 text-center text-base leading-none ${ICON_COLOR[climb.result_type]}`}>
         {ICONS[climb.result_type]}
       </span>
       <span className="flex-1 min-w-0 truncate text-zinc-200">{name}</span>

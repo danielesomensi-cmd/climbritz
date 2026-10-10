@@ -218,7 +218,9 @@ function CreatePageInner() {
             placeholder="Name (leave blank for an AI name)"
             className="w-full min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-base font-semibold text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
           />
-          <div className="grid grid-cols-2 gap-2">
+          {/* Grade gets the wider column: "Grade — set later" clipped at 360pt
+              in a 50/50 split, while the angle select only needs "40°". */}
+          <div className="grid grid-cols-[3fr_2fr] gap-2">
             <select
               data-testid="editor-grade"
               value={grade}
@@ -226,7 +228,7 @@ function CreatePageInner() {
                 setGrade(e.target.value);
                 setDirty(true);
               }}
-              className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
+              className="min-h-[48px] min-w-0 bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
             >
               <option value="">Grade — set later</option>
               {GRADES.map((g) => (

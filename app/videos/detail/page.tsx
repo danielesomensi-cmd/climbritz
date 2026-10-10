@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/ui/PageHeader';
 import { getVideo, Video, FormAnalysis, ImprovementItem, ApiError } from '@/app/lib/api';
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
@@ -212,7 +213,7 @@ function VideoContent() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-zinc-400 mb-4">Video not found</p>
-          <Link href="/dashboard" className="text-orange-500 hover:underline">Back to dashboard</Link>
+          <Link href="/dashboard" className="text-orange-500 hover:underline">Back to videos</Link>
         </div>
       </div>
     );
@@ -220,14 +221,11 @@ function VideoContent() {
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-nav">
-      <header className="border-b border-zinc-800 px-4 pt-safe pb-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="text-xl font-black text-orange-500">CLIMBRITZ</Link>
-          <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Dashboard</Link>
-        </div>
-      </header>
+      {/* Same nested PageHeader as /upload (UX-POLISH): back to "Videos", the
+          tab name — the old "CLIMBRITZ / ← Dashboard" bar predates the rename. */}
+      <PageHeader back={{ href: '/dashboard', label: 'Videos' }} />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-4">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-white truncate">{video.title || video.filename || 'Video'}</h1>
           <p className="text-sm text-zinc-500 mt-1">
