@@ -66,6 +66,13 @@ const TILES: Tile[] = [
     icon: '🎲',
   },
   {
+    // ARCADE-001: Deadpoint — bundled offline HTML5 mini-game (iframe, /arcade).
+    href: '/arcade',
+    label: 'Deadpoint',
+    subtitle: 'Mini-game: catch the deadpoint',
+    icon: '🕹️',
+  },
+  {
     href: '/history',
     label: 'History',
     subtitle: 'Sessions, pyramid, trend',

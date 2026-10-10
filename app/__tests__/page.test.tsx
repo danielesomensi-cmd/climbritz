@@ -54,6 +54,14 @@ describe('Home Page', () => {
     expect(link).toHaveAttribute('href', '/play');
   });
 
+  // ARCADE-001 — Deadpoint mini-game entry point.
+  it('renders the Deadpoint tile pointing at /arcade', () => {
+    render(<Home />);
+    const link = screen.getByText('Deadpoint').closest('a');
+    expect(link).toHaveAttribute('href', '/arcade');
+    expect(screen.getByText('Mini-game: catch the deadpoint')).toBeInTheDocument();
+  });
+
   // B034 v4 — the hero's top safe-area padding MUST come from an inline style,
   // NEVER a Tailwind `pt-*` utility. globals.css has an unlayered
   // `* { padding: 0 }` reset that beats `@layer utilities` in the CSS cascade,
