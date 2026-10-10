@@ -6,6 +6,7 @@ import {
   ApiError,
   createLog,
   deleteLog,
+  patchLog,
   patchUserClimbProject,
   type ClimbLogResponse,
   type LogResultType,
@@ -13,6 +14,7 @@ import {
   type UserClimbState,
 } from '@/app/lib/api';
 import { haptic } from '@/lib/feedback/haptics';
+import Toast from '@/components/ui/Toast';
 
 interface LogSectionProps {
   climbUuid: string;
@@ -34,10 +36,29 @@ interface ResultButton {
 }
 
 const RESULT_BUTTONS: ResultButton[] = [
-  { result: 'flash', label: 'Flash', icon: '⚡', color: 'bg-yellow-500 hover:bg-yellow-400 border-yellow-600' },
-  { result: 'send', label: 'Send', icon: '✓', color: 'bg-green-600 hover:bg-green-500 border-green-700' },
-  { result: 'attempt', label: 'Attempt', icon: '•', color: 'bg-zinc-700 hover:bg-zinc-600 border-zinc-600' },
+  { result: 'flash', label: 'Flash', icon: '⚡', color: 'bg-state-flash-solid hover:bg-state-flash-solid-hover border-state-flash-solid-border' },
+  { result: 'send', label: 'Send', icon: '✓', color: 'bg-state-send-solid hover:bg-state-send-solid-hover border-state-send-solid-border' },
+  { result: 'attempt', label: 'Attempt', icon: '•', color: 'bg-state-attempt-solid hover:bg-state-attempt-solid-hover border-state-attempt-solid-border' },
 ];
+
+const RESULT_LABEL: Record<LogResultType, string> = {
+  flash: 'Flash',
+  send: 'Send',
+  attempt: 'Attempt',
+};
+
+/** UX-003 — everything Undo needs to put today's row back exactly as it was
+ *  before the tap. `previous === null` means the tap created the row, so
+ *  Undo deletes it; otherwise Undo PATCHes the snapshot back. */
+interface UndoRecord {
+  key: number;
+  logId: string;
+  previous: { result_type: LogResultType; attempts_count: number } | null;
+  /** The tap also cleared the project flag (modal "Yes, remove") → Undo
+   *  sets it back. */
+  projectCleared: boolean;
+  message: string;
+}
 
 // ISO local_date strings (YYYY-MM-DD) compare lexicographically so we can
 // just == them. The backend always emits this format.
@@ -60,7 +81,8 @@ export default function LogSection({
   detail,
   onMutated,
 }: LogSectionProps) {
-  const [pending, setPending] = useState<LogResultType | 'project' | 'remove' | null>(null);
+  const [pending, setPending] = useState<LogResultType | 'project' | 'undo' | null>(null);
+  const [undo, setUndo] = useState<UndoRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Modal state: null = closed, otherwise carries the pending result type
   // that triggered the prompt. Send/Flash while is_project=true → modal.
@@ -116,11 +138,32 @@ export default function LogSection({
   }, [pendingProjectModal]);
 
   const performLog = useCallback(
-    async (result: LogResultType) => {
+    async (result: LogResultType): Promise<boolean> => {
       setPending(result);
       setError(null);
+      setUndo(null);
+      // UX-003: snapshot today's row BEFORE the POST so Undo can restore it.
+      // No optimistic update — the buttons stay disabled until the server
+      // answers, so this snapshot always reflects the last persisted state.
+      const before = detail ? findTodaysLog(detail.recent_logs) : null;
+      const snapshot = before
+        ? { id: before.id, result_type: before.result_type, attempts_count: before.attempts_count }
+        : null;
       try {
-        await createLog(climbUuid, angle, result);
+        const res = await createLog(climbUuid, angle, result);
+        const logId = res?.log?.id ?? snapshot?.id;
+        if (logId) {
+          const isSameRow = snapshot !== null && snapshot.id === logId;
+          setUndo({
+            key: Date.now(),
+            logId,
+            previous: isSameRow
+              ? { result_type: snapshot.result_type, attempts_count: snapshot.attempts_count }
+              : null,
+            projectCleared: false,
+            message: `Logged ${RESULT_LABEL[result]}`,
+          });
+        }
         // NATIVE-001: confirm the log with a light tap (no-op on web).
         void haptic('light');
         // Refetch detail to pick up new last_logged_at + recent_logs.
@@ -130,14 +173,16 @@ export default function LogSection({
         const { getUserClimb } = await import('@/app/lib/api');
         const fresh = await getUserClimb(climbUuid, angle);
         onMutated(fresh);
+        return true;
       } catch (e) {
         const message = e instanceof ApiError ? e.message : 'Network error';
         setError(message);
+        return false;
       } finally {
         setPending(null);
       }
     },
-    [climbUuid, angle, onMutated],
+    [climbUuid, angle, onMutated, detail],
   );
 
   const handleResultButton = (result: LogResultType) => {
@@ -167,22 +212,37 @@ export default function LogSection({
     }
   };
 
-  const handleRemoveTodaysLog = async () => {
-    if (!todaysLog) return;
-    setPending('remove');
+  // UX-003: revert the last log tap. Restores the exact pre-tap row (PATCH)
+  // or deletes it if the tap created it, then re-adds the project flag if
+  // the same tap had cleared it.
+  const handleUndo = async () => {
+    if (!undo) return;
+    const record = undo;
+    setPending('undo');
     setError(null);
     try {
-      await deleteLog(todaysLog.id);
+      if (record.previous) {
+        await patchLog(record.logId, record.previous);
+      } else {
+        await deleteLog(record.logId);
+      }
+      if (record.projectCleared) {
+        await patchUserClimbProject(climbUuid, angle, true);
+      }
+      setUndo(null);
       const { getUserClimb } = await import('@/app/lib/api');
       const fresh = await getUserClimb(climbUuid, angle);
       onMutated(fresh);
     } catch (e) {
       const message = e instanceof ApiError ? e.message : 'Network error';
       setError(message);
+      setUndo(null);
     } finally {
       setPending(null);
     }
   };
+
+  const handleToastDismiss = useCallback(() => setUndo(null), []);
 
   const handleModalConfirmRemoveProject = async () => {
     if (!pendingProjectModal) return;
@@ -190,9 +250,11 @@ export default function LogSection({
     setPendingProjectModal(null);
     // Log first, then clear the project flag — order matters: if the
     // log post fails we don't want to have already removed the project.
-    await performLog(result);
+    const ok = await performLog(result);
+    if (!ok) return;
     try {
       await patchUserClimbProject(climbUuid, angle, false);
+      setUndo((u) => (u ? { ...u, projectCleared: true } : u));
       const { getUserClimb } = await import('@/app/lib/api');
       const fresh = await getUserClimb(climbUuid, angle);
       onMutated(fresh);
@@ -219,14 +281,11 @@ export default function LogSection({
         Log your attempt
       </div>
 
-      {/* B-A021-fix-1.1.1 — single-row grid. 5 cols when a Remove
-          button is present (today's log exists), 4 cols otherwise.
-          All buttons share the same icon-over-label stack so they read
-          consistently at the narrow per-cell width on a phone. */}
-      <div
-        data-testid="log-grid"
-        className={`grid ${todaysLog ? 'grid-cols-5' : 'grid-cols-4'} gap-2`}
-      >
+      {/* B-A021-fix-1.1.1 — single-row grid. UX-003: the instant
+          "Remove" button is gone (mis-taps are reverted via the Undo toast),
+          so the grid is always 4 columns. All buttons share the same
+          icon-over-label stack so they read consistently on a phone. */}
+      <div data-testid="log-grid" className="grid grid-cols-4 gap-2">
         {RESULT_BUTTONS.map((btn) => {
           const isPending = pending === btn.result;
           const isTodaysResult = todaysLog?.result_type === btn.result;
@@ -283,20 +342,6 @@ export default function LogSection({
           </span>
         </button>
 
-        {todaysLog && (
-          <button
-            type="button"
-            data-testid="log-btn-remove"
-            onClick={handleRemoveTodaysLog}
-            disabled={pending !== null}
-            className="min-h-14 px-1 touch-manipulation select-none active:scale-[0.97] motion-reduce:active:scale-100 rounded-lg border-2 border-red-900 bg-red-950/40 text-red-300 font-bold flex flex-col items-center justify-center gap-0 transition-all hover:bg-red-900/40 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-xl leading-none">🗑</span>
-            <span className="max-w-full truncate text-xs leading-tight">
-              {pending === 'remove' ? '…' : 'Remove'}
-            </span>
-          </button>
-        )}
       </div>
 
       {error && (
@@ -307,6 +352,17 @@ export default function LogSection({
         >
           {error}
         </div>
+      )}
+
+      {undo && (
+        <Toast
+          toastKey={undo.key}
+          message={undo.message}
+          actionLabel="Undo"
+          onAction={handleUndo}
+          onDismiss={handleToastDismiss}
+          busy={pending === 'undo'}
+        />
       )}
 
       {pendingProjectModal && (

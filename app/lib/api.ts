@@ -496,6 +496,18 @@ export async function deleteLog(logId: string): Promise<void> {
   return apiFetch<void>(`/api/logs/${logId}`, { method: 'DELETE' });
 }
 
+/** UX-003 — direct field update on a log row (used by Undo to restore the
+ *  pre-tap snapshot). At least one field must be set. */
+export async function patchLog(
+  logId: string,
+  fields: { result_type?: LogResultType; attempts_count?: number },
+): Promise<LogCreateResponse> {
+  return apiFetch<LogCreateResponse>(`/api/logs/${logId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(fields),
+  });
+}
+
 /** Get current user state for a climb at an angle, plus the most recent
  *  N logs (default 20 server-side). Used by LogSection + RecentLogs. */
 export async function getUserClimb(

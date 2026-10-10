@@ -11,8 +11,9 @@
  *  - Modal "No, mantienilo" → POST /api/logs only.
  *  - Modal "Annulla" → no POST.
  *  - Capacitor back button (simulated) closes the modal without calling POST.
- *  - Remove-log button shows only when there's a log for today and calls
- *    DELETE /api/logs/{id}.
+ *  - UX-003: no instant Remove button; every successful log shows an Undo
+ *    toast that PATCHes today's row back to its pre-tap snapshot, or
+ *    DELETEs it when the tap created it.
  */
 
 import {
@@ -36,6 +37,7 @@ const createLogMock = jest.fn();
 const getUserClimbMock = jest.fn();
 const patchUserClimbProjectMock = jest.fn();
 const deleteLogMock = jest.fn();
+const patchLogMock = jest.fn();
 
 jest.mock('@/app/lib/api', () => {
   class ApiError extends Error {
@@ -52,6 +54,7 @@ jest.mock('@/app/lib/api', () => {
     patchUserClimbProject: (...args: unknown[]) =>
       patchUserClimbProjectMock(...args),
     deleteLog: (...args: unknown[]) => deleteLogMock(...args),
+    patchLog: (...args: unknown[]) => patchLogMock(...args),
   };
 });
 
@@ -129,6 +132,7 @@ beforeEach(() => {
   createLogMock.mockResolvedValue({ log: mkLog(), user_state: mkState() });
   patchUserClimbProjectMock.mockResolvedValue(mkState({ is_project: true }));
   deleteLogMock.mockResolvedValue(undefined);
+  patchLogMock.mockResolvedValue({ log: mkLog(), user_state: mkState() });
   getUserClimbMock.mockResolvedValue(mkDetail());
 });
 
@@ -401,84 +405,149 @@ describe('LogSection — project-removal modal (Send / Flash while project)', ()
   });
 });
 
-describe('LogSection — remove today log', () => {
-  it('shows the remove button only when there is a log for today', () => {
-    const { rerender } = render(
+describe('LogSection — UX-003 Undo toast', () => {
+  it('never renders an instant Remove button; grid is always 4 columns', () => {
+    render(
       <LogSection
         climbUuid={CLIMB_UUID}
         angle={ANGLE}
-        detail={mkDetail()}
+        detail={mkDetail({ recent_logs: [mkLog()] })}
         onMutated={jest.fn()}
       />,
     );
     expect(screen.queryByTestId('log-btn-remove')).not.toBeInTheDocument();
-
-    rerender(
-      <LogSection
-        climbUuid={CLIMB_UUID}
-        angle={ANGLE}
-        detail={mkDetail({ recent_logs: [mkLog()] })}
-        onMutated={jest.fn()}
-      />,
-    );
-    expect(screen.getByTestId('log-btn-remove')).toBeInTheDocument();
-  });
-
-  // B-A021-fix-1.1.1 — single-row grid. The grid switches between 5 and
-  // 4 columns depending on whether the Remove button is present, so the
-  // other four buttons redistribute to fill the row evenly.
-  it('uses grid-cols-5 when today’s log exists', () => {
-    render(
-      <LogSection
-        climbUuid={CLIMB_UUID}
-        angle={ANGLE}
-        detail={mkDetail({ recent_logs: [mkLog()] })}
-        onMutated={jest.fn()}
-      />,
-    );
-    expect(screen.getByTestId('log-grid')).toHaveClass('grid-cols-5');
-    expect(screen.getByTestId('log-grid')).not.toHaveClass('grid-cols-4');
-  });
-
-  it('uses grid-cols-4 when no log exists for today', () => {
-    render(
-      <LogSection
-        climbUuid={CLIMB_UUID}
-        angle={ANGLE}
-        detail={mkDetail()}
-        onMutated={jest.fn()}
-      />,
-    );
     expect(screen.getByTestId('log-grid')).toHaveClass('grid-cols-4');
-    expect(screen.getByTestId('log-grid')).not.toHaveClass('grid-cols-5');
   });
 
-  it('tapping remove calls DELETE /api/logs/{id} with the right id', async () => {
-    const log = mkLog({ id: 'todays-log-42' });
+  it('4 attempts → send by mistake → Undo restores attempt ×4', async () => {
+    // Today's row already holds 4 attempts.
+    const before = mkLog({ id: 'today-row', result_type: 'attempt', attempts_count: 4 });
+    // Server upgrades the same row to send ×5.
+    const upgraded = mkLog({ id: 'today-row', result_type: 'send', attempts_count: 5 });
+    createLogMock.mockResolvedValue({ log: upgraded, user_state: mkState({ best_result: 'send' }) });
+    getUserClimbMock.mockResolvedValueOnce(
+      mkDetail({ state: mkState({ best_result: 'send' }), recent_logs: [upgraded] }),
+    );
+    const restored = mkDetail({ recent_logs: [before] });
+    getUserClimbMock.mockResolvedValueOnce(restored);
+    const onMutated = jest.fn();
+
     render(
       <LogSection
         climbUuid={CLIMB_UUID}
         angle={ANGLE}
-        detail={mkDetail({ recent_logs: [log] })}
-        onMutated={jest.fn()}
+        detail={mkDetail({ recent_logs: [before] })}
+        onMutated={onMutated}
       />,
     );
-    fireEvent.click(screen.getByTestId('log-btn-remove'));
-    await waitFor(() => expect(deleteLogMock).toHaveBeenCalledTimes(1));
-    expect(deleteLogMock).toHaveBeenCalledWith('todays-log-42');
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    const toast = await screen.findByTestId('toast');
+    expect(toast).toHaveTextContent('Logged Send');
+
+    fireEvent.click(screen.getByTestId('toast-action'));
+    await waitFor(() =>
+      expect(patchLogMock).toHaveBeenCalledWith('today-row', {
+        result_type: 'attempt',
+        attempts_count: 4,
+      }),
+    );
+    expect(deleteLogMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(onMutated).toHaveBeenLastCalledWith(restored));
+    await waitFor(() => expect(screen.queryByTestId('toast')).not.toBeInTheDocument());
   });
 
-  it('does not show remove for a log dated other than today', () => {
-    const oldLog = mkLog({ id: 'yesterday-log', local_date: '2020-01-01' });
+  it('Undo DELETEs the row when the tap created it (no log today before)', async () => {
+    createLogMock.mockResolvedValue({ log: mkLog({ id: 'fresh-row' }), user_state: mkState() });
     render(
       <LogSection
         climbUuid={CLIMB_UUID}
         angle={ANGLE}
-        detail={mkDetail({ recent_logs: [oldLog] })}
+        detail={mkDetail()}
         onMutated={jest.fn()}
       />,
     );
-    expect(screen.queryByTestId('log-btn-remove')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    fireEvent.click(await screen.findByTestId('toast-action'));
+    await waitFor(() => expect(deleteLogMock).toHaveBeenCalledWith('fresh-row'));
+    expect(patchLogMock).not.toHaveBeenCalled();
+  });
+
+  it('a log from another day is not treated as today’s snapshot', async () => {
+    const old = mkLog({ id: 'old-row', local_date: '2020-01-01', result_type: 'attempt', attempts_count: 3 });
+    createLogMock.mockResolvedValue({ log: mkLog({ id: 'new-row' }), user_state: mkState() });
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ recent_logs: [old] })}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-attempt'));
+    fireEvent.click(await screen.findByTestId('toast-action'));
+    await waitFor(() => expect(deleteLogMock).toHaveBeenCalledWith('new-row'));
+    expect(patchLogMock).not.toHaveBeenCalled();
+  });
+
+  it('no toast when the log fails', async () => {
+    createLogMock.mockRejectedValueOnce(new Error('boom'));
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail()}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    await screen.findByText(/network error/i);
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+  });
+
+  it('toast auto-dismisses without touching the log', async () => {
+    jest.useFakeTimers();
+    try {
+      render(
+        <LogSection
+          climbUuid={CLIMB_UUID}
+          angle={ANGLE}
+          detail={mkDetail()}
+          onMutated={jest.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('log-btn-send'));
+      await screen.findByTestId('toast');
+      act(() => {
+        jest.advanceTimersByTime(10_000);
+      });
+      expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+      expect(deleteLogMock).not.toHaveBeenCalled();
+      expect(patchLogMock).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('Undo after modal "Yes, remove" also restores the project flag', async () => {
+    createLogMock.mockResolvedValue({ log: mkLog({ id: 'proj-row' }), user_state: mkState() });
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail({ state: mkState({ is_project: true }) })}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    fireEvent.click(screen.getByTestId('modal-confirm-remove'));
+    await waitFor(() =>
+      expect(patchUserClimbProjectMock).toHaveBeenCalledWith(CLIMB_UUID, ANGLE, false),
+    );
+    fireEvent.click(await screen.findByTestId('toast-action'));
+    await waitFor(() => expect(deleteLogMock).toHaveBeenCalledWith('proj-row'));
+    await waitFor(() =>
+      expect(patchUserClimbProjectMock).toHaveBeenLastCalledWith(CLIMB_UUID, ANGLE, true),
+    );
   });
 });
 
@@ -539,7 +608,7 @@ describe('LogSection — tap targets', () => {
       />,
     );
     const buttons = screen.getByTestId('log-grid').querySelectorAll('button');
-    expect(buttons).toHaveLength(5);
+    expect(buttons).toHaveLength(4);
     buttons.forEach((b) => expect(b).toHaveClass('min-h-14'));
     expect(container.querySelector('[class*="text-[10px]"]')).toBeNull();
   });

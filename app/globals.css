@@ -55,6 +55,17 @@
   --color-state-send: #34d399;       /* emerald-400 — also "connected" */
   --color-state-attempt: #a1a1aa;    /* zinc-400 */
   --color-state-project: #ff6b35;    /* brand */
+  /* UX-003 — solid fills for the LogSection result buttons (white label on
+     top, so these are the deeper shades of the state hues above). */
+  --color-state-flash-solid: #eab308;        /* yellow-500 */
+  --color-state-flash-solid-hover: #facc15;  /* yellow-400 */
+  --color-state-flash-solid-border: #ca8a04; /* yellow-600 */
+  --color-state-send-solid: #16a34a;         /* green-600 */
+  --color-state-send-solid-hover: #22c55e;   /* green-500 */
+  --color-state-send-solid-border: #15803d;  /* green-700 */
+  --color-state-attempt-solid: #3f3f46;      /* zinc-700 */
+  --color-state-attempt-solid-hover: #52525b;/* zinc-600 */
+  --color-state-attempt-solid-border: #52525b;/* zinc-600 */
 
   /* Feedback (D18-10) */
   --color-feedback-success: #10b981; /* emerald-500 */
