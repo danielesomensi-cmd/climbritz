@@ -725,7 +725,7 @@ export default function PlayPage() {
           ? 'Resume game · pick start holds'
           : `Resume game · ${who}'s turn`;
     return (
-      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
         <PageHeader back={{ href: '/', label: 'Home' }} title="Add-On" />
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
           <Card className="p-4 space-y-3">
@@ -777,7 +777,7 @@ export default function PlayPage() {
   // ---------------- SETUP ----------------
   if (game.phase === 'setup') {
     return (
-      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
         <PageHeader
           back={{ href: '/', label: 'Home' }}
           title="Add-On"
@@ -899,9 +899,11 @@ export default function PlayPage() {
           )}
           {errorBanner}
 
-          {/* Sticky CTA: always reachable above the BottomNav, even with 6 players. */}
+          {/* Sticky CTA: always reachable above the BottomNav, even with 6 players.
+              Solid backdrop (plus a short fade above) so a disabled, translucent
+              button never shows the scrolled cards through it. */}
           <div
-            className="sticky z-10 -mx-4 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent px-4 pt-4 pb-2"
+            className="sticky z-10 -mx-4 bg-zinc-950 px-4 pt-3 pb-2 before:pointer-events-none before:absolute before:inset-x-0 before:-top-6 before:h-6 before:bg-gradient-to-t before:from-zinc-950 before:to-transparent"
             style={{
               bottom:
                 'calc(3.5rem + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px)))',
@@ -933,7 +935,7 @@ export default function PlayPage() {
         ? 'Pick 1 start foot'
         : `Pick ${FEET_START_HANDS} start holds`;
     return (
-      <div className="play-root flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+      <div className="flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
         <header className="shrink-0 z-20 bg-surface-base/95 border-b border-border-default">
           <div className="max-w-2xl mx-auto px-4 pt-safe pb-3">
             <div className="flex items-center justify-between gap-2">
@@ -1026,7 +1028,7 @@ export default function PlayPage() {
       .map((name, i) => ({ name, i, ...playerScores[i] }))
       .sort((a, b) => b.score - a.score || b.longestChain - a.longestChain);
     return (
-      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
         {w !== null && <Confetti />}
         <PageHeader back={{ href: '/', label: 'Home' }} title="Add-On" right={<SoundToggle />} />
         <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
@@ -1191,7 +1193,7 @@ export default function PlayPage() {
     game.feet && game.pendingFootId !== null ? 'Confirm hand + foot' : 'Confirm hold';
 
   return (
-    <div className="play-root flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+    <div className="flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
       <header className="shrink-0 z-20 bg-surface-base/95 border-b border-border-default">
         <div className="max-w-2xl mx-auto px-4 pt-safe pb-3">
           <div className="flex items-center justify-between gap-2">

@@ -152,15 +152,15 @@ function HomeContent() {
   return (
     // B033 Phase 4 (D18-12): ported off inline styles to Tailwind classes +
     // design tokens. Hero gradient is the named --hero-gradient token (2.1).
-    // B034 v4 — paddingTop is an INLINE style, NOT a Tailwind `pt-[...]` utility.
-    // globals.css has an UNLAYERED `* { padding: 0 }` reset; Tailwind utilities
-    // live in `@layer utilities`, and unlayered rules beat layered ones in the
-    // CSS cascade — so the pt utility computed to 0 and the wordmark sat behind
-    // the Dynamic Island regardless of --safe-top's value (the real reason B032
-    // / B034 v1–v3 never fixed it). An inline style outranks the reset.
+    // B034 v4 — the hero's top safe-area padding is an inline style. It was
+    // forced inline while an unlayered `* { padding: 0 }` reset zeroed every
+    // Tailwind pt-* utility; that reset is gone (B-CSS-RESET) but the inline
+    // value is kept as the verified-on-device source of truth for the island.
+    // 3.75rem clears the gear/avatar row (top: safe + 0.75rem, 44px tall) so the
+    // wordmark never collides with the gear on narrow (360pt) phones.
     <div
       className="relative min-h-screen flex flex-col items-center px-4 pb-8 bg-[image:var(--hero-gradient)]"
-      style={{ paddingTop: 'calc(var(--safe-top) + 2.5rem)' }}
+      style={{ paddingTop: 'calc(var(--safe-top) + 3.75rem)' }}
     >
       {/* B032 — account / sign-out entry point. Clerk's hosted menu owns
           profile management + sign-out (afterSignOutUrl → /sign-in), purely
@@ -185,7 +185,7 @@ function HomeContent() {
       <h1 className="font-display text-display m-0 text-center tracking-[-2px] text-[color:var(--brand-orange)] [text-shadow:0_0_40px_rgba(255,107,53,0.6)]">
         CLIMBRITZ
       </h1>
-      <p className="mt-2 mb-12 text-center text-base font-medium text-zinc-400">
+      <p className="mt-2 mb-8 text-center text-base font-medium text-zinc-400">
         AI Climbing Companion
       </p>
 

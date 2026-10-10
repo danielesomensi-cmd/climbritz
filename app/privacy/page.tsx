@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
           <h2 style={{ color: '#e2e8f0', fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
             What we collect
           </h2>
-          <ul style={{ paddingLeft: '20px', lineHeight: 1.8 }}>
+          <ul style={{ paddingLeft: '20px', lineHeight: 1.8, listStyle: 'disc' }}>
             <li>
               <strong>Email address</strong> — used only for account login.
             </li>
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
           <h2 style={{ color: '#e2e8f0', fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
             What we do NOT do
           </h2>
-          <ul style={{ paddingLeft: '20px', lineHeight: 1.8 }}>
+          <ul style={{ paddingLeft: '20px', lineHeight: 1.8, listStyle: 'disc' }}>
             <li>We do not sell your data to third parties.</li>
             <li>We do not use your videos for advertising.</li>
             <li>We do not share personal information with other users.</li>
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
             immediately.
           </p>
           <p style={{ lineHeight: 1.8, marginTop: '12px' }}>Deleting your account permanently removes:</p>
-          <ul style={{ paddingLeft: '20px', lineHeight: 1.8 }}>
+          <ul style={{ paddingLeft: '20px', lineHeight: 1.8, listStyle: 'disc' }}>
             <li>your logged climbs and attempt history</li>
             <li>your projects and saved climb states</li>
             <li>your hold classifications</li>

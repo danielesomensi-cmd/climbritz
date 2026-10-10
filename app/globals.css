@@ -177,17 +177,13 @@
    no custom tokens. Documented rhythm: gap-2 = default control gap;
    space-y-3 = intra-section; space-y-5 / space-y-6 = inter-section. */
 
-/* NOTE: this reset is UNLAYERED, so it beats every Tailwind v4 utility (which
-   live in @layer utilities) → p-*, px-*, m-*, space-y-*, mx-auto compute to 0
-   app-wide. It is redundant with Tailwind's preflight (@layer base already
-   zeroes margin/padding + border-box). /play (.play-root) opts out so its
-   spacing utilities apply; removing the reset app-wide is a separate,
-   whole-app visual change (ticket B-CSS-RESET). */
-*:where(:not(.play-root, .play-root *)) {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* B-CSS-RESET — the old unlayered `* { margin: 0; padding: 0 }` reset lived
+   here since the first commit. Being unlayered it beat every Tailwind v4
+   utility (those live in @layer utilities), so p-*, px-*, m-*, space-y-* and
+   mx-auto silently computed to 0 app-wide. Tailwind's preflight (@layer base)
+   already zeroes margin/padding and sets border-box, so the reset was dropped:
+   spacing utilities now apply everywhere. Do NOT add an unlayered element
+   reset back — put base styles in `@layer base` so utilities still win. */
 
 /* B-A021-fix-1.2.1 — `scroll-behavior: smooth` was the root cause of an
    iOS Safari "snap-to-top" bug on /discover/detail: any browser-initiated

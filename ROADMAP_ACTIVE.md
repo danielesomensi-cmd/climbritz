@@ -239,6 +239,7 @@ Version 1.1.0 · Android versionCode 16 · iOS build 14 (the previous TestFlight
 - [ ] **Daniele (manual):** iOS archive+upload (`bash ~/deploy_climbritz.sh 14`); upload the AAB (versionCode 16) to Play Console and roll it out to the closed-testing track.
 - [x] **GAME-002** — Add-On owner feedback: optional feet mode (2 hands + 1 foot start, optional foot per turn, r15), big player name + lives, winner fanfare + elimination cue + confetti.
 - [ ] **Future:** optional max turn time that auto-fails a turn (timer is informative only for now).
+- [x] **B-CSS-RESET (1/3)** — dropped the unlayered global `* { margin: 0; padding: 0 }` reset (it zeroed every Tailwind spacing utility) + the `.play-root` carve-out; tuned home / privacy / play spacing. Remaining pages in steps 2–3.
 - [x] **ARCADE-001** — Deadpoint in the mobile app at `/arcade` (Deadpoint tile): vendored single-file build in `public/arcade/` (`scripts/sync-deadpoint.sh`), same-origin iframe with `?lang=en&embed=1`; the web `/gioco` rewrite stays Italian and untouched. Branch `feat/arcade-deadpoint`, not merged yet.
 - [ ] **ARCADE-001 follow-up:** on-device check — WebGL frame rate (the game steps quality down on its own) and iframe touch/tap latency on iOS WKWebView + Android WebView; re-run `scripts/sync-deadpoint.sh` after Deadpoint changes before a release.
 

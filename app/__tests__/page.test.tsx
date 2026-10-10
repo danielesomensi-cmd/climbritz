@@ -62,15 +62,13 @@ describe('Home Page', () => {
     expect(screen.getByText('Mini-game: catch the deadpoint')).toBeInTheDocument();
   });
 
-  // B034 v4 — the hero's top safe-area padding MUST come from an inline style,
-  // NEVER a Tailwind `pt-*` utility. globals.css has an unlayered
-  // `* { padding: 0 }` reset that beats `@layer utilities` in the CSS cascade,
-  // so ANY pt-* class computes to padding-top:0 → the wordmark clips behind the
-  // iOS Dynamic Island regardless of --safe-top. Do NOT "simplify" the inline
-  // style back into a className — it silently re-breaks iOS.
-  // (jsdom's CSSOM rejects the inline `calc(var(--safe-top) + 2.5rem)` value, so
-  // we can't read it back; instead we assert no pt-* utility is present — the
-  // exact regression — on the verified-correct hero element.)
+  // B034 v4 — the hero's top safe-area padding comes from an inline style
+  // (verified on-device against the Dynamic Island). It was forced inline while
+  // an unlayered `* { padding: 0 }` reset zeroed Tailwind pt-* utilities; the
+  // reset is gone (B-CSS-RESET) but the inline value stays the single source of
+  // truth, so a stray pt-* class here would fight it.
+  // (jsdom's CSSOM rejects the inline `calc(var(--safe-top) + 3.75rem)` value, so
+  // we can't read it back; instead we assert no pt-* utility is present.)
   it('keeps the hero top safe-area padding off Tailwind pt-* utilities (B034 v4)', () => {
     render(<Home />);
     const hero = screen.getByText('CLIMBRITZ').parentElement as HTMLElement;

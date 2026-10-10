@@ -14,8 +14,7 @@ import Link from 'next/link';
 //   screen) and no AuthGuard (playable signed-out, like /play).
 // - Leaving the page unmounts the iframe → the game's audio and rAF loop stop.
 // - Safe areas: .pt-safe (top, via --safe-top) on the header, .pb-safe on the
-//   page — both unlayered utilities from app/safe-area.css, so the global
-//   `* { padding: 0 }` reset can't zero them (see B034 v4 in app/page.tsx).
+//   page — both from app/safe-area.css.
 const DEADPOINT_SRC = '/arcade/deadpoint.html?lang=en&embed=1';
 
 export default function ArcadePage() {
@@ -25,10 +24,7 @@ export default function ArcadePage() {
       className="fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-[#0b0d12] pb-safe"
     >
       <header className="shrink-0 pt-safe bg-surface-base/95 border-b border-border-default">
-        <div
-          className="flex items-center gap-1"
-          style={{ paddingLeft: '0.5rem', paddingRight: '1rem', paddingBottom: '0.25rem' }}
-        >
+        <div className="flex items-center gap-1 pl-2 pr-4 pb-1">
           <Link
             href="/"
             data-testid="arcade-back"
