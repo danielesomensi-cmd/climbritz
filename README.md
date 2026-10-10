@@ -1,6 +1,6 @@
 # Climbritz — AI Climbing Companion for Kilter Board
 
-AI climbing companion for Kilter Board — search 160k+ climbs by grip type, build AI training sessions, connect to your board via Bluetooth (Discovery, free) + video technique analysis powered by Gemini 2.5 Flash (Coach, €7.99/month).
+AI climbing companion for Kilter Board — search 160k+ climbs by grip type, build AI training sessions, connect to your board via Bluetooth, play the Add-On party game on the board LEDs (Discovery, free) + video technique analysis powered by Gemini 2.5 Flash (Coach, €7.99/month).
 
 ## Quick Start
 

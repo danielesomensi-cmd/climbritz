@@ -227,6 +227,19 @@ Promotes the app from TestFlight/closed-testing to a submittable public 1.0. See
 - [ ] **Follow-up — `CLERK_WEBHOOK_SECRET` is NOT set on Railway** ⇒ `POST /api/webhooks/clerk` returns 503 and **new-signup Telegram alerts never fire**. Not a submission blocker. Fix: Clerk dashboard → Webhooks → signing secret → set the var on Railway.
 - [ ] **Follow-up — no cost cap on video analysis.** A consequence of Phase 1's finding: with no quota *and* no rate limit, Gemini spend is unbounded per user. Not a review risk, but worth a bound before any Reddit-scale launch.
 
+### Release 1.1.0 — UX polish + Add-On game ✅ code DONE (2026-10-10)
+Version 1.1.0 · Android versionCode 16 · iOS build 14 (the previous TestFlight build expired).
+
+- [x] **UX-001** — grip-type "Coming soon" UI hidden on Discovery + Generate (store gate); BLE strings in English.
+- [x] **UX-002** — tap polish: press feedback, ≥44pt targets, 48px inputs, loading labels, BottomNav "Videos" tab.
+- [x] **UX-003** — log Undo toast replaces the instant Remove button.
+- [x] **NATIVE-001** — haptics, keep-awake, synthesized sound cues (muted by default, Settings toggle).
+- [x] **GAME-001** — Add-On game at `/play` (Play tile): Fell discards the hold, lives 1 default / 3 "Easy", discreet informative turn timer.
+- [x] Version bump, suites green, `build:mobile` + `cap sync`, signed AAB built.
+- [ ] **Daniele (manual):** iOS archive+upload (`bash ~/deploy_climbritz.sh 14`); upload the AAB (versionCode 16) to Play Console and roll it out to the closed-testing track.
+- [ ] **Future:** optional max turn time that auto-fails a turn (timer is informative only for now).
+- [ ] **Future:** Deadpoint (own repo) is already served on the web at `climbritz.app/gioco` (WEB-GIOCO, web build only) — evaluate bringing it into the mobile app too (static export has no rewrites).
+
 ### B-iOS-oauth-prod — Promote Clerk to Production ✅ DONE (B021, 30 May 2026) — superseded by A-STORE-PROD-001 Phase 3
 Executed: custom domain `clerk.climbritz.app`, `pk_live`/`sk_live`, email+password auth, per-platform origin fixes. See `PROJECT_STATUS.md` B021 + `docs/CLERK_CAPACITOR_AUTH.md`. **Closed** — A-STORE-PROD-001 Phase 3 re-verified the live instance (production, `pk_live` on Vercel, prod secret on Railway) and supersedes this item.
 
