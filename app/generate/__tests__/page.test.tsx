@@ -127,6 +127,34 @@ describe('GeneratePage', () => {
     await waitFor(() => expect(generateMock).toHaveBeenCalledTimes(2));
   });
 
+  // UX-005 — the filter card collapses to a summary after a result.
+  it('collapses the filters to a summary after generating and re-opens on Edit', async () => {
+    generateMock.mockResolvedValue(RESULT);
+    render(<GeneratePage />);
+    expect(screen.queryByTestId('filter-summary')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('generate-btn'));
+    await waitFor(() => expect(screen.getByTestId('generate-result')).toBeInTheDocument());
+
+    expect(screen.getByTestId('filter-summary')).toHaveTextContent('40° · 6a–6c · any moves');
+    expect(screen.queryByTestId('angle-selector')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('start-blank-btn')).not.toBeInTheDocument();
+    // Re-roll stays one tap away while collapsed.
+    expect(screen.getByTestId('generate-btn')).toHaveTextContent('Generate again');
+
+    fireEvent.click(screen.getByTestId('edit-filters-btn'));
+    expect(screen.getByTestId('angle-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('start-blank-btn')).toBeInTheDocument();
+    expect(screen.queryByTestId('filter-summary')).not.toBeInTheDocument();
+  });
+
+  it('keeps the filters open when generation fails', async () => {
+    generateMock.mockRejectedValue(new Error('boom'));
+    render(<GeneratePage />);
+    fireEvent.click(screen.getByTestId('generate-btn'));
+    await waitFor(() => expect(screen.getByTestId('generate-error')).toBeInTheDocument());
+    expect(screen.getByTestId('angle-selector')).toBeInTheDocument();
+  });
+
   it('shows the backend 422 message on a too-small pool', async () => {
     generateMock.mockRejectedValue(new ApiError(422, 'Not enough source problems. Loosen the filters.'));
     render(<GeneratePage />);

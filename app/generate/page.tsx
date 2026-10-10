@@ -83,6 +83,10 @@ function GeneratePageInner() {
   const [gradeMin, setGradeMin] = useState(DEFAULT_GRADE_MIN);
   const [gradeMax, setGradeMax] = useState(DEFAULT_GRADE_MAX);
   const [moves, setMoves] = useState<MovesFilter>('any');
+  // UX-005: after the first successful generate the filter card collapses
+  // to a one-line summary + "Generate again", so the board (the thing you
+  // actually look at from the mat) sits near the top. "Edit" re-opens it.
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -126,6 +130,7 @@ function GeneratePageInner() {
         moves,
       });
       setResult(res);
+      setFiltersOpen(false);
       const gen = genRef.current + 1;
       genRef.current = gen;
       setGenCount(gen);
@@ -239,6 +244,14 @@ function GeneratePageInner() {
     router.push('/create');
   };
 
+  const gradeLabel = (difficulty: number) =>
+    GRADES.find((g) => g.difficulty === difficulty)?.font ?? String(difficulty);
+  const movesLabel = MOVES_OPTIONS.find((o) => o.value === moves)?.label ?? 'Any';
+  const filterSummary = `${angle}° · ${gradeLabel(gradeMin)}–${gradeLabel(gradeMax)} · ${
+    moves === 'any' ? 'any moves' : `${movesLabel} moves`
+  }`;
+  const showFilters = filtersOpen || !result;
+
   const roleCounts = holdsForView.reduce<Record<string, number>>((acc, h) => {
     acc[h.role] = (acc[h.role] ?? 0) + 1;
     return acc;
@@ -251,82 +264,100 @@ function GeneratePageInner() {
       <main className="max-w-2xl mx-auto px-4 py-4 space-y-5">
         {/* ── Filters ───────────────────────────────────────────────── */}
         <Card className="p-4 space-y-5" data-testid="generate-filters">
-          {/* Angle */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-              Angle
-            </label>
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" data-testid="angle-selector">
-              {ANGLES.map((a) => (
-                <Chip
-                  key={a}
-                  data-testid={`angle-${a}`}
-                  selected={angle === a}
-                  onClick={() => setAngle(a)}
-                  className="shrink-0"
-                >
-                  {a}°
-                </Chip>
-              ))}
-            </div>
-          </div>
-
-          {/* Grade range */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-              Grade range
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                data-testid="grade-min"
-                value={gradeMin}
-                onChange={(e) => setGradeMin(Number(e.target.value))}
-                className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
-              >
-                {GRADES.map((g) => (
-                  <option key={g.difficulty} value={g.difficulty}>
-                    {g.font} / {g.v}
-                  </option>
+          {showFilters ? (
+            <>
+            {/* Angle */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+                Angle
+              </label>
+              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" data-testid="angle-selector">
+                {ANGLES.map((a) => (
+                  <Chip
+                    key={a}
+                    data-testid={`angle-${a}`}
+                    selected={angle === a}
+                    onClick={() => setAngle(a)}
+                    className="shrink-0"
+                  >
+                    {a}°
+                  </Chip>
                 ))}
-              </select>
-              <select
-                data-testid="grade-max"
-                value={gradeMax}
-                onChange={(e) => setGradeMax(Number(e.target.value))}
-                className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
-              >
-                {GRADES.map((g) => (
-                  <option key={g.difficulty} value={g.difficulty}>
-                    {g.font} / {g.v}
-                  </option>
-                ))}
-              </select>
+              </div>
             </div>
-            {gradeInvalid && (
-              <p data-testid="grade-invalid" className="mt-2 text-xs text-red-400">
-                Min grade must be ≤ max grade.
-              </p>
-            )}
-          </div>
 
-          {/* Moves */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
-              Moves
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {MOVES_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt.value}
-                  data-testid={`moves-${opt.value}`}
-                  selected={moves === opt.value}
-                  onClick={() => setMoves(opt.value)}
+            {/* Grade range */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+                Grade range
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  data-testid="grade-min"
+                  value={gradeMin}
+                  onChange={(e) => setGradeMin(Number(e.target.value))}
+                  className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
                 >
-                  {opt.label}
-                </Chip>
-              ))}
+                  {GRADES.map((g) => (
+                    <option key={g.difficulty} value={g.difficulty}>
+                      {g.font} / {g.v}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  data-testid="grade-max"
+                  value={gradeMax}
+                  onChange={(e) => setGradeMax(Number(e.target.value))}
+                  className="min-h-[48px] bg-zinc-800 border border-zinc-700 rounded px-2 py-2 text-base text-white"
+                >
+                  {GRADES.map((g) => (
+                    <option key={g.difficulty} value={g.difficulty}>
+                      {g.font} / {g.v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {gradeInvalid && (
+                <p data-testid="grade-invalid" className="mt-2 text-xs text-red-400">
+                  Min grade must be ≤ max grade.
+                </p>
+              )}
             </div>
-          </div>
+
+            {/* Moves */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+                Moves
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {MOVES_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt.value}
+                    data-testid={`moves-${opt.value}`}
+                    selected={moves === opt.value}
+                    onClick={() => setMoves(opt.value)}
+                  >
+                    {opt.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3" data-testid="filter-summary">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  Filters
+                </div>
+                <div className="truncate text-base font-semibold text-zinc-100">
+                  {filterSummary}
+                </div>
+              </div>
+              <Chip data-testid="edit-filters-btn" onClick={() => setFiltersOpen(true)} className="shrink-0">
+                Edit
+              </Chip>
+            </div>
+          )}
 
           <Button
             variant="primary"
@@ -340,16 +371,19 @@ function GeneratePageInner() {
             {result ? 'Generate again' : 'Generate'}
           </Button>
 
-          {/* A031 — second creation path: paint a problem from scratch. */}
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full"
-            data-testid="start-blank-btn"
-            onClick={handleStartBlank}
-          >
-            Start from blank
-          </Button>
+          {/* A031 — second creation path: paint a problem from scratch.
+              Hidden while the filter card is collapsed (UX-005). */}
+          {showFilters && (
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              data-testid="start-blank-btn"
+              onClick={handleStartBlank}
+            >
+              Start from blank
+            </Button>
+          )}
 
           {error && (
             <p data-testid="generate-error" className="text-sm text-red-400 text-center">
