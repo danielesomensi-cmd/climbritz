@@ -240,7 +240,7 @@ Three GET fetches drive the page (`/api/logs/sessions`, `/api/stats/pyramid`, `/
 └──────────────────────────────────────────┘
 
 Frontend: climbritz.app (deployed via Vercel)
-  └─ /gioco → Next.js rewrite (web build only) → danielesomensi-cmd.github.io/deadpoint (browser game, own repo, Italian)
+  └─ /gioco → Next.js rewrite (web build only) → danielesomensi-cmd.github.io/deadpoint (browser game, own repo, English default, `?lang=it` for Italian)
   └─ /arcade → same game, vendored copy in public/arcade/ (English via ?lang=en; also in the mobile bundle)
 Video storage: local filesystem (S3 planned)
 ```
