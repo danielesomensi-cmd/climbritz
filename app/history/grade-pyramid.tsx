@@ -31,18 +31,18 @@ export default function GradePyramid({
 }: GradePyramidProps) {
   return (
     <div data-testid="grade-pyramid" className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
           Grade pyramid
         </h2>
-        <div className="flex gap-1 flex-wrap justify-end" data-testid="pyramid-filter">
+        <div className="flex gap-2" data-testid="pyramid-filter">
           {FILTER_OPTIONS.map((opt) => (
             <Chip
               key={opt.value}
               data-testid={`pyramid-filter-${opt.value}`}
               selected={resultFilter === opt.value}
               onClick={() => onFilterChange(opt.value)}
-              className="text-xs px-2"
+              className="text-xs px-3"
             >
               {opt.label}
             </Chip>
@@ -58,7 +58,9 @@ export default function GradePyramid({
           No data yet for this filter.
         </div>
       ) : (
-        <div className="h-[260px] w-full">
+        // Height follows the number of grade bands (B-CSS-RESET 3/3): a fixed
+        // 260px turned 1–2 bands into huge slabs.
+        <div className="w-full" style={{ height: Math.max(140, entries.length * 44 + 40) }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={entries}
@@ -92,7 +94,7 @@ export default function GradePyramid({
                 itemStyle={{ color: '#fdba74' }}
                 cursor={{ fill: '#27272a' }}
               />
-              <Bar dataKey="count" fill="#fb923c" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="#fb923c" radius={[0, 4, 4, 0]} maxBarSize={28} />
             </BarChart>
           </ResponsiveContainer>
         </div>

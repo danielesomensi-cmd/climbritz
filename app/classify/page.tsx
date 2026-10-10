@@ -234,6 +234,13 @@ function ClassifyContent() {
     <main className="min-h-screen bg-zinc-950 text-zinc-100 pt-safe px-4 pb-nav">
       <div className="max-w-6xl mx-auto space-y-4">
 
+        {/* B-CSS-RESET 3/3: title first, then the banner — the page used to open
+            on the orange banner with the H1 buried underneath it. */}
+        <div>
+          <h1 className="text-page-title font-display">Hold Classification</h1>
+          <p className="text-sm text-zinc-400 mt-1">Tap any hold to classify or reclassify it.</p>
+        </div>
+
         {/* A023: growth banner — invite to contribute */}
         <div
           data-testid="growth-banner"
@@ -246,39 +253,33 @@ function ClassifyContent() {
           </p>
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-page-title font-display">Hold Classification</h1>
-            <p className="text-xs text-zinc-400">Tap any hold to classify or reclassify it.</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* B033: Next is navigation, not a category — moved off blue (blue is
-                reserved for the good_crimp category swatch) to a neutral button. */}
-            <Button variant="secondary" data-testid="btn-next" onClick={jumpToNext} disabled={isDone}>
-              Next unclassified →
-            </Button>
-            <Button variant="primary" data-testid="btn-send-export" onClick={handleSendExport}>
-              Send my export
-            </Button>
-            <Button variant="secondary" data-testid="btn-export" onClick={handleExport}>
-              Export JSON
-            </Button>
-            <Button variant="secondary" data-testid="btn-import" onClick={() => fileInputRef.current?.click()}>
-              Import JSON
-            </Button>
-            <input
-              ref={fileInputRef}
-              data-testid="import-file-input"
-              type="file"
-              accept=".json,application/json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-            <Button variant="ghost" onClick={() => setConfirmReset(true)} className="hover:text-red-400">
-              Reset
-            </Button>
-          </div>
+        {/* Actions */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* B033: Next is navigation, not a category — moved off blue (blue is
+              reserved for the good_crimp category swatch) to a neutral button. */}
+          <Button variant="secondary" data-testid="btn-next" onClick={jumpToNext} disabled={isDone}>
+            Next unclassified →
+          </Button>
+          <Button variant="primary" data-testid="btn-send-export" onClick={handleSendExport}>
+            Send my export
+          </Button>
+          <Button variant="secondary" data-testid="btn-export" onClick={handleExport}>
+            Export JSON
+          </Button>
+          <Button variant="secondary" data-testid="btn-import" onClick={() => fileInputRef.current?.click()}>
+            Import JSON
+          </Button>
+          <input
+            ref={fileInputRef}
+            data-testid="import-file-input"
+            type="file"
+            accept=".json,application/json"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+          <Button variant="ghost" onClick={() => setConfirmReset(true)} className="hover:text-red-400">
+            Reset
+          </Button>
         </div>
 
         {/* A023: prize message */}

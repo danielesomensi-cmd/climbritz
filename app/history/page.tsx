@@ -126,7 +126,7 @@ function HistoryInner() {
     <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
       {/* B026: no back arrow — /history is a top-level BottomNav route. */}
       <PageHeader title="History">
-        <div className="flex gap-1 mt-3" data-testid="range-picker">
+        <div className="flex gap-2 mt-3" data-testid="range-picker">
           {RANGE_PRESETS.map((p) => (
             <Chip
               key={String(p.value)}

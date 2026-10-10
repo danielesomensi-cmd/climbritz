@@ -58,7 +58,7 @@ function BoardMapContent() {
 
           {/* Detail panel — side on desktop, below on mobile */}
           <aside
-            className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 min-h-[260px]"
+            className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 min-h-[120px] md:min-h-[260px]"
             data-testid="hold-detail-panel"
           >
             {selectedHold ? (
@@ -98,7 +98,7 @@ function BoardMapContent() {
                 </dl>
               </div>
             ) : (
-              <p className="text-sm text-zinc-500 text-center pt-16">
+              <p className="text-sm text-zinc-500 text-center pt-8 md:pt-16">
                 Click a hold on the board to see its details.
               </p>
             )}

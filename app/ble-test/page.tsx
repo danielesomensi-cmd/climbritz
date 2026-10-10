@@ -191,7 +191,7 @@ function BleTestContent() {
                 key={preset.id}
                 onClick={() => handlePreset(preset.id)}
                 className={[
-                  'p-3 rounded-lg text-left transition-all',
+                  'flex flex-col justify-start p-3 rounded-lg text-left transition-all',
                   isStressTest ? 'col-span-2 border border-amber-600/60' : '',
                   isActive
                     ? 'bg-orange-500/20 ring-2 ring-orange-500'

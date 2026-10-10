@@ -46,11 +46,11 @@ export default function TrendChart({ entries }: TrendChartProps) {
 
   return (
     <div data-testid="trend-chart" className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
           Send-rate trend
         </h2>
-        <div className="flex gap-1" data-testid="trend-filter">
+        <div className="flex gap-2" data-testid="trend-filter">
           {(Object.keys(SERIES_META) as Series[]).map((s) => {
             const meta = SERIES_META[s];
             const active = visible[s];
@@ -61,7 +61,7 @@ export default function TrendChart({ entries }: TrendChartProps) {
                 data-testid={`trend-toggle-${s}`}
                 onClick={() => toggle(s)}
                 aria-pressed={active}
-                className={`px-2 py-1 rounded-full text-xs border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
                   active
                     ? 'border-current'
                     : 'border-zinc-800 text-zinc-500 hover:border-zinc-600'
