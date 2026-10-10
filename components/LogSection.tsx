@@ -145,14 +145,26 @@ export default function LogSection({
       // UX-003: snapshot today's row BEFORE the POST so Undo can restore it.
       // No optimistic update — the buttons stay disabled until the server
       // answers, so this snapshot always reflects the last persisted state.
-      const before = detail ? findTodaysLog(detail.recent_logs) : null;
-      const snapshot = before
-        ? { id: before.id, result_type: before.result_type, attempts_count: before.attempts_count }
-        : null;
       try {
+        // If the parent's detail hasn't loaded (or its fetch failed) we don't
+        // know whether today's row exists: an Undo that DELETEs could wipe a
+        // pre-existing row. Fetch it now; if that fails, log without Undo.
+        let known: UserClimbDetail | null = detail;
+        if (!known) {
+          try {
+            const { getUserClimb } = await import('@/app/lib/api');
+            known = await getUserClimb(climbUuid, angle);
+          } catch {
+            known = null;
+          }
+        }
+        const before = known ? findTodaysLog(known.recent_logs) : null;
+        const snapshot = before
+          ? { id: before.id, result_type: before.result_type, attempts_count: before.attempts_count }
+          : null;
         const res = await createLog(climbUuid, angle, result);
         const logId = res?.log?.id ?? snapshot?.id;
-        if (logId) {
+        if (logId && known) {
           const isSameRow = snapshot !== null && snapshot.id === logId;
           setUndo({
             key: Date.now(),
@@ -252,6 +264,9 @@ export default function LogSection({
     // log post fails we don't want to have already removed the project.
     const ok = await performLog(result);
     if (!ok) return;
+    // Keep Undo disabled until projectCleared is recorded — otherwise an
+    // Undo tapped mid-request would revert the log but not the project flag.
+    setPending('project');
     try {
       await patchUserClimbProject(climbUuid, angle, false);
       setUndo((u) => (u ? { ...u, projectCleared: true } : u));
@@ -261,6 +276,8 @@ export default function LogSection({
     } catch (e) {
       const message = e instanceof ApiError ? e.message : 'Network error';
       setError(message);
+    } finally {
+      setPending(null);
     }
   };
 
@@ -361,7 +378,7 @@ export default function LogSection({
           actionLabel="Undo"
           onAction={handleUndo}
           onDismiss={handleToastDismiss}
-          busy={pending === 'undo'}
+          busy={pending !== null}
         />
       )}
 

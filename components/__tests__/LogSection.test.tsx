@@ -456,6 +456,37 @@ describe('LogSection — UX-003 Undo toast', () => {
     await waitFor(() => expect(screen.queryByTestId('toast')).not.toBeInTheDocument());
   });
 
+  it('detail not loaded yet: snapshots via GET first so Undo PATCHes, never DELETEs an existing row', async () => {
+    const before = mkLog({ id: 'today-row', result_type: 'attempt', attempts_count: 3 });
+    const upgraded = mkLog({ id: 'today-row', result_type: 'send', attempts_count: 4 });
+    createLogMock.mockResolvedValue({ log: upgraded, user_state: mkState() });
+    getUserClimbMock.mockResolvedValueOnce(mkDetail({ recent_logs: [before] }));
+    render(
+      <LogSection climbUuid={CLIMB_UUID} angle={ANGLE} detail={null} onMutated={jest.fn()} />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    await screen.findByTestId('toast');
+    fireEvent.click(screen.getByTestId('toast-action'));
+    await waitFor(() =>
+      expect(patchLogMock).toHaveBeenCalledWith('today-row', {
+        result_type: 'attempt',
+        attempts_count: 3,
+      }),
+    );
+    expect(deleteLogMock).not.toHaveBeenCalled();
+  });
+
+  it('detail unknown and GET fails: logs without offering Undo', async () => {
+    getUserClimbMock.mockRejectedValueOnce(new Error('offline'));
+    render(
+      <LogSection climbUuid={CLIMB_UUID} angle={ANGLE} detail={null} onMutated={jest.fn()} />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    await waitFor(() => expect(createLogMock).toHaveBeenCalled());
+    await waitFor(() => expect(getUserClimbMock).toHaveBeenCalledTimes(2));
+    expect(screen.queryByTestId('toast')).not.toBeInTheDocument();
+  });
+
   it('Undo DELETEs the row when the tap created it (no log today before)', async () => {
     createLogMock.mockResolvedValue({ log: mkLog({ id: 'fresh-row' }), user_state: mkState() });
     render(

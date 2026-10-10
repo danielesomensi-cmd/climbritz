@@ -65,6 +65,10 @@ const SET_SCREW_ONS = 20;
 const BLE_DEBOUNCE_MS = 300;
 const BLINK_INTERVAL_MS = 220;
 const ERROR_VISIBLE_MS = 2500;
+// SENT/FELL replace the Confirm button in the same spot: ignore a declare
+// that lands right after Confirm (double tap / laggy tap) so nobody gets an
+// accidental SENT or FELL.
+const DECLARE_GUARD_MS = 500;
 
 // UI-only player colors (never sent to the wall — see led-commands.ts).
 const PLAYER_COLORS = ['#ff6b35', '#38bdf8', '#a3e635', '#f472b6', '#facc15', '#c084fc'];
@@ -317,7 +321,12 @@ export default function PlayPage() {
 
   useEffect(() => {
     const f = frameRef.current;
-    if (!isConnected || !f) return;
+    if (!isConnected || !f) {
+      // Nothing will be sent for this frame: drop a pending blink/fell effect
+      // so it doesn't fire later on an unrelated frame (e.g. after connect).
+      effectRef.current = null;
+      return;
+    }
     const gen = ++genRef.current;
     const timer = setTimeout(async () => {
       const effect = effectRef.current;
@@ -376,19 +385,23 @@ export default function PlayPage() {
     if (!next.error) void haptic('light');
   };
 
+  const confirmedAtRef = useRef(0);
+
   const confirmHold = () => {
     const next = act({ type: 'CONFIRM_HOLD' });
     if (!next.error) {
+      confirmedAtRef.current = Date.now();
       effectRef.current = 'blink';
       void haptic('light');
     }
   };
 
   const declare = (outcome: 'sent' | 'fell') => {
+    if (Date.now() - confirmedAtRef.current < DECLARE_GUARD_MS) return;
     const who = current;
-    if (outcome === 'fell') effectRef.current = 'fell';
     const next = act({ type: 'DECLARE', outcome, now: Date.now() });
     if (next.error) return;
+    if (outcome === 'fell') effectRef.current = 'fell';
     setMenuOpen(false);
     if (outcome === 'sent') {
       void haptic('success');

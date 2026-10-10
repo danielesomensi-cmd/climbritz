@@ -60,11 +60,24 @@ function tapHold(p: unknown) {
   fireEvent.click(screen.getByTestId('play-board-overlay'));
 }
 
+// Controllable clock: SENT/FELL ignore taps landing < 500ms after Confirm.
+let clock = 1_000_000;
+let nowSpy: jest.SpyInstance<number, []>;
 beforeEach(() => {
   window.localStorage.clear();
   tapQueue.length = 0;
   jest.clearAllMocks();
+  clock = 1_000_000;
+  nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => clock);
 });
+afterEach(() => {
+  nowSpy.mockRestore();
+});
+
+function confirmHold() {
+  fireEvent.click(screen.getByTestId('play-confirm'));
+  clock += 1000;
+}
 
 async function renderPage() {
   render(<PlayPage />);
@@ -101,12 +114,12 @@ describe('/play', () => {
 
     expect(screen.getByTestId('play-confirm')).toBeDisabled();
     tapHold(h2);
-    fireEvent.click(screen.getByTestId('play-confirm'));
+    confirmHold();
     fireEvent.click(screen.getByTestId('play-sent'));
     expect(screen.getByTestId('play-current-player')).toHaveTextContent("Marco's turn");
 
     tapHold(h3);
-    fireEvent.click(screen.getByTestId('play-confirm'));
+    confirmHold();
     fireEvent.click(screen.getByTestId('play-fell'));
     expect(screen.getByTestId('play-winner')).toHaveTextContent('Dani wins');
     // Signed out → login only needed to save.
@@ -118,7 +131,7 @@ describe('/play', () => {
   it('undo last turn from the menu returns to the climb', async () => {
     await startTwoPlayerGame();
     tapHold(h2);
-    fireEvent.click(screen.getByTestId('play-confirm'));
+    confirmHold();
     fireEvent.click(screen.getByTestId('play-sent'));
     fireEvent.click(screen.getByTestId('play-menu'));
     fireEvent.click(screen.getByTestId('play-menu-undo'));
@@ -140,6 +153,18 @@ describe('/play', () => {
       fireEvent.click(resume);
     });
     expect(screen.getByTestId('play-current-player')).toHaveTextContent("Dani's turn");
+  });
+
+  it('ignores a SENT/FELL tap landing right after Confirm (double tap)', async () => {
+    await startTwoPlayerGame();
+    tapHold(h2);
+    fireEvent.click(screen.getByTestId('play-confirm'));
+    fireEvent.click(screen.getByTestId('play-fell'));
+    expect(screen.getByTestId('play-current-player')).toHaveTextContent("Dani's turn");
+    expect(screen.getByTestId('play-fell')).toBeInTheDocument();
+    clock += 600;
+    fireEvent.click(screen.getByTestId('play-sent'));
+    expect(screen.getByTestId('play-current-player')).toHaveTextContent("Marco's turn");
   });
 
   it('never connects the board on its own and sends nothing while disconnected', async () => {
