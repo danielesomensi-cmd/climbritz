@@ -77,6 +77,11 @@ jest.mock('@capacitor/app', () => ({
   },
 }));
 
+const hapticMock = jest.fn().mockResolvedValue(undefined);
+jest.mock('@/lib/feedback/haptics', () => ({
+  haptic: (...args: unknown[]) => hapticMock(...args),
+}));
+
 import LogSection from '../LogSection';
 
 const CLIMB_UUID = 'uuid-test-climb';
@@ -146,6 +151,35 @@ describe('LogSection — result buttons', () => {
       await waitFor(() => expect(onMutated).toHaveBeenCalledTimes(1));
     },
   );
+
+  it('fires a light haptic after a successful log (NATIVE-001)', async () => {
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail()}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-attempt'));
+    await waitFor(() => expect(hapticMock).toHaveBeenCalledWith('light'));
+  });
+
+  it('does not fire a haptic when the log fails', async () => {
+    createLogMock.mockRejectedValueOnce(new Error('boom'));
+    render(
+      <LogSection
+        climbUuid={CLIMB_UUID}
+        angle={ANGLE}
+        detail={mkDetail()}
+        onMutated={jest.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('log-btn-send'));
+    await waitFor(() => expect(createLogMock).toHaveBeenCalled());
+    await screen.findByText(/network error/i);
+    expect(hapticMock).not.toHaveBeenCalled();
+  });
 
   it('refetches detail after a successful log', async () => {
     const onMutated = jest.fn();

@@ -11,13 +11,14 @@
 //
 // Capacitor-safe: static route (no dynamic segment), SPA nav, no next/image.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { deleteAccount } from '@/app/lib/api';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
+import { isSoundEnabled, playCue, setSoundEnabled, unlockAudio } from '@/lib/feedback/sound';
 
 const CONFIRM_WORD = 'DELETE';
 
@@ -34,6 +35,24 @@ function SettingsPageInner() {
   const [typed, setTyped] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // NATIVE-001: per-device sound toggle, default off. Read after mount so
+  // the static export never renders a storage-dependent value.
+  const [soundOn, setSoundOn] = useState(false);
+  useEffect(() => {
+    setSoundOn(isSoundEnabled());
+  }, []);
+
+  function toggleSound() {
+    const next = !soundOn;
+    setSoundEnabled(next);
+    setSoundOn(next);
+    if (next) {
+      // This is a user tap — the right moment to unlock Web Audio on iOS.
+      unlockAudio();
+      playCue('turn');
+    }
+  }
 
   const canConfirm = typed.trim().toUpperCase() === CONFIRM_WORD && !deleting;
 
@@ -87,6 +106,41 @@ function SettingsPageInner() {
       <PageHeader title="Settings" back={{ href: '/', label: 'Home' }} />
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-8">
+        <section>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-text-tertiary">
+            Preferences
+          </h2>
+          <div className="mt-3 rounded-card border border-border-default">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={soundOn}
+              data-testid="settings-sound-toggle"
+              onClick={toggleSound}
+              className="flex w-full min-h-[44px] items-center justify-between px-4 py-4 text-left text-text-primary hover:bg-surface-overlay"
+            >
+              <span>
+                <span className="block">Sounds</span>
+                <span className="block text-sm text-text-tertiary">
+                  Game cues on this device
+                </span>
+              </span>
+              <span
+                aria-hidden
+                className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${
+                  soundOn ? 'bg-orange-500' : 'bg-zinc-600'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                    soundOn ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+        </section>
+
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-text-tertiary">
             About

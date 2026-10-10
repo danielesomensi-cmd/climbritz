@@ -12,6 +12,7 @@ import {
   type UserClimbDetail,
   type UserClimbState,
 } from '@/app/lib/api';
+import { haptic } from '@/lib/feedback/haptics';
 
 interface LogSectionProps {
   climbUuid: string;
@@ -120,6 +121,8 @@ export default function LogSection({
       setError(null);
       try {
         await createLog(climbUuid, angle, result);
+        // NATIVE-001: confirm the log with a light tap (no-op on web).
+        void haptic('light');
         // Refetch detail to pick up new last_logged_at + recent_logs.
         // We can't reuse the POST response's user_state for the
         // recent_logs list — that endpoint returns only the new log,

@@ -134,3 +134,22 @@ describe('Settings — account deletion (Guideline 5.1.1(v))', () => {
     );
   });
 });
+
+describe('Settings — Sounds toggle (NATIVE-001)', () => {
+  it('is off by default', () => {
+    render(<SettingsPage />);
+    expect(screen.getByTestId('settings-sound-toggle')).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('persists the choice per device and reflects it on next render', () => {
+    const { unmount } = render(<SettingsPage />);
+    fireEvent.click(screen.getByTestId('settings-sound-toggle'));
+    expect(screen.getByTestId('settings-sound-toggle')).toHaveAttribute('aria-checked', 'true');
+    expect(localStorage.getItem('climbritz.sound.enabled')).toBe('1');
+    unmount();
+    render(<SettingsPage />);
+    expect(screen.getByTestId('settings-sound-toggle')).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(screen.getByTestId('settings-sound-toggle'));
+    expect(localStorage.getItem('climbritz.sound.enabled')).toBeNull();
+  });
+});
