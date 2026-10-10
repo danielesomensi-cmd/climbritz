@@ -104,6 +104,10 @@ For Climbritz that means **BLE board control**:
 - Add a **redundant link** to the recording in the notes text itself —
   attachments are occasionally missed.
 
+Also state in the notes: **Deadpoint is a bundled offline HTML5 mini-game (no remote code)** —
+`/arcade` loads `public/arcade/deadpoint.html` from the app bundle in an
+iframe; nothing is downloaded or executed from a server (Guideline 2.5.2).
+
 Demo account credentials go in this section too — see A2, and generate the
 paste-ready block with `backend/scripts/seed_review_accounts.py`.
 
