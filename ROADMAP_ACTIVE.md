@@ -237,6 +237,7 @@ Version 1.1.0 · Android versionCode 16 · iOS build 14 (the previous TestFlight
 - [x] **GAME-001** — Add-On game at `/play` (Play tile): Fell discards the hold, lives 1 default / 3 "Easy", discreet informative turn timer.
 - [x] Version bump, suites green, `build:mobile` + `cap sync`, signed AAB built.
 - [ ] **Daniele (manual):** iOS archive+upload (`bash ~/deploy_climbritz.sh 14`); upload the AAB (versionCode 16) to Play Console and roll it out to the closed-testing track.
+- [x] **GAME-002** — Add-On owner feedback: optional feet mode (2 hands + 1 foot start, optional foot per turn, r15), big player name + lives, winner fanfare + elimination cue + confetti.
 - [ ] **Future:** optional max turn time that auto-fails a turn (timer is informative only for now).
 - [ ] **Future:** Deadpoint (own repo) is already served on the web at `climbritz.app/gioco` (WEB-GIOCO, web build only) — evaluate bringing it into the mobile app too (static export has no rewrites).
 
