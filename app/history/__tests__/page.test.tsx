@@ -153,6 +153,7 @@ describe('HistoryPage — loading + empty state', () => {
       expect(screen.queryByTestId('history-loading')).not.toBeInTheDocument(),
     );
     expect(screen.getByTestId('sessions-empty')).toBeInTheDocument();
+    expect(screen.getByTestId('sessions-empty-cta')).toHaveAttribute('href', '/discover');
     expect(screen.getByTestId('pyramid-empty')).toBeInTheDocument();
     expect(screen.getByTestId('trend-empty')).toBeInTheDocument();
   });

@@ -102,7 +102,8 @@ export default function ClimbBleControls({
 
   return (
     <div className="mb-4 space-y-2" data-testid="climb-ble-controls">
-      {/* Status bar */}
+      {/* Compact: status + the connect action share one row, so the card
+          is two rows tall when connected instead of four. */}
       <Card className="flex items-center gap-3 p-2.5">
         <StatusDot status={status} />
         <div className="flex-1 min-w-0 text-sm">
@@ -116,6 +117,19 @@ export default function ClimbBleControls({
             </div>
           )}
         </div>
+        {isConnected ? (
+          <Button variant="ghost" className="shrink-0" onClick={disconnect} disabled={isSending} data-testid="ble-disconnect-btn">
+            Disconnect
+          </Button>
+        ) : busy ? (
+          <Button variant="secondary" className="shrink-0" disabled data-testid="ble-busy-btn">
+            Wait…
+          </Button>
+        ) : (
+          <Button variant="primary" className="shrink-0" onClick={connect} data-testid="ble-connect-btn">
+            Connect
+          </Button>
+        )}
       </Card>
 
       {errorMessage && (
@@ -137,21 +151,6 @@ export default function ClimbBleControls({
         </div>
       )}
 
-      {/* Connect / Disconnect */}
-      {isConnected ? (
-        <Button variant="secondary" className="w-full" onClick={disconnect} disabled={isSending} data-testid="ble-disconnect-btn">
-          Disconnect
-        </Button>
-      ) : busy ? (
-        <Button variant="secondary" className="w-full" disabled data-testid="ble-busy-btn">
-          {STATUS_LABELS[status]}
-        </Button>
-      ) : (
-        <Button variant="primary" className="w-full" onClick={connect} data-testid="ble-connect-btn">
-          Connect to board
-        </Button>
-      )}
-
       {/* Illumina + Reset — only shown while connected */}
       {isConnected && (
         <div className="flex gap-2">
@@ -164,7 +163,7 @@ export default function ClimbBleControls({
           >
             {isSending ? 'Sending…' : '💡 Light up board'}
           </Button>
-          <Button variant="secondary" className="flex-1" onClick={handleReset} disabled={isSending} data-testid="ble-reset-btn">
+          <Button variant="secondary" className="shrink-0" onClick={handleReset} disabled={isSending} data-testid="ble-reset-btn">
             Reset
           </Button>
         </div>

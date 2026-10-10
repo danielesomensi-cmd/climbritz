@@ -2,6 +2,10 @@ import { type ReactNode } from 'react';
 
 // B033 Phase 3 — unified "nothing here yet" surface (D18-5). icon + title +
 // optional hint + optional action.
+/** Primary-button look for a <Link> passed as `action` (the next step). */
+export const EMPTY_CTA_CLASSES =
+  'inline-flex min-h-[44px] items-center justify-center rounded-xl bg-orange-500 px-5 text-sm font-bold text-zinc-950 hover:bg-orange-400 active:scale-[0.98] transition touch-manipulation select-none';
+
 export interface EmptyStateProps {
   icon?: ReactNode;
   title: ReactNode;

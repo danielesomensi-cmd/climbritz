@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { forwardRef } from 'react';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EMPTY_CTA_CLASSES } from '@/components/ui/EmptyState';
 import type {
   LogResultType,
   SessionClimb,
@@ -47,7 +47,20 @@ export default function SessionsList({
   if (sessions.length === 0) {
     return (
       <div data-testid="sessions-empty">
-        <EmptyState icon="🧗" title="No sessions in this range yet." />
+        <EmptyState
+          icon="🧗"
+          title="No sessions in this range yet."
+          hint="Log a flash, send or attempt on any climb and it shows up here."
+          action={
+            <Link
+              href="/discover"
+              data-testid="sessions-empty-cta"
+              className={EMPTY_CTA_CLASSES}
+            >
+              Find a climb
+            </Link>
+          }
+        />
       </div>
     );
   }

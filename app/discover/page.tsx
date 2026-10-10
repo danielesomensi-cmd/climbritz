@@ -12,13 +12,18 @@ import {
   type SortField,
 } from '@/app/lib/api';
 import ClimbCard from '@/components/ClimbCard';
-import FilterPanel, { countActiveFilters, type Filters } from '@/components/FilterPanel';
+import FilterPanel, {
+  CLEARED_FILTERS,
+  countActiveFilters,
+  type Filters,
+} from '@/components/FilterPanel';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
 import PageHeader from '@/components/ui/PageHeader';
 import Chip from '@/components/ui/Chip';
 import LoadingState from '@/components/ui/LoadingState';
 import EmptyState from '@/components/ui/EmptyState';
+import Button from '@/components/ui/Button';
 import { saveFilteredList } from './filtered-list-storage';
 import { loadDiscoverFilters, saveDiscoverFilters } from './discover-filters-storage';
 
@@ -422,7 +427,24 @@ function DiscoverPageInner() {
 
           {emptyState && !error && (
             <div data-testid="results-empty">
-              <EmptyState icon="🔍" title={emptyState} />
+              <EmptyState
+                icon="🔍"
+                title={emptyState}
+                action={
+                  (activeFilterCount > 0 || query.trim() !== '') && (
+                    <Button
+                      variant="secondary"
+                      data-testid="empty-clear-filters"
+                      onClick={() => {
+                        setQuery('');
+                        setFilters({ ...CLEARED_FILTERS });
+                      }}
+                    >
+                      Clear search and filters
+                    </Button>
+                  )
+                }
+              />
             </div>
           )}
 

@@ -11,7 +11,7 @@ import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingState from '@/components/ui/LoadingState';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EMPTY_CTA_CLASSES } from '@/components/ui/EmptyState';
 import GradeDisplay from '@/components/GradeDisplay';
 
 function formatDate(iso: string): string {
@@ -75,10 +75,10 @@ function MyProblemsPageInner() {
             action={
               <Link
                 href="/generate"
-                className="text-orange-400 font-semibold"
+                className={EMPTY_CTA_CLASSES}
                 data-testid="empty-create-link"
               >
-                AI Create →
+                AI Create
               </Link>
             }
           />

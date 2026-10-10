@@ -232,7 +232,9 @@ async def search(
         benchmark=benchmark,
         nomatch=nomatch,
         sort=sort,
-        limit=limit,
+        # Mine are prepended below: shrink the BoardLib page so the merged
+        # list never exceeds `limit` (else "first 501 of N" in the banner).
+        limit=max(limit - len(mine), 0),
         include_uuids=include_uuids,
         exclude_uuids=exclude_uuids or None,
     )
@@ -253,7 +255,7 @@ async def search(
     # A030 — prepend mine (small set, always visible) without disturbing
     # the BoardLib sort; total_count includes them.
     if mine:
-        climbs = mine + climbs
+        climbs = (mine + climbs)[:limit]
         total_count += len(mine)
 
     # Overlay user_state on each result row (mine included). Authenticated only.

@@ -588,6 +588,15 @@ class TestDiscoveryMerge:
         anon = client.get("/api/climbs/search").json()
         assert base["total_count"] == anon["total_count"] + 1
 
+    def test_include_never_exceeds_limit(self):
+        user = _create_user()
+        saved = _save(user.id).json()
+        body = client.get(
+            "/api/climbs/search?limit=2", headers=_auth(user.id)
+        ).json()
+        assert len(body["climbs"]) == 2
+        assert body["climbs"][0]["uuid"] == saved["uuid"]
+
     def test_unauthenticated_has_no_mine(self):
         user = _create_user()
         _save(user.id)

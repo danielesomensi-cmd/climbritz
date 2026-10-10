@@ -82,10 +82,11 @@ function ClimbCardComponent({ climb }: ClimbCardProps) {
         </div>
       </div>
 
-      <div className="text-right shrink-0">
-        <div className="text-xs text-zinc-400 uppercase tracking-wide">Angle</div>
-        <div className="text-white font-semibold">{climb.angle}°</div>
-      </div>
+      {/* The angle is already the selected Discover filter — repeating
+          "ANGLE 40°" on every card was noise. A chevron signals the tap. */}
+      <span aria-hidden="true" className="shrink-0 text-2xl leading-none text-zinc-600">
+        ›
+      </span>
     </Link>
   );
 }

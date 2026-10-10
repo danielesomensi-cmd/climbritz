@@ -26,6 +26,15 @@ describe('BottomNav', () => {
     expect(screen.queryByTestId('nav-coach')).not.toBeInTheDocument();
   });
 
+  it('uses line SVG icons, not emoji', () => {
+    mockPath = '/';
+    render(<BottomNav />);
+    for (const id of ['nav-home', 'nav-discover', 'nav-history', 'nav-videos']) {
+      expect(screen.getByTestId(id).querySelector('svg')).not.toBeNull();
+    }
+    expect(screen.getByTestId('bottom-nav')).not.toHaveTextContent(/🏠|🔍|📊|🎬/u);
+  });
+
   it('renders exactly 4 nav items', () => {
     mockPath = '/';
     const { container } = render(<BottomNav />);

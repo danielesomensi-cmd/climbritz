@@ -163,6 +163,15 @@ describe('DiscoverPage', () => {
     });
   });
 
+  it('offers a Clear button in the empty state that resets search and filters', async () => {
+    searchClimbsMock.mockResolvedValue(envelope([], 0));
+    render(<DiscoverPage />);
+    fireEvent.change(screen.getByTestId('search-input'), { target: { value: 'xyz' } });
+    const clear = await screen.findByTestId('empty-clear-filters');
+    fireEvent.click(clear);
+    expect((screen.getByTestId('search-input') as HTMLInputElement).value).toBe('');
+  });
+
   it('initialises state from URL params', async () => {
     searchParamsString = 'q=alpha&angle=50&grade_min=18&sort=quality';
     render(<DiscoverPage />);

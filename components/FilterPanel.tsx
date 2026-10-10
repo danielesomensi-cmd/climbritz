@@ -65,6 +65,21 @@ const MOVES_OPTIONS: Array<{ label: string; value: MovesFilter }> = [
   { label: '>10', value: 'gt10' },
 ];
 
+/** Every filter at its default — "Clear filters" and the Discover empty state. */
+export const CLEARED_FILTERS: Filters = {
+  sort: 'popularity',
+  gradeMin: undefined,
+  gradeMax: undefined,
+  minAscents: undefined,
+  minQuality: undefined,
+  moves: 'any',
+  benchmark: false,
+  nomatch: false,
+  myProblems: false,
+  doneFilter: 'all',
+  projectFilter: 'all',
+};
+
 export function countActiveFilters(value: Filters): number {
   return (
     (value.gradeMin !== undefined ? 1 : 0) +
@@ -84,20 +99,7 @@ export function countActiveFilters(value: Filters): number {
 export default function FilterPanel({ value, onChange, expanded }: FilterPanelProps) {
   const activeCount = countActiveFilters(value);
 
-  const reset = () =>
-    onChange({
-      sort: 'popularity',
-      gradeMin: undefined,
-      gradeMax: undefined,
-      minAscents: undefined,
-      minQuality: undefined,
-      moves: 'any',
-      benchmark: false,
-      nomatch: false,
-      myProblems: false,
-      doneFilter: 'all',
-      projectFilter: 'all',
-    });
+  const reset = () => onChange({ ...CLEARED_FILTERS });
 
   if (!expanded) return null;
 

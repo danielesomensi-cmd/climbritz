@@ -15,13 +15,13 @@ const SAMPLE: ClimbSearchResult = {
 };
 
 describe('ClimbCard', () => {
-  it('renders the climb name, setter, grade, and angle', () => {
+  it('renders the climb name, setter and grade (no per-card angle)', () => {
     render(<ClimbCard climb={SAMPLE} />);
     expect(screen.getByText('The Dyno Project')).toBeInTheDocument();
     expect(screen.getByText(/by john_doe/)).toBeInTheDocument();
     expect(screen.getByText('7a')).toBeInTheDocument();
     expect(screen.getByText('V6')).toBeInTheDocument();
-    expect(screen.getByText('40°')).toBeInTheDocument();
+    expect(screen.queryByText('40°')).not.toBeInTheDocument();
   });
 
   it('formats ascent counts >= 1000 as "k" units', () => {
