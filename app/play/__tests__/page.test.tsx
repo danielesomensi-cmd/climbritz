@@ -289,4 +289,23 @@ describe('/play', () => {
     tapHold(h2);
     expect(screen.queryByTestId('play-add-foot')).toBeNull();
   });
+
+  it('layout: board fills the area between header and the bottom action bar; game over shows Rematch before the save card', async () => {
+    await startTwoPlayerGame();
+    const area = screen.getByTestId('play-board-area');
+    expect(area).toContainElement(screen.getByTestId('play-board-overlay'));
+    // Primary action lives after the board (thumb zone), not inside it.
+    expect(area).not.toContainElement(screen.getByTestId('play-confirm'));
+    expect(
+      area.compareDocumentPosition(screen.getByTestId('play-confirm')) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    tapHold(h2);
+    confirmHold();
+    expect(screen.getByTestId('play-board-area')).not.toContainElement(screen.getByTestId('play-sent'));
+    fireEvent.click(screen.getByTestId('play-fell'));
+    const rematch = screen.getByTestId('play-rematch');
+    expect(
+      rematch.compareDocumentPosition(screen.getByTestId('play-sign-in')) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });

@@ -177,7 +177,13 @@
    no custom tokens. Documented rhythm: gap-2 = default control gap;
    space-y-3 = intra-section; space-y-5 / space-y-6 = inter-section. */
 
-* {
+/* NOTE: this reset is UNLAYERED, so it beats every Tailwind v4 utility (which
+   live in @layer utilities) → p-*, px-*, m-*, space-y-*, mx-auto compute to 0
+   app-wide. It is redundant with Tailwind's preflight (@layer base already
+   zeroes margin/padding + border-box). /play (.play-root) opts out so its
+   spacing utilities apply; removing the reset app-wide is a separate,
+   whole-app visual change (ticket B-CSS-RESET). */
+*:where(:not(.play-root, .play-root *)) {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -206,6 +212,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+
+/* Add-On (/play) — largest board that fits its container (144:156 aspect).
+   Fallback without container query units: full width (the area scrolls). */
+.play-fit-board {
+  width: 100%;
+  width: min(100cqw, calc(100cqh * 144 / 156));
+}
 
 /* GAME-002 — Add-On game-over celebration (confetti + title pop). CSS-only,
    one-shot; skipped entirely under prefers-reduced-motion. */

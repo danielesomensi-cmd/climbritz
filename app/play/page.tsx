@@ -318,6 +318,34 @@ function PickBoard({
   );
 }
 
+/**
+ * Fills the remaining height between header and bottom action bar with the
+ * largest board that fits (no page scroll while playing). Uses container
+ * query units; where unsupported the board falls back to full width and the
+ * area scrolls instead of clipping.
+ */
+function FitBoard({ children, overlay }: { children: React.ReactNode; overlay?: React.ReactNode }) {
+  return (
+    <div
+      data-testid="play-board-area"
+      className="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+      style={{ containerType: 'size' }}
+    >
+      <div className="play-fit-board mx-auto my-auto shrink-0">{children}</div>
+      {overlay}
+    </div>
+  );
+}
+
+/** Thumb-zone action bar pinned to the bottom of the in-game screens. */
+function ActionBar({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="shrink-0 border-t border-border-default bg-surface-base/95 pb-safe">
+      <div className="max-w-2xl mx-auto px-4 pt-3 pb-3 space-y-2">{children}</div>
+    </div>
+  );
+}
+
 // ---- page -------------------------------------------------------------------
 
 export default function PlayPage() {
@@ -675,7 +703,7 @@ export default function PlayPage() {
           ? 'Resume game · pick start holds'
           : `Resume game · ${who}'s turn`;
     return (
-      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
         <PageHeader back={{ href: '/', label: 'Home' }} title="Add-On" />
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-3">
           <Card className="p-4 space-y-3">
@@ -723,7 +751,7 @@ export default function PlayPage() {
   // ---------------- SETUP ----------------
   if (game.phase === 'setup') {
     return (
-      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
         <PageHeader
           back={{ href: '/', label: 'Home' }}
           title="Add-On"
@@ -845,15 +873,24 @@ export default function PlayPage() {
           )}
           {errorBanner}
 
-          <Button
-            size="lg"
-            className="w-full"
-            data-testid="play-pick-starts"
-            disabled={!namesCheck.valid}
-            onClick={startSetup}
+          {/* Sticky CTA: always reachable above the BottomNav, even with 6 players. */}
+          <div
+            className="sticky z-10 -mx-4 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent px-4 pt-4 pb-2"
+            style={{
+              bottom:
+                'calc(3.5rem + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px)))',
+            }}
           >
-            Pick start holds →
-          </Button>
+            <Button
+              size="lg"
+              className="w-full min-h-[60px] text-lg"
+              data-testid="play-pick-starts"
+              disabled={!namesCheck.valid}
+              onClick={startSetup}
+            >
+              Pick start holds →
+            </Button>
+          </div>
         </main>
         <BottomNav />
       </div>
@@ -870,17 +907,43 @@ export default function PlayPage() {
         ? 'Pick 1 start foot'
         : `Pick ${FEET_START_HANDS} start holds`;
     return (
-      <div className="min-h-dvh bg-zinc-950 text-white pb-safe">
-        <PageHeader
-          title="Start holds"
-          right={
-            <div className="flex items-center gap-1">
-              <BleChip />
-              <SoundToggle />
+      <div className="play-root flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+        <header className="shrink-0 z-20 bg-surface-base/95 border-b border-border-default">
+          <div className="max-w-2xl mx-auto px-4 pt-safe pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-page-title font-display">Start holds</h1>
+              <div className="flex items-center gap-1">
+                <BleChip />
+                <SoundToggle />
+              </div>
             </div>
-          }
-        />
-        <main className="max-w-2xl mx-auto px-4 py-3 space-y-3">
+            <p
+              data-testid="play-starts-instruction"
+              className="mt-2 text-xl font-bold leading-tight"
+              style={{ color: footStep ? COLOR_FOOT : undefined }}
+            >
+              {instruction}
+              {!game.feet && (
+                <span className="ml-2 text-base font-medium text-zinc-400 tabular-nums">
+                  · {game.starts.length} picked
+                </span>
+              )}
+            </p>
+          </div>
+        </header>
+
+        <main className="flex min-h-0 w-full max-w-2xl flex-1 flex-col mx-auto px-4 py-3">
+          <FitBoard>
+            <PickBoard
+              holdColors={holdColors}
+              onPick={onPickStart}
+              eligible={footStep ? isFootPickable : isPickable}
+            />
+          </FitBoard>
+        </main>
+
+        <ActionBar>
+          {errorBanner}
           {game.feet && (
             <Segmented
               label="Start hold type"
@@ -910,35 +973,21 @@ export default function PlayPage() {
               ]}
             />
           )}
-          <p
-            data-testid="play-starts-instruction"
-            className="text-center text-lg font-semibold"
-            style={{ color: footStep ? COLOR_FOOT : undefined }}
-          >
-            {instruction}
-            {!game.feet && (
-              <span className="block text-sm font-normal text-zinc-400">{game.starts.length} picked</span>
-            )}
-          </p>
-          <PickBoard
-            holdColors={holdColors}
-            onPick={onPickStart}
-            eligible={footStep ? isFootPickable : isPickable}
-          />
-          {errorBanner}
-          <Button
-            size="lg"
-            className="w-full min-h-[64px] text-lg"
-            data-testid="play-start-game"
-            disabled={!ready}
-            onClick={startGame}
-          >
-            Start game
-          </Button>
-          <Button variant="ghost" className="w-full" onClick={newGame}>
-            Back to setup
-          </Button>
-        </main>
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
+            <Button variant="secondary" className="min-h-[60px]" onClick={newGame}>
+              ← Setup
+            </Button>
+            <Button
+              size="lg"
+              className="min-h-[60px] text-lg"
+              data-testid="play-start-game"
+              disabled={!ready}
+              onClick={startGame}
+            >
+              Start game
+            </Button>
+          </div>
+        </ActionBar>
       </div>
     );
   }
@@ -951,7 +1000,7 @@ export default function PlayPage() {
       .map((name, i) => ({ name, i, ...playerScores[i] }))
       .sort((a, b) => b.score - a.score || b.longestChain - a.longestChain);
     return (
-      <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
+      <div className="play-root min-h-dvh bg-zinc-950 text-white pb-nav">
         {w !== null && <Confetti />}
         <PageHeader back={{ href: '/', label: 'Home' }} title="Add-On" right={<SoundToggle />} />
         <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
@@ -968,28 +1017,42 @@ export default function PlayPage() {
             </h2>
           </div>
 
-          <Card className="p-4 space-y-1">
-            {ranking.map((r) => (
-              <div key={r.i} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: playerColor(r.i) }} />
-                  {r.name}
-                </span>
-                <span className="tabular-nums text-zinc-300">
-                  {r.score} pts · ✓{r.sent} ✗{r.fell}
-                </span>
-              </div>
-            ))}
+          <Card className="p-2">
+            <ol className="divide-y divide-border-default">
+              {ranking.map((r, pos) => (
+                <li key={r.i} className="flex min-h-[44px] items-center justify-between gap-3 px-2">
+                  <span className="flex min-w-0 items-center gap-2 text-base font-semibold">
+                    <span className="w-4 text-sm tabular-nums text-zinc-500">{pos + 1}</span>
+                    <span aria-hidden className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: playerColor(r.i) }} />
+                    <span className="truncate">{r.name}</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums text-sm text-zinc-300">
+                    <span className="text-base font-bold text-white">{r.score}</span> pts · ✓{r.sent} ✗{r.fell}
+                  </span>
+                </li>
+              ))}
+            </ol>
             {best && (
-              <p className="pt-2 text-xs text-zinc-400">
+              <p className="px-2 pt-2 pb-1 text-xs text-zinc-400">
                 Longest chain: {best.length} ({game.players[best.playerIdx]})
               </p>
             )}
           </Card>
 
-          <PickBoard holdColors={holdColors} />
+          <div className="grid grid-cols-[2fr_1fr] gap-2">
+            <Button size="lg" className="min-h-[60px] text-lg" data-testid="play-rematch" onClick={rematch}>
+              Rematch
+            </Button>
+            <Button variant="secondary" className="min-h-[60px]" data-testid="play-done" onClick={newGame}>
+              New game
+            </Button>
+          </div>
 
           <Card className="p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Save this boulder</h3>
+            <div className="mx-auto w-full max-w-[22rem]">
+              <PickBoard holdColors={holdColors} />
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-zinc-400 w-14">Finish</span>
               <Chip selected={finishCount === 1} onClick={() => setFinishCount(1)} data-testid="play-finish-1">
@@ -1066,23 +1129,15 @@ export default function PlayPage() {
             )}
           </Card>
 
-          <div className="space-y-2">
-            <Button size="lg" className="w-full" data-testid="play-rematch" onClick={rematch}>
-              Rematch
+          <div className="flex gap-2">
+            {isConnected && (
+              <Button variant="secondary" className="flex-1" onClick={turnOffBoard}>
+                Turn off board
+              </Button>
+            )}
+            <Button variant="ghost" className="flex-1" data-testid="play-undo-over" onClick={undoLastTurn}>
+              Undo last turn
             </Button>
-            <div className="flex gap-2">
-              {isConnected && (
-                <Button variant="secondary" className="flex-1" onClick={turnOffBoard}>
-                  Turn off board
-                </Button>
-              )}
-              <Button variant="secondary" className="flex-1" data-testid="play-undo-over" onClick={undoLastTurn}>
-                Undo last turn
-              </Button>
-              <Button variant="secondary" className="flex-1" data-testid="play-done" onClick={newGame}>
-                New game
-              </Button>
-            </div>
           </div>
         </main>
         <BottomNav />
@@ -1110,10 +1165,10 @@ export default function PlayPage() {
     game.feet && game.pendingFootId !== null ? 'Confirm hand + foot' : 'Confirm hold';
 
   return (
-    <div className="min-h-dvh bg-zinc-950 text-white pb-safe">
-      <header className="sticky top-0 z-20 bg-surface-base/95 backdrop-blur border-b border-border-default">
-        <div className="max-w-2xl mx-auto px-4 pt-safe pb-2">
-          <div className="flex items-center justify-between gap-2 pt-1">
+    <div className="play-root flex h-dvh flex-col overflow-hidden bg-zinc-950 text-white">
+      <header className="shrink-0 z-20 bg-surface-base/95 border-b border-border-default">
+        <div className="max-w-2xl mx-auto px-4 pt-safe pb-3">
+          <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
               {game.phase === 'climb' ? 'Climbing' : 'Picking'}
               <TurnTimer startedAt={game.turnStartedAt} />
@@ -1171,16 +1226,16 @@ export default function PlayPage() {
           </div>
 
           {/* Current player — readable from the wall. */}
-          <p data-testid="play-current-player" className="mt-1 min-w-0 leading-none">
+          <p data-testid="play-current-player" className="min-w-0 leading-none">
             <span
-              className="block truncate font-display font-black leading-[1.05] text-[clamp(2.5rem,13vw,3.75rem)]"
+              className="block truncate font-display font-black leading-[1.05] text-[clamp(2.5rem,12.5vw,3.75rem)]"
               style={{ color }}
             >
               {current}
             </span>
             <span className="sr-only">&apos;s turn</span>
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <span
               data-testid="play-lives"
               aria-label={`${myLives} ${myLives === 1 ? 'life' : 'lives'} left`}
@@ -1194,19 +1249,23 @@ export default function PlayPage() {
               </span>
             </span>
             <span className="text-sm text-zinc-400 tabular-nums">
-              Chain {chain} · {playerScores[game.currentIdx]?.score ?? 0} pts
+              Chain <span className="font-semibold text-zinc-200">{chain}</span> ·{' '}
+              <span className="font-semibold text-zinc-200">{playerScores[game.currentIdx]?.score ?? 0}</span> pts
             </span>
           </div>
 
-          {/* Other players at a glance */}
-          <div data-testid="play-others" className="mt-2 flex flex-wrap gap-1.5">
+          {/* Other players at a glance — one row, scrolls sideways with 5–6 players. */}
+          <div
+            data-testid="play-others"
+            className="-mx-4 mt-2 flex gap-1.5 overflow-x-auto px-4 [scrollbar-width:none]"
+          >
             {game.players.map((p, i) => {
               if (i === game.currentIdx) return null;
               const out = !active.includes(i);
               return (
                 <span
                   key={i}
-                  className={`flex items-center gap-1.5 rounded-pill border border-border-default px-2.5 py-1 text-sm ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-pill border border-border-default bg-zinc-900 px-2.5 py-1 text-sm ${
                     out ? 'line-through opacity-50' : 'text-zinc-200'
                   }`}
                 >
@@ -1227,9 +1286,9 @@ export default function PlayPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-3 space-y-3">
+      <main className="flex min-h-0 w-full max-w-2xl flex-1 flex-col mx-auto px-4 py-3 gap-3">
         {rulesOpen && (
-          <Card className="p-3 text-xs text-zinc-300 space-y-1" data-testid="play-rules">
+          <Card className="shrink-0 max-h-[40%] overflow-y-auto p-3 text-sm text-zinc-300 space-y-1" data-testid="play-rules">
             <p>Tap the next hold, confirm, then climb the whole sequence plus the new hold.</p>
             <p>
               Your partner taps SENT or FELL. Sent: +1 and the hold stays. Fell: the hold
@@ -1247,91 +1306,84 @@ export default function PlayPage() {
           </Card>
         )}
 
-        {lastResult && (
-          <p data-testid="play-last-result" className="text-center text-base font-semibold text-zinc-200">
-            {lastResult}
-          </p>
-        )}
-
-        {game.phase === 'pick' && game.feet && (
-          <Segmented
-            label="What are you adding"
-            value={pickTarget}
-            onChange={setPickTarget}
-            options={[
-              {
-                value: 'hand',
-                dot: COLOR_NEW,
-                testid: 'play-target-hand',
-                label: <span>Hand{game.pendingId !== null ? ' ✓' : ''}</span>,
-              },
-              {
-                value: 'foot',
-                dot: COLOR_FOOT,
-                testid: 'play-target-foot',
-                label: (
-                  <span>
-                    Foot{game.pendingFootId !== null ? ' ✓' : <span className="font-normal text-zinc-500"> · optional</span>}
-                  </span>
-                ),
-              },
-            ]}
+        <FitBoard
+          overlay={
+            lastResult && (
+              <p
+                data-testid="play-last-result"
+                className="pointer-events-none absolute inset-x-0 top-3 z-20 mx-auto w-fit max-w-[90%] rounded-pill border border-border-strong bg-zinc-900/95 px-4 py-2 text-center text-base font-semibold text-white shadow-xl"
+              >
+                {lastResult}
+              </p>
+            )
+          }
+        >
+          <PickBoard
+            holdColors={holdColors}
+            onPick={game.phase === 'pick' ? onPreview : undefined}
+            eligible={footTarget ? isFootPickable : isPickable}
           />
-        )}
+        </FitBoard>
+      </main>
 
-        <PickBoard
-          holdColors={holdColors}
-          onPick={game.phase === 'pick' ? onPreview : undefined}
-          eligible={footTarget ? isFootPickable : isPickable}
-        />
-
-        {game.phase === 'climb' && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-zinc-400">
-              {game.feet && game.pendingFootId !== null ? 'New hand + foot in white' : 'New hold in white'}
-            </span>
-            <button
-              type="button"
-              data-testid="play-change-hold"
-              onClick={() => act({ type: 'UNDO_PICK' })}
-              className="min-h-[44px] px-2 text-sm text-zinc-400 hover:text-orange-400"
-            >
-              Change hold
-            </button>
-          </div>
-        )}
-
+      <ActionBar>
         {errorBanner}
-
         {game.phase === 'pick' ? (
           <>
-            <p
-              data-testid="play-pick-hint"
-              className="text-center text-base"
-              style={{ color: footTarget ? COLOR_FOOT : '#a1a1aa' }}
-            >
-              {pickHint}
-            </p>
-            {game.feet && !footTarget && game.pendingId !== null && game.pendingFootId === null && (
-              <Button
-                variant="secondary"
-                className="w-full min-h-[52px]"
-                data-testid="play-add-foot"
-                onClick={() => setPickTarget('foot')}
-              >
-                + Add a foot (optional)
-              </Button>
+            {game.feet && (
+              <Segmented
+                label="What are you adding"
+                value={pickTarget}
+                onChange={setPickTarget}
+                options={[
+                  {
+                    value: 'hand',
+                    dot: COLOR_NEW,
+                    testid: 'play-target-hand',
+                    label: <span>Hand{game.pendingId !== null ? ' ✓' : ''}</span>,
+                  },
+                  {
+                    value: 'foot',
+                    dot: COLOR_FOOT,
+                    testid: 'play-target-foot',
+                    label: (
+                      <span>
+                        Foot{game.pendingFootId !== null ? ' ✓' : <span className="font-normal text-zinc-500"> · optional</span>}
+                      </span>
+                    ),
+                  },
+                ]}
+              />
             )}
-            {footTarget && game.pendingFootId !== null && (
-              <Button
-                variant="ghost"
-                className="w-full"
-                data-testid="play-remove-foot"
-                onClick={() => act({ type: 'CLEAR_FOOT' })}
+            <div className="flex min-h-[44px] items-center justify-between gap-2">
+              <p
+                data-testid="play-pick-hint"
+                className="min-w-0 flex-1 text-sm"
+                style={{ color: footTarget ? COLOR_FOOT : '#a1a1aa' }}
               >
-                Remove foot
-              </Button>
-            )}
+                {pickHint}
+              </p>
+              {game.feet && !footTarget && game.pendingId !== null && game.pendingFootId === null && (
+                <button
+                  type="button"
+                  data-testid="play-add-foot"
+                  onClick={() => setPickTarget('foot')}
+                  className={`flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-pill border border-yellow-400/60 bg-yellow-400/10 px-3 text-sm font-semibold text-yellow-300 ${PRESSABLE_CLASSES}`}
+                >
+                  + Add a foot (optional)
+                </button>
+              )}
+              {footTarget && game.pendingFootId !== null && (
+                <button
+                  type="button"
+                  data-testid="play-remove-foot"
+                  onClick={() => act({ type: 'CLEAR_FOOT' })}
+                  className={`flex min-h-[44px] shrink-0 items-center rounded-pill border border-border-strong px-3 text-sm font-semibold text-zinc-300 ${PRESSABLE_CLASSES}`}
+                >
+                  Remove foot
+                </button>
+              )}
+            </div>
             <Button
               size="lg"
               className="w-full min-h-[64px] text-lg"
@@ -1343,26 +1395,41 @@ export default function PlayPage() {
             </Button>
           </>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              data-testid="play-sent"
-              onClick={() => declare('sent')}
-              className={`min-h-[120px] rounded-card bg-emerald-500 text-zinc-950 text-2xl font-bold ${PRESSABLE_CLASSES}`}
-            >
-              SENT ✓
-            </button>
-            <button
-              type="button"
-              data-testid="play-fell"
-              onClick={() => declare('fell')}
-              className={`min-h-[120px] rounded-card bg-red-500 text-zinc-950 text-2xl font-bold ${PRESSABLE_CLASSES}`}
-            >
-              FELL ✗
-            </button>
-          </div>
+          <>
+            <div className="flex min-h-[44px] items-center justify-between gap-2">
+              <span className="text-sm text-zinc-400">
+                {game.feet && game.pendingFootId !== null ? 'New hand + foot in white' : 'New hold in white'}
+              </span>
+              <button
+                type="button"
+                data-testid="play-change-hold"
+                onClick={() => act({ type: 'UNDO_PICK' })}
+                className="min-h-[44px] px-2 text-sm font-semibold text-zinc-300 hover:text-orange-400"
+              >
+                ← Change hold
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                data-testid="play-sent"
+                onClick={() => declare('sent')}
+                className={`min-h-[104px] rounded-card bg-emerald-500 text-zinc-950 text-2xl font-black ${PRESSABLE_CLASSES}`}
+              >
+                SENT ✓
+              </button>
+              <button
+                type="button"
+                data-testid="play-fell"
+                onClick={() => declare('fell')}
+                className={`min-h-[104px] rounded-card bg-red-500 text-zinc-950 text-2xl font-black ${PRESSABLE_CLASSES}`}
+              >
+                FELL ✗
+              </button>
+            </div>
+          </>
         )}
-      </main>
+      </ActionBar>
     </div>
   );
 }
