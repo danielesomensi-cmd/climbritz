@@ -31,6 +31,10 @@ jest.mock('@/components/BottomNav', () => ({
 }));
 
 jest.mock('@/lib/feedback/haptics', () => ({ haptic: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/lib/feedback/sound', () => ({
+  ...jest.requireActual('@/lib/feedback/sound'),
+  playCue: jest.fn(),
+}));
 jest.mock('@/lib/feedback/keep-awake', () => ({
   keepAwake: jest.fn(() => Promise.resolve(true)),
   allowSleep: jest.fn(() => Promise.resolve()),
@@ -46,6 +50,8 @@ jest.mock('../hold-pick', () => ({
 
 import PlayPage from '../page';
 import { keepAwake } from '@/lib/feedback/keep-awake';
+import { haptic } from '@/lib/feedback/haptics';
+import { playCue } from '@/lib/feedback/sound';
 import { GAME_KEY } from '../game-storage';
 
 type P = { placement_id: number; set_id: number };
@@ -53,7 +59,7 @@ const LEDS = ledsMap as Record<string, number>;
 const pickable = (placementsData as P[]).filter(
   (p) => p.set_id === 1 && LEDS[String(p.placement_id)] !== undefined,
 );
-const [h1, h2, h3] = pickable;
+const [h1, h2, h3, h4, h5, h6] = pickable;
 
 function tapHold(p: unknown) {
   tapQueue.push(p);
@@ -171,5 +177,116 @@ describe('/play', () => {
     await startTwoPlayerGame();
     expect(connect).not.toHaveBeenCalled();
     expect(sendLEDs).not.toHaveBeenCalled();
+  });
+
+  it('shows the current player name and lives big, others compactly', async () => {
+    await renderPage();
+    fireEvent.change(screen.getByTestId('play-name-0'), { target: { value: 'Dani' } });
+    fireEvent.change(screen.getByTestId('play-name-1'), { target: { value: 'Marco' } });
+    fireEvent.click(screen.getByTestId('play-lives-2'));
+    fireEvent.click(screen.getByTestId('play-pick-starts'));
+    tapHold(h1);
+    fireEvent.click(screen.getByTestId('play-start-game'));
+    const name = screen.getByTestId('play-current-player');
+    expect(name).toHaveTextContent("Dani's turn");
+    expect(name.querySelector('span')?.className).toMatch(/font-black/);
+    const lives = screen.getByTestId('play-lives');
+    expect(lives).toHaveAttribute('aria-label', '2 lives left');
+    expect(lives).toHaveTextContent('♥♥');
+    expect(screen.getByTestId('play-others')).toHaveTextContent('Marco');
+    // Fall once → last life, hollow heart shown.
+    tapHold(h2);
+    confirmHold();
+    fireEvent.click(screen.getByTestId('play-fell'));
+    expect(playCue).toHaveBeenCalledWith('fell');
+    expect(screen.getByTestId('play-current-player')).toHaveTextContent("Marco's turn");
+    tapHold(h2);
+    confirmHold();
+    fireEvent.click(screen.getByTestId('play-sent'));
+    expect(screen.getByTestId('play-lives')).toHaveTextContent('Last life!');
+    expect(screen.getByTestId('play-lives')).toHaveTextContent('♥♡');
+  });
+
+  it('knock-out plays the elimination cue, then the winner fanfare + success haptic + confetti', async () => {
+    jest.useFakeTimers({ doNotFake: ['Date'] });
+    try {
+      await startTwoPlayerGame();
+      tapHold(h2);
+      confirmHold();
+      fireEvent.click(screen.getByTestId('play-fell'));
+      expect(playCue).toHaveBeenCalledWith('eliminated');
+      expect(playCue).not.toHaveBeenCalledWith('fell');
+      expect(playCue).not.toHaveBeenCalledWith('winner');
+      expect(screen.getByTestId('play-winner')).toHaveTextContent('Marco wins');
+      expect(screen.getByTestId('play-confetti')).toBeInTheDocument();
+      act(() => {
+        jest.advanceTimersByTime(1500);
+      });
+      expect(playCue).toHaveBeenCalledWith('winner');
+      expect(haptic).toHaveBeenCalledWith('success');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('feet mode: toggle, 2 start hands then 1 start foot, optional foot per turn', async () => {
+    await renderPage();
+    const toggle = screen.getByTestId('play-feet-toggle');
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    fireEvent.change(screen.getByTestId('play-name-0'), { target: { value: 'Dani' } });
+    fireEvent.change(screen.getByTestId('play-name-1'), { target: { value: 'Marco' } });
+    fireEvent.click(screen.getByTestId('play-lives-2'));
+    fireEvent.click(screen.getByTestId('play-pick-starts'));
+
+    // Step 1: 2 start hands.
+    expect(screen.getByTestId('play-starts-instruction')).toHaveTextContent('Pick 2 start holds');
+    expect(screen.getByTestId('play-step-hands')).toHaveAttribute('aria-pressed', 'true');
+    tapHold(h1);
+    expect(screen.getByTestId('play-start-game')).toBeDisabled();
+    tapHold(h2);
+    // Auto-advance to step 2: the start foot.
+    expect(screen.getByTestId('play-step-foot')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('play-starts-instruction')).toHaveTextContent('Pick 1 start foot');
+    expect(screen.getByTestId('play-start-game')).toBeDisabled();
+    tapHold(h3);
+    expect(screen.getByTestId('play-step-foot')).toHaveTextContent('1/1');
+    fireEvent.click(screen.getByTestId('play-start-game'));
+
+    // Turn: hand required, foot optional.
+    expect(screen.getByTestId('play-target-hand')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByTestId('play-add-foot')).toBeNull();
+    tapHold(h4);
+    fireEvent.click(screen.getByTestId('play-add-foot'));
+    expect(screen.getByTestId('play-target-foot')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('play-pick-hint')).toHaveTextContent('Tap a foot hold (optional)');
+    tapHold(h5);
+    expect(screen.getByTestId('play-confirm')).toHaveTextContent('Confirm hand + foot');
+    confirmHold();
+    fireEvent.click(screen.getByTestId('play-fell'));
+    expect(screen.getByTestId('play-last-result')).toHaveTextContent('Dani fell · hand + foot discarded');
+
+    // Next turn resets to Hand; skipping the foot is fine.
+    expect(screen.getByTestId('play-target-hand')).toHaveAttribute('aria-pressed', 'true');
+    tapHold(h6);
+    expect(screen.getByTestId('play-confirm')).toHaveTextContent('Confirm hold');
+    confirmHold();
+    fireEvent.click(screen.getByTestId('play-sent'));
+    expect(screen.getByTestId('play-current-player')).toHaveTextContent("Dani's turn");
+
+    // Prefs remember feet mode.
+    expect(JSON.parse(window.localStorage.getItem('climbritz:play:prefs') ?? '{}').feet).toBe(true);
+    // Persisted game carries the start foot.
+    const saved = JSON.parse(window.localStorage.getItem(GAME_KEY) ?? '{}');
+    expect(saved.state.feet).toBe(true);
+    expect(saved.state.startFoot).toBe((h3 as P).placement_id);
+  });
+
+  it('feet OFF: no hand/foot picker and the classic start step', async () => {
+    await startTwoPlayerGame();
+    expect(screen.queryByTestId('play-target-foot')).toBeNull();
+    tapHold(h2);
+    expect(screen.queryByTestId('play-add-foot')).toBeNull();
   });
 });

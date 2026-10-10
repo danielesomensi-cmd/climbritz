@@ -18,6 +18,10 @@
 //   - FELL DISCARDS the added hold and costs one life; the next player starts
 //     from the same sequence. 0 lives → eliminated.
 //   - Lives 1 (default, classic elimination) / 2 / 3 ("Easy").
+//   - Feet mode (GAME-002, optional, default OFF): start = exactly 2 start
+//     hands + 1 start foot; each turn adds 1 hand (required) and MAY add 1
+//     foot. FELL discards both. Feet go to the wall/save as role 15 and never
+//     count as start/finish. Feet OFF = GAME-001 behaviour exactly.
 //   - Timer is informative only: the state just records turnStartedAt; there
 //     is deliberately no timeout/auto-fail action.
 //
@@ -35,12 +39,16 @@ export const MAX_PLAYERS = 6;
 export const MAX_NAME_LENGTH = 16;
 export const LIVES_OPTIONS = [1, 2, 3] as const;
 export const DEFAULT_LIVES = 1;
+/** Feet mode: exact start hand holds required. */
+export const FEET_START_HANDS = 2;
 
 const SET_SCREW_ONS = 20;
 
 export interface Turn {
   playerIdx: number;
   holdId: number;
+  /** Optional foot added this turn (feet mode only). */
+  footId?: number | null;
   outcome: TurnOutcome;
 }
 
@@ -50,8 +58,12 @@ export interface GameState {
   players: string[];
   /** Lives each player starts with. */
   lives: number;
-  /** Start holds (1–MAX_START placement ids). */
+  /** Start holds (1–MAX_START placement ids; exactly 2 in feet mode). */
   starts: number[];
+  /** Feet mode: each turn may add one foot; start = 2 hands + 1 foot. */
+  feet: boolean;
+  /** Feet mode: the start foot (null until picked / feet off). */
+  startFoot: number | null;
   /** Every declared turn, in order — scores/lives/sequence derive from it. */
   turns: Turn[];
   /** Indices of players removed via the menu (not via lives). */
@@ -60,6 +72,8 @@ export interface GameState {
   currentIdx: number;
   /** Hold being previewed (pick) or attempted (climb). */
   pendingId: number | null;
+  /** Feet mode: optional foot previewed/attempted this turn. */
+  pendingFootId: number | null;
   /** Epoch ms when the current turn began (informative timer). */
   turnStartedAt: number | null;
   error: string | null;
@@ -73,10 +87,13 @@ export interface HoldInfo {
 }
 
 export type GameAction =
-  | { type: 'START_PICKING_STARTS'; names: string[]; lives: number }
+  | { type: 'START_PICKING_STARTS'; names: string[]; lives: number; feet?: boolean }
   | { type: 'TOGGLE_START'; hold: HoldInfo }
+  | { type: 'TOGGLE_START_FOOT'; hold: HoldInfo }
   | { type: 'START_GAME'; now: number }
   | { type: 'PREVIEW_HOLD'; hold: HoldInfo }
+  | { type: 'PREVIEW_FOOT'; hold: HoldInfo }
+  | { type: 'CLEAR_FOOT' }
   | { type: 'CONFIRM_HOLD' }
   | { type: 'UNDO_PICK' }
   | { type: 'DECLARE'; outcome: TurnOutcome; now: number }
@@ -87,16 +104,23 @@ export type GameAction =
   | { type: 'RESET' }
   | { type: 'CLEAR_ERROR' };
 
-export function initialGameState(players: string[] = [], lives = DEFAULT_LIVES): GameState {
+export function initialGameState(
+  players: string[] = [],
+  lives = DEFAULT_LIVES,
+  feet = false,
+): GameState {
   return {
     phase: 'setup',
     players,
     lives,
     starts: [],
+    feet,
+    startFoot: null,
     turns: [],
     removed: [],
     currentIdx: 0,
     pendingId: null,
+    pendingFootId: null,
     turnStartedAt: null,
     error: null,
   };
@@ -112,6 +136,26 @@ export function addedHolds(state: Pick<GameState, 'turns'>): number[] {
 /** Full climbed sequence: starts + added holds. */
 export function sequence(state: Pick<GameState, 'starts' | 'turns'>): number[] {
   return [...state.starts, ...addedHolds(state)];
+}
+
+/** Feet kept in the problem: start foot + feet of SENT turns, in order. */
+export function feetHolds(state: Pick<GameState, 'startFoot' | 'turns'>): number[] {
+  const out: number[] = state.startFoot !== null ? [state.startFoot] : [];
+  for (const t of state.turns) {
+    if (t.outcome === 'sent' && t.footId != null) out.push(t.footId);
+  }
+  return out;
+}
+
+/** Every placement already used (hands + feet). */
+function takenHolds(state: GameState): number[] {
+  return [...sequence(state), ...feetHolds(state)];
+}
+
+/** Feet mode: are the start holds complete (2 hands + 1 foot)? */
+export function startsComplete(state: GameState): boolean {
+  if (!state.feet) return state.starts.length >= 1;
+  return state.starts.length === FEET_START_HANDS && state.startFoot !== null;
 }
 
 export interface PlayerScore {
@@ -236,6 +280,11 @@ export function validatePlayerNames(names: string[]): NameValidation {
 
 function holdError(hold: HoldInfo, taken: number[]): string | null {
   if (hold.set_id === SET_SCREW_ONS) return "Footholds (screw-ons) can't be picked";
+  return footError(hold, taken);
+}
+
+/** Feet may be any hold with an LED, screw-ons included. */
+function footError(hold: HoldInfo, taken: number[]): string | null {
   if (!hold.hasLed) return 'This hold has no LED — pick another';
   if (taken.includes(hold.placement_id)) return 'Already in the sequence';
   return null;
@@ -263,13 +312,21 @@ function nextActiveAfter(state: GameState, from: number): number {
 function advance(state: GameState, from: number, now: number): GameState {
   const active = activePlayers(state);
   if (active.length <= 1) {
-    return { ...state, phase: 'over', pendingId: null, turnStartedAt: null, error: null };
+    return {
+      ...state,
+      phase: 'over',
+      pendingId: null,
+      pendingFootId: null,
+      turnStartedAt: null,
+      error: null,
+    };
   }
   return {
     ...state,
     phase: 'pick',
     currentIdx: nextActiveAfter(state, from),
     pendingId: null,
+    pendingFootId: null,
     turnStartedAt: now,
     error: null,
   };
@@ -287,7 +344,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return fail(state, 'Lives must be 1, 2 or 3');
       }
       return {
-        ...initialGameState(action.names.map((n) => n.trim()), action.lives),
+        ...initialGameState(action.names.map((n) => n.trim()), action.lives, action.feet === true),
         phase: 'pickStarts',
       };
     }
@@ -298,17 +355,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.starts.includes(id)) {
         return { ...state, starts: state.starts.filter((s) => s !== id), error: null };
       }
+      if (id === state.startFoot) return fail(state, 'Already the start foot');
       const err = holdError(action.hold, state.starts);
       if (err) return fail(state, err);
-      if (state.starts.length >= MAX_START) {
-        return fail(state, `Max ${MAX_START} start holds`);
+      const max = state.feet ? FEET_START_HANDS : MAX_START;
+      if (state.starts.length >= max) {
+        return fail(state, `Max ${max} start holds`);
       }
       return { ...state, starts: [...state.starts, id], error: null };
     }
 
+    case 'TOGGLE_START_FOOT': {
+      if (state.phase !== 'pickStarts' || !state.feet) return fail(state, OUT_OF_PHASE);
+      const id = action.hold.placement_id;
+      if (id === state.startFoot) return { ...state, startFoot: null, error: null };
+      if (state.starts.includes(id)) return fail(state, 'Already a start hold');
+      const err = footError(action.hold, []);
+      if (err) return fail(state, err);
+      // One start foot: a new tap replaces it.
+      return { ...state, startFoot: id, error: null };
+    }
+
     case 'START_GAME': {
       if (state.phase !== 'pickStarts') return fail(state, OUT_OF_PHASE);
-      if (state.starts.length < 1) return fail(state, 'Pick at least one start hold');
+      if (state.feet) {
+        if (state.starts.length !== FEET_START_HANDS) {
+          return fail(state, `Pick ${FEET_START_HANDS} start holds`);
+        }
+        if (state.startFoot === null) return fail(state, 'Pick 1 start foot');
+      } else if (state.starts.length < 1) {
+        return fail(state, 'Pick at least one start hold');
+      }
       return {
         ...state,
         phase: 'pick',
@@ -316,6 +393,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         removed: [],
         currentIdx: 0,
         pendingId: null,
+        pendingFootId: null,
         turnStartedAt: action.now,
         error: null,
       };
@@ -323,9 +401,27 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'PREVIEW_HOLD': {
       if (state.phase !== 'pick') return fail(state, OUT_OF_PHASE);
-      const err = holdError(action.hold, sequence(state));
+      if (action.hold.placement_id === state.pendingFootId) {
+        return fail(state, 'Already picked as the foot');
+      }
+      const err = holdError(action.hold, takenHolds(state));
       if (err) return fail(state, err);
       return { ...state, pendingId: action.hold.placement_id, error: null };
+    }
+
+    case 'PREVIEW_FOOT': {
+      if (state.phase !== 'pick' || !state.feet) return fail(state, OUT_OF_PHASE);
+      const id = action.hold.placement_id;
+      if (id === state.pendingFootId) return { ...state, pendingFootId: null, error: null };
+      if (id === state.pendingId) return fail(state, 'Already picked as the hand hold');
+      const err = footError(action.hold, takenHolds(state));
+      if (err) return fail(state, err);
+      return { ...state, pendingFootId: id, error: null };
+    }
+
+    case 'CLEAR_FOOT': {
+      if (state.phase !== 'pick') return fail(state, OUT_OF_PHASE);
+      return { ...state, pendingFootId: null, error: null };
     }
 
     case 'CONFIRM_HOLD': {
@@ -348,6 +444,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         holdId: state.pendingId,
         outcome: action.outcome,
       };
+      if (state.feet) turn.footId = state.pendingFootId;
       const next = { ...state, turns: [...state.turns, turn] };
       return advance(next, state.currentIdx, action.now);
     }
@@ -364,6 +461,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         removed: state.removed.filter((i) => i !== last.playerIdx),
         currentIdx: last.playerIdx,
         pendingId: last.holdId,
+        pendingFootId: last.footId ?? null,
         turnStartedAt: action.now,
         error: null,
       };
@@ -387,16 +485,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.phase !== 'pick' && state.phase !== 'climb') {
         return fail(state, OUT_OF_PHASE);
       }
-      return { ...state, phase: 'over', pendingId: null, turnStartedAt: null, error: null };
+      return {
+        ...state,
+        phase: 'over',
+        pendingId: null,
+        pendingFootId: null,
+        turnStartedAt: null,
+        error: null,
+      };
     }
 
     case 'REMATCH': {
       if (state.phase !== 'over') return fail(state, OUT_OF_PHASE);
-      return { ...initialGameState(state.players, state.lives), phase: 'pickStarts' };
+      return { ...initialGameState(state.players, state.lives, state.feet), phase: 'pickStarts' };
     }
 
     case 'RESET':
-      return initialGameState(state.players, state.lives);
+      return initialGameState(state.players, state.lives, state.feet);
 
     case 'CLEAR_ERROR':
       return state.error === null ? state : { ...state, error: null };
@@ -410,13 +515,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
 /**
  * Map the final sequence to editor holds: starts → start, added → middle,
- * the last `finishCount` (1 or 2, ≤ MAX_FINISH) added holds → finish.
+ * the last `finishCount` (1 or 2, ≤ MAX_FINISH) added HAND holds → finish,
+ * feet → foot_only (r15; never start/finish).
  * Feed the result to validateDraft / draftToFrames (editor-state).
  */
 export function toProblemHolds(
   starts: number[],
   added: number[],
   finishCount: 1 | 2 = 1,
+  feet: number[] = [],
 ): DraftHold[] {
   const n = Math.min(finishCount, MAX_FINISH, added.length);
   const firstFinish = added.length - n;
@@ -426,6 +533,7 @@ export function toProblemHolds(
       placement_id: id,
       role: i >= firstFinish ? 'finish' : 'middle',
     })),
+    ...feet.map((id) => ({ placement_id: id, role: 'foot_only' })),
   ];
 }
 

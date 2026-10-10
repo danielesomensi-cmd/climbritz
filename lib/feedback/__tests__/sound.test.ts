@@ -11,7 +11,7 @@ import {
   type SoundCue,
 } from '../sound';
 
-const CUES: SoundCue[] = ['turn', 'sent', 'fell', 'winner', 'tick'];
+const CUES: SoundCue[] = ['turn', 'sent', 'fell', 'winner', 'eliminated', 'tick'];
 
 describe('sound cues (pure)', () => {
   it.each(CUES)('%s has at least one well-formed step', (cue) => {
@@ -30,7 +30,35 @@ describe('sound cues (pure)', () => {
     const durations = CUES.map(cueDuration);
     expect(Math.min(...durations)).toBe(cueDuration('tick'));
     expect(Math.max(...durations)).toBe(cueDuration('winner'));
-    expect(cueDuration('winner')).toBeLessThan(1);
+  });
+
+  it('winner is a rich ~1.5–2s fanfare with a sustained multi-voice chord', () => {
+    const d = cueDuration('winner');
+    expect(d).toBeGreaterThanOrEqual(1.5);
+    expect(d).toBeLessThanOrEqual(2.1);
+    const steps = getCueSteps('winner');
+    // Chord: ≥3 voices starting together and sustained (release envelope).
+    const byStart = new Map<number, number>();
+    for (const st of steps) byStart.set(st.at, (byStart.get(st.at) ?? 0) + 1);
+    expect(Math.max(...byStart.values())).toBeGreaterThanOrEqual(3);
+    expect(steps.some((st) => st.release !== undefined && st.dur >= 1)).toBe(true);
+    // Rising arpeggio before the chord.
+    const lead = steps.filter((st) => st.type === 'triangle' && st.at < 0.45).map((st) => st.freq);
+    expect(lead).toEqual([...lead].sort((a, b) => a - b));
+    // Summed peak gain stays sane (compressor + low per-voice gains).
+    const peakAtChord = steps.filter((st) => st.at === 0.46).reduce((s, st) => s + st.gain, 0);
+    expect(peakAtChord).toBeLessThan(0.6);
+  });
+
+  it('eliminated is a ~1s descending sad-trombone cue, distinct from fell', () => {
+    const d = cueDuration('eliminated');
+    expect(d).toBeGreaterThanOrEqual(0.9);
+    expect(d).toBeLessThanOrEqual(1.4);
+    const freqs = getCueSteps('eliminated').map((st) => st.freq);
+    expect(freqs).toEqual([...freqs].sort((a, b) => b - a));
+    expect(getCueSteps('eliminated').some((st) => st.vibrato)).toBe(true);
+    expect(cueDuration('fell')).toBeLessThan(0.5);
+    expect(getCueSteps('eliminated')).not.toEqual(getCueSteps('fell'));
   });
 });
 
@@ -119,6 +147,53 @@ describe('playback without Web Audio', () => {
     (window as unknown as { AudioContext: unknown }).AudioContext = Ctor;
     playCue('sent');
     expect(createOscillator).toHaveBeenCalledTimes(getCueSteps('sent').length);
+    delete (window as unknown as { AudioContext?: unknown }).AudioContext;
+  });
+
+  it('schedules the winner/eliminated cues with filters, vibrato and a compressor bus', () => {
+    setSoundEnabled(true);
+    const param = () => ({
+      value: 0,
+      setValueAtTime: jest.fn(),
+      exponentialRampToValueAtTime: jest.fn(),
+    });
+    const createOscillator = jest.fn(() => ({
+      type: 'sine',
+      frequency: param(),
+      connect: jest.fn(),
+      start: jest.fn(),
+      stop: jest.fn(),
+    }));
+    const createBiquadFilter = jest.fn(() => ({
+      type: 'lowpass',
+      Q: param(),
+      frequency: param(),
+      connect: jest.fn(),
+    }));
+    const createDynamicsCompressor = jest.fn(() => ({ connect: jest.fn() }));
+    const Ctor = jest.fn().mockImplementation(() => ({
+      state: 'running',
+      currentTime: 0,
+      destination: {},
+      createBuffer: jest.fn(() => ({})),
+      createBufferSource: jest.fn(() => ({ connect: jest.fn(), start: jest.fn() })),
+      createOscillator,
+      createBiquadFilter,
+      createDynamicsCompressor,
+      createGain: jest.fn(() => ({ gain: param(), connect: jest.fn() })),
+    }));
+    (window as unknown as { AudioContext: unknown }).AudioContext = Ctor;
+    playCue('winner');
+    expect(createOscillator).toHaveBeenCalledTimes(getCueSteps('winner').length);
+    expect(createDynamicsCompressor).toHaveBeenCalledTimes(1);
+    createOscillator.mockClear();
+    playCue('eliminated');
+    const steps = getCueSteps('eliminated');
+    const lfos = steps.filter((st) => st.vibrato).length;
+    expect(createOscillator).toHaveBeenCalledTimes(steps.length + lfos);
+    expect(createBiquadFilter).toHaveBeenCalled();
+    // Bus is reused, not rebuilt per cue.
+    expect(createDynamicsCompressor).toHaveBeenCalledTimes(1);
     delete (window as unknown as { AudioContext?: unknown }).AudioContext;
   });
 });

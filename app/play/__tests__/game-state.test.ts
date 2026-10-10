@@ -2,6 +2,8 @@ import {
   activePlayers,
   addedHolds,
   computeScores,
+  feetHolds,
+  startsComplete,
   formatElapsed,
   gameReducer,
   initialGameState,
@@ -357,5 +359,225 @@ describe('formatElapsed', () => {
     expect(formatElapsed(9_999)).toBe('0:09');
     expect(formatElapsed(75_000)).toBe('1:15');
     expect(formatElapsed(-5)).toBe('0:00');
+  });
+});
+
+// ---- GAME-002 feet mode ------------------------------------------------------
+
+/** Feet-mode game in `pick`: start hands 1+2, start foot 3 (screw-on). */
+function startedFeet(names = ['Dani', 'Marco'], lives = 2): GameState {
+  return run(
+    initialGameState(),
+    { type: 'START_PICKING_STARTS', names, lives, feet: true },
+    { type: 'TOGGLE_START', hold: hold(1) },
+    { type: 'TOGGLE_START', hold: hold(2) },
+    { type: 'TOGGLE_START_FOOT', hold: hold(3, { set_id: 20 }) },
+    { type: 'START_GAME', now: 1000 },
+  );
+}
+
+/** One feet-mode turn: hand `id`, optional foot, confirm, declare. */
+function feetTurn(
+  state: GameState,
+  id: number,
+  foot: number | null,
+  outcome: 'sent' | 'fell',
+  now = 2000,
+): GameState {
+  const actions: GameAction[] = [{ type: 'PREVIEW_HOLD', hold: hold(id) }];
+  if (foot !== null) actions.push({ type: 'PREVIEW_FOOT', hold: hold(foot, { set_id: 20 }) });
+  actions.push({ type: 'CONFIRM_HOLD' }, { type: 'DECLARE', outcome, now });
+  return run(state, ...actions);
+}
+
+describe('feet mode — setup and starts', () => {
+  it('defaults OFF; START_PICKING_STARTS persists the option', () => {
+    expect(initialGameState().feet).toBe(false);
+    const s = gameReducer(initialGameState(), {
+      type: 'START_PICKING_STARTS',
+      names: ['A', 'B'],
+      lives: 1,
+      feet: true,
+    });
+    expect(s.feet).toBe(true);
+    expect(s.startFoot).toBeNull();
+  });
+
+  it('requires exactly 2 start hands + 1 start foot', () => {
+    let s = run(initialGameState(), {
+      type: 'START_PICKING_STARTS',
+      names: ['A', 'B'],
+      lives: 1,
+      feet: true,
+    });
+    s = run(s, { type: 'TOGGLE_START', hold: hold(1) });
+    expect(gameReducer(s, { type: 'START_GAME', now: 1 }).error).toBe('Pick 2 start holds');
+    s = run(s, { type: 'TOGGLE_START', hold: hold(2) });
+    expect(startsComplete(s)).toBe(false);
+    expect(gameReducer(s, { type: 'START_GAME', now: 1 }).error).toBe('Pick 1 start foot');
+    // Third hand is rejected in feet mode (exactly 2).
+    expect(gameReducer(s, { type: 'TOGGLE_START', hold: hold(9) }).error).toBe('Max 2 start holds');
+    s = run(s, { type: 'TOGGLE_START_FOOT', hold: hold(3, { set_id: 20 }) });
+    expect(startsComplete(s)).toBe(true);
+    const g = gameReducer(s, { type: 'START_GAME', now: 1 });
+    expect(g.phase).toBe('pick');
+    expect(g.starts).toEqual([1, 2]);
+    expect(g.startFoot).toBe(3);
+  });
+
+  it('start foot: screw-ons allowed, tap again clears, new tap replaces, no hand overlap', () => {
+    let s = run(
+      initialGameState(),
+      { type: 'START_PICKING_STARTS', names: ['A', 'B'], lives: 1, feet: true },
+      { type: 'TOGGLE_START', hold: hold(1) },
+    );
+    s = run(s, { type: 'TOGGLE_START_FOOT', hold: hold(3, { set_id: 20 }) });
+    expect(s.startFoot).toBe(3);
+    s = run(s, { type: 'TOGGLE_START_FOOT', hold: hold(4) });
+    expect(s.startFoot).toBe(4);
+    s = run(s, { type: 'TOGGLE_START_FOOT', hold: hold(4) });
+    expect(s.startFoot).toBeNull();
+    expect(gameReducer(s, { type: 'TOGGLE_START_FOOT', hold: hold(1) }).error).toBe(
+      'Already a start hold',
+    );
+    expect(gameReducer(s, { type: 'TOGGLE_START_FOOT', hold: hold(5, { hasLed: false }) }).error).toMatch(
+      /no LED/,
+    );
+    s = run(s, { type: 'TOGGLE_START_FOOT', hold: hold(3) });
+    expect(gameReducer(s, { type: 'TOGGLE_START', hold: hold(3) }).error).toBe('Already the start foot');
+  });
+
+  it('feet actions are rejected when feet mode is OFF', () => {
+    const pick = run(
+      initialGameState(),
+      { type: 'START_PICKING_STARTS', names: ['A', 'B'], lives: 1 },
+    );
+    expect(gameReducer(pick, { type: 'TOGGLE_START_FOOT', hold: hold(3) }).error).toBe(
+      'Not available right now',
+    );
+    const s = started();
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(3) }).error).toBe(
+      'Not available right now',
+    );
+  });
+});
+
+describe('feet mode — turns', () => {
+  it('a turn may add one optional foot; SENT keeps hand + foot', () => {
+    let s = startedFeet();
+    s = feetTurn(s, 10, 11, 'sent');
+    expect(s.turns[0]).toEqual({ playerIdx: 0, holdId: 10, footId: 11, outcome: 'sent' });
+    expect(sequence(s)).toEqual([1, 2, 10]);
+    expect(feetHolds(s)).toEqual([3, 11]);
+    expect(s.pendingFootId).toBeNull();
+    // Foot is optional.
+    s = feetTurn(s, 12, null, 'sent');
+    expect(s.turns[1].footId).toBeNull();
+    expect(feetHolds(s)).toEqual([3, 11]);
+    expect(sequence(s)).toEqual([1, 2, 10, 12]);
+  });
+
+  it('FELL discards both the hand and the foot and costs a life', () => {
+    let s = startedFeet();
+    s = feetTurn(s, 10, 11, 'fell');
+    expect(sequence(s)).toEqual([1, 2]);
+    expect(feetHolds(s)).toEqual([3]);
+    expect(livesLeft(s, 0)).toBe(1);
+    // Discarded holds are free again.
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(11) }).error).toBeNull();
+    expect(gameReducer(s, { type: 'PREVIEW_HOLD', hold: hold(10) }).error).toBeNull();
+  });
+
+  it('PREVIEW_FOOT toggles, rejects used holds and the pending hand; CLEAR_FOOT clears', () => {
+    let s = feetTurn(startedFeet(), 10, 11, 'sent');
+    s = run(s, { type: 'PREVIEW_HOLD', hold: hold(20) });
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(20) }).error).toBe(
+      'Already picked as the hand hold',
+    );
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(11) }).error).toBe(
+      'Already in the sequence',
+    );
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(3) }).error).toBe(
+      'Already in the sequence',
+    );
+    expect(gameReducer(s, { type: 'PREVIEW_FOOT', hold: hold(10) }).error).toBe(
+      'Already in the sequence',
+    );
+    s = run(s, { type: 'PREVIEW_FOOT', hold: hold(21, { set_id: 20 }) });
+    expect(s.pendingFootId).toBe(21);
+    // A hand can't land on the pending foot, nor on a used foot.
+    expect(gameReducer(s, { type: 'PREVIEW_HOLD', hold: hold(21) }).error).toBe(
+      'Already picked as the foot',
+    );
+    expect(gameReducer(s, { type: 'PREVIEW_HOLD', hold: hold(11) }).error).toBe(
+      'Already in the sequence',
+    );
+    s = run(s, { type: 'PREVIEW_FOOT', hold: hold(22) });
+    expect(s.pendingFootId).toBe(22);
+    s = run(s, { type: 'PREVIEW_FOOT', hold: hold(22) });
+    expect(s.pendingFootId).toBeNull();
+    s = run(s, { type: 'PREVIEW_FOOT', hold: hold(22) }, { type: 'CLEAR_FOOT' });
+    expect(s.pendingFootId).toBeNull();
+  });
+
+  it('UNDO_PICK keeps the pending foot; CONFIRM needs the hand, not the foot', () => {
+    let s = run(startedFeet(), { type: 'PREVIEW_FOOT', hold: hold(11) });
+    expect(gameReducer(s, { type: 'CONFIRM_HOLD' }).error).toBe('Tap a hold first');
+    s = run(s, { type: 'PREVIEW_HOLD', hold: hold(10) }, { type: 'CONFIRM_HOLD' });
+    expect(s.phase).toBe('climb');
+    s = run(s, { type: 'UNDO_PICK' });
+    expect(s.phase).toBe('pick');
+    expect(s.pendingId).toBe(10);
+    expect(s.pendingFootId).toBe(11);
+  });
+
+  it('UNDO_LAST_TURN removes the foot from the sequence and restores it as pending', () => {
+    let s = feetTurn(startedFeet(), 10, 11, 'sent');
+    s = gameReducer(s, { type: 'UNDO_LAST_TURN', now: 5000 });
+    expect(s.phase).toBe('climb');
+    expect(s.pendingId).toBe(10);
+    expect(s.pendingFootId).toBe(11);
+    expect(feetHolds(s)).toEqual([3]);
+    // Undo a foot-less turn → no pending foot.
+    s = feetTurn(startedFeet(), 10, null, 'sent');
+    s = gameReducer(s, { type: 'UNDO_LAST_TURN', now: 5000 });
+    expect(s.pendingFootId).toBeNull();
+  });
+
+  it('REMATCH / RESET keep feet mode on', () => {
+    const over = run(feetTurn(startedFeet(['A', 'B'], 1), 10, 11, 'fell'));
+    expect(over.phase).toBe('over');
+    const r = gameReducer(over, { type: 'REMATCH' });
+    expect(r.feet).toBe(true);
+    expect(r.startFoot).toBeNull();
+    expect(gameReducer(over, { type: 'RESET' }).feet).toBe(true);
+  });
+
+  it('feet OFF: turns carry no footId (GAME-001 shape unchanged)', () => {
+    const s = turn(started(), 10, 'sent');
+    expect(s.turns[0]).toEqual({ playerIdx: 0, holdId: 10, outcome: 'sent' });
+    expect(feetHolds(s)).toEqual([]);
+    expect(s.pendingFootId).toBeNull();
+  });
+});
+
+describe('feet mode — save as My Problem', () => {
+  it('feet map to r15; starts r12; hands r13; finish only on hand holds', () => {
+    let s = startedFeet();
+    s = feetTurn(s, 10, 11, 'sent');
+    s = feetTurn(s, 12, 13, 'fell'); // discarded
+    s = feetTurn(s, 14, null, 'sent');
+    const holds = toProblemHolds(s.starts, addedHolds(s), 1, feetHolds(s));
+    expect(draftToFrames(holds)).toBe('p1r12p2r12p10r13p14r14p3r15p11r15');
+    expect(validateDraft(holds).valid).toBe(true);
+    const two = toProblemHolds(s.starts, addedHolds(s), 2, feetHolds(s));
+    expect(draftToFrames(two)).toBe('p1r12p2r12p10r14p14r14p3r15p11r15');
+    expect(validateDraft(two).valid).toBe(true);
+  });
+
+  it('feet never count as finish: 2 starts + foot with no hand added is invalid', () => {
+    const holds = toProblemHolds([1, 2], [], 1, [3, 4]);
+    expect(validateDraft(holds).valid).toBe(false);
+    expect(validateDraft(holds).errors).toContain('Add a finish hold');
   });
 });

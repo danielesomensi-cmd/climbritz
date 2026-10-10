@@ -21,6 +21,8 @@ interface StoredGame {
 export interface PlayPrefs {
   names: string[];
   lives: number;
+  /** GAME-002 feet mode (absent in older prefs → off). */
+  feet?: boolean;
 }
 
 function storage(): Storage | null {
@@ -74,7 +76,14 @@ export function loadGame(now: number = Date.now()): GameState | null {
     clearGame();
     return null;
   }
-  return parsed.state;
+  // GAME-002: games saved before feet mode lack the feet fields → feet off.
+  const st = parsed.state as GameState;
+  return {
+    ...st,
+    feet: st.feet === true,
+    startFoot: st.startFoot ?? null,
+    pendingFootId: st.pendingFootId ?? null,
+  };
 }
 
 export function savePrefs(prefs: PlayPrefs): void {
@@ -92,7 +101,7 @@ export function loadPrefs(): PlayPrefs | null {
   if (!parsed || typeof parsed !== 'object') return null;
   const o = parsed as Record<string, unknown>;
   if (!isStringArray(o.names) || typeof o.lives !== 'number') return null;
-  return { names: o.names, lives: o.lives };
+  return { names: o.names, lives: o.lives, feet: o.feet === true };
 }
 
 // ---- type guards ------------------------------------------------------------
@@ -117,6 +126,7 @@ function isTurn(x: unknown): x is Turn {
   return (
     typeof t.playerIdx === 'number' &&
     typeof t.holdId === 'number' &&
+    (t.footId === undefined || isNumOrNull(t.footId)) &&
     (t.outcome === 'sent' || t.outcome === 'fell')
   );
 }
@@ -130,6 +140,9 @@ export function isGameState(x: unknown): x is GameState {
     isStringArray(o.players) &&
     typeof o.lives === 'number' &&
     isNumberArray(o.starts) &&
+    (o.feet === undefined || typeof o.feet === 'boolean') &&
+    (o.startFoot === undefined || isNumOrNull(o.startFoot)) &&
+    (o.pendingFootId === undefined || isNumOrNull(o.pendingFootId)) &&
     Array.isArray(o.turns) &&
     o.turns.every(isTurn) &&
     isNumberArray(o.removed) &&

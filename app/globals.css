@@ -206,3 +206,55 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+
+/* GAME-002 — Add-On game-over celebration (confetti + title pop). CSS-only,
+   one-shot; skipped entirely under prefers-reduced-motion. */
+.play-confetti-piece {
+  position: absolute;
+  top: -24px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: play-confetti-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes play-confetti-fall {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 24px 105vh;
+    rotate: 720deg;
+  }
+}
+
+.play-pop {
+  animation: play-pop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes play-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-confetti {
+    display: none;
+  }
+  .play-pop {
+    animation: none;
+  }
+}

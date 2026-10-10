@@ -12,6 +12,10 @@
 // - BLE: useBle().sendLEDs directly, 300ms debounce + latest-only generation
 //   counter (sendLEDs does not coalesce). Never connect/disconnect on our own.
 // - Timer: informative only, small and muted; counts up from turnStartedAt.
+// - GAME-002: big current-player name + lives (readable from the wall), optional
+//   feet mode (2 start hands + 1 start foot; each turn 1 hand + optional foot,
+//   feet in yellow / role 15), winner fanfare + sad-trombone elimination cue,
+//   confetti on game over (hidden under prefers-reduced-motion).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -39,6 +43,8 @@ import {
   activePlayers,
   addedHolds,
   DEFAULT_LIVES,
+  feetHolds,
+  FEET_START_HANDS,
   formatElapsed,
   gameReducer,
   initialGameState,
@@ -49,6 +55,7 @@ import {
   MIN_PLAYERS,
   problemName,
   scores,
+  startsComplete,
   toProblemHolds,
   validatePlayerNames,
   winner,
@@ -76,7 +83,10 @@ const PLAYER_COLORS = ['#ff6b35', '#38bdf8', '#a3e635', '#f472b6', '#facc15', '#
 const COLOR_START = `#${PLACEMENT_ROLES[12]}`;
 const COLOR_MIDDLE = `#${PLACEMENT_ROLES[13]}`;
 const COLOR_FINISH = `#${PLACEMENT_ROLES[14]}`;
+const COLOR_FOOT = `#${PLACEMENT_ROLES[15]}`;
 const COLOR_NEW = '#ffffff';
+// New foot of the turn: pale yellow on screen (white on the wall).
+const COLOR_NEW_FOOT = '#fef08a';
 
 const LIVES_CHOICES: Array<{ value: number; label: string }> = [
   { value: 1, label: '1' },
@@ -86,6 +96,11 @@ const LIVES_CHOICES: Array<{ value: number; label: string }> = [
 
 function isPickable(p: Placement): boolean {
   return p.set_id !== SET_SCREW_ONS && hasLed(p.placement_id);
+}
+
+/** Feet can go on any hold with an LED, screw-ons included. */
+function isFootPickable(p: Placement): boolean {
+  return hasLed(p.placement_id);
 }
 
 function toHoldInfo(p: Placement): HoldInfo {
@@ -118,11 +133,16 @@ function SoundToggle() {
           playCue('tick');
         }
       }}
-      className={`flex h-11 w-11 items-center justify-center rounded-full text-xl ${PRESSABLE_CLASSES} ${
-        on ? 'bg-orange-500/15 text-orange-300' : 'text-zinc-500 hover:bg-zinc-800'
+      className={`flex min-h-[48px] items-center gap-1.5 rounded-pill border px-3 text-sm font-semibold ${PRESSABLE_CLASSES} ${
+        on
+          ? 'border-orange-500/60 bg-orange-500/15 text-orange-300'
+          : 'border-border-strong text-zinc-400 hover:bg-zinc-800'
       }`}
     >
-      <span aria-hidden>{on ? '🔊' : '🔇'}</span>
+      <span aria-hidden className="text-xl leading-none">
+        {on ? '🔊' : '🔇'}
+      </span>
+      <span>{on ? 'On' : 'Off'}</span>
     </button>
   );
 }
@@ -166,13 +186,114 @@ function BleChip() {
   );
 }
 
+/** Big hearts: filled for lives left, hollow for lives lost. */
+function LivesHearts({
+  left,
+  total,
+  className = '',
+}: {
+  left: number;
+  total: number;
+  className?: string;
+}) {
+  return (
+    <span aria-hidden className={`tracking-tight leading-none ${className}`}>
+      <span className="text-red-500">{'♥'.repeat(left)}</span>
+      <span className="text-zinc-600">{'♡'.repeat(Math.max(0, total - left))}</span>
+    </span>
+  );
+}
+
+function livesLabel(left: number, total: number): string {
+  if (left === 1 && total > 1) return 'Last life!';
+  return `${left} ${left === 1 ? 'life' : 'lives'} left`;
+}
+
+const CONFETTI_COLORS = ['#ff6b35', '#facc15', '#38bdf8', '#a3e635', '#f472b6', '#c084fc', '#ffffff'];
+
+/** CSS-only confetti burst; hidden under prefers-reduced-motion (globals.css). */
+function Confetti() {
+  // Deterministic layout (no Math.random at render → stable on re-render).
+  const pieces = Array.from({ length: 36 }, (_, i) => ({
+    left: (i * 37) % 100,
+    delay: (i % 9) * 0.09,
+    duration: 2.2 + ((i * 7) % 10) / 10,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    rotate: (i * 47) % 360,
+    wide: i % 3 === 0,
+  }));
+  return (
+    <div
+      aria-hidden
+      data-testid="play-confetti"
+      className="play-confetti pointer-events-none fixed inset-0 z-40 overflow-hidden"
+    >
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="play-confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            backgroundColor: p.color,
+            width: p.wide ? 12 : 7,
+            height: p.wide ? 7 : 14,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            transform: `rotate(${p.rotate}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Big two-option segmented control (feet-mode hand/foot targets). */
+function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: Array<{ value: T; label: React.ReactNode; dot: string; testid: string }>;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="grid grid-cols-2 gap-2">
+      {options.map((o) => {
+        const selected = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            data-testid={o.testid}
+            aria-pressed={selected}
+            onClick={() => onChange(o.value)}
+            className={`flex min-h-[56px] items-center justify-center gap-2 rounded-card border-2 px-2 text-base font-semibold ${PRESSABLE_CLASSES} ${
+              selected
+                ? 'border-white bg-zinc-800 text-white'
+                : 'border-border-strong bg-transparent text-zinc-400'
+            }`}
+          >
+            <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ backgroundColor: o.dot }} />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Board + transparent tap overlay that snaps to the nearest pickable hold. */
 function PickBoard({
   holdColors,
   onPick,
+  eligible = isPickable,
 }: {
   holdColors: Record<number, string>;
   onPick?: (p: Placement) => void;
+  eligible?: (p: Placement) => boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
@@ -188,7 +309,7 @@ function PickBoard({
             if (!rect) return;
             const pct = pointToPct(e.clientX, e.clientY, rect);
             if (!pct) return;
-            const hit = nearestHold(pct.xPct, pct.yPct, PLACEMENTS, undefined, isPickable);
+            const hit = nearestHold(pct.xPct, pct.yPct, PLACEMENTS, undefined, eligible);
             if (hit) onPick(hit);
           }}
         />
@@ -212,6 +333,11 @@ export default function PlayPage() {
   // Setup form
   const [names, setNames] = useState<string[]>(['', '']);
   const [lives, setLives] = useState<number>(DEFAULT_LIVES);
+  const [feetMode, setFeetMode] = useState(false);
+
+  // Feet mode: which kind of hold a board tap picks.
+  const [startStep, setStartStep] = useState<'hands' | 'foot'>('hands');
+  const [pickTarget, setPickTarget] = useState<'hand' | 'foot'>('hand');
 
   // Overflow menu + result flash + save
   const [menuOpen, setMenuOpen] = useState(false);
@@ -232,6 +358,7 @@ export default function PlayPage() {
       while (prefill.length < MIN_PLAYERS) prefill.push('');
       setNames(prefill);
       if ([1, 2, 3].includes(prefs.lives)) setLives(prefs.lives);
+      setFeetMode(prefs.feet === true);
     }
     const saved = loadGame();
     if (saved && saved.phase !== 'setup') setResumable(saved);
@@ -262,6 +389,11 @@ export default function PlayPage() {
     };
   }, [inGame]);
 
+  // Every new turn starts on the (required) hand hold.
+  useEffect(() => {
+    setPickTarget('hand');
+  }, [game.turns.length, game.currentIdx]);
+
   useEffect(() => {
     if (!lastResult) return;
     const t = setTimeout(() => setLastResult(null), 1500);
@@ -280,6 +412,7 @@ export default function PlayPage() {
 
   // ---- derived ----
   const added = useMemo(() => addedHolds(game), [game]);
+  const feet = useMemo(() => feetHolds(game), [game]);
   const playerScores = useMemo(() => scores(game), [game]);
   const current = game.players[game.currentIdx] ?? '';
 
@@ -290,26 +423,31 @@ export default function PlayPage() {
       const isFinish = game.phase === 'over' && i >= added.length - Math.min(finishCount, added.length);
       colors[id] = isFinish ? COLOR_FINISH : COLOR_MIDDLE;
     });
-    if (game.pendingId !== null && (game.phase === 'pick' || game.phase === 'climb')) {
-      colors[game.pendingId] = COLOR_NEW;
+    for (const id of feet) colors[id] = COLOR_FOOT;
+    if (game.phase === 'pick' || game.phase === 'climb') {
+      if (game.pendingId !== null) colors[game.pendingId] = COLOR_NEW;
+      if (game.pendingFootId !== null) colors[game.pendingFootId] = COLOR_NEW_FOOT;
     }
     return colors;
-  }, [game.starts, game.pendingId, game.phase, added, finishCount]);
+  }, [game.starts, game.pendingId, game.pendingFootId, game.phase, added, feet, finishCount]);
 
   // ---- BLE: debounced, latest-only ----
   const frame: EncoderHold[] | null = useMemo(() => {
     switch (game.phase) {
       case 'pickStarts':
-        return sequenceToLedCommands(game.starts, []);
+        return sequenceToLedCommands(game.starts, [], null, { feet });
       case 'pick':
       case 'climb':
-        return sequenceToLedCommands(game.starts, added, game.pendingId);
+        return sequenceToLedCommands(game.starts, added, game.pendingId, {
+          feet,
+          newFootId: game.pendingFootId,
+        });
       case 'over':
-        return finalLedCommands(game.starts, added, finishCount);
+        return finalLedCommands(game.starts, added, finishCount, feet);
       default:
         return null;
     }
-  }, [game.phase, game.starts, game.pendingId, added, finishCount]);
+  }, [game.phase, game.starts, game.pendingId, game.pendingFootId, added, feet, finishCount]);
   const frameKey = frame ? `${game.phase}|${JSON.stringify(frame)}` : '';
 
   const genRef = useRef(0);
@@ -334,7 +472,10 @@ export default function PlayPage() {
       const g = gameRef.current;
       let steps: Array<EncoderHold[] | 'off'> = [f];
       if (effect === 'blink' && g.pendingId !== null) {
-        steps = blinkFrames(g.starts, addedHolds(g), g.pendingId);
+        steps = blinkFrames(g.starts, addedHolds(g), g.pendingId, 2, {
+          feet: feetHolds(g),
+          newFootId: g.pendingFootId,
+        });
       } else if (effect === 'fell') {
         steps = ['off', f];
       }
@@ -360,10 +501,11 @@ export default function PlayPage() {
   const startSetup = () => {
     unlockAudio();
     const trimmed = names.map((n) => n.trim());
-    savePrefs({ names: trimmed, lives });
+    savePrefs({ names: trimmed, lives, feet: feetMode });
     setSavedUuid(null);
     setSaveError(null);
-    act({ type: 'START_PICKING_STARTS', names: trimmed, lives });
+    setStartStep('hands');
+    act({ type: 'START_PICKING_STARTS', names: trimmed, lives, feet: feetMode });
   };
 
   const startGame = () => {
@@ -376,13 +518,35 @@ export default function PlayPage() {
   };
 
   const onPickStart = (p: Placement) => {
+    if (game.feet && startStep === 'foot') {
+      const next = act({ type: 'TOGGLE_START_FOOT', hold: toHoldInfo(p) });
+      if (!next.error) void haptic('light');
+      return;
+    }
     const next = act({ type: 'TOGGLE_START', hold: toHoldInfo(p) });
-    if (!next.error) void haptic('light');
+    if (next.error) return;
+    void haptic('light');
+    // Feet mode: both start hands picked → guide straight to the start foot.
+    if (next.feet && next.starts.length === FEET_START_HANDS && next.startFoot === null) {
+      setStartStep('foot');
+    }
   };
 
   const onPreview = (p: Placement) => {
-    const next = act({ type: 'PREVIEW_HOLD', hold: toHoldInfo(p) });
+    const footTap = game.feet && pickTarget === 'foot';
+    const next = act(
+      footTap
+        ? { type: 'PREVIEW_FOOT', hold: toHoldInfo(p) }
+        : { type: 'PREVIEW_HOLD', hold: toHoldInfo(p) },
+    );
     if (!next.error) void haptic('light');
+  };
+
+  const celebrate = (delayMs: number) => {
+    setTimeout(() => {
+      playCue('winner');
+      void haptic('success');
+    }, delayMs);
   };
 
   const confirmedAtRef = useRef(0);
@@ -407,16 +571,21 @@ export default function PlayPage() {
       void haptic('success');
       playCue('sent');
       setLastResult(`${who} sent it · +1`);
-    } else {
+    }
+    let eliminated = false;
+    if (outcome === 'fell') {
       void haptic('error');
-      playCue('fell');
-      const out = livesLeft(next, game.currentIdx) === 0;
-      setLastResult(out ? `${who} is out` : `${who} fell · hold discarded`);
+      eliminated = livesLeft(next, game.currentIdx) === 0;
+      // Knocked out → sad trombone; otherwise the short "fell" buzz.
+      playCue(eliminated ? 'eliminated' : 'fell');
+      const discarded = game.pendingFootId !== null ? 'hand + foot discarded' : 'hold discarded';
+      setLastResult(eliminated ? `${who} is out` : `${who} fell · ${discarded}`);
     }
     if (next.phase === 'over') {
-      setTimeout(() => playCue('winner'), 450);
+      // Let the elimination cue finish before the fanfare.
+      celebrate(eliminated ? 1350 : 450);
     } else {
-      setTimeout(() => playCue('turn'), 600);
+      setTimeout(() => playCue('turn'), eliminated ? 1350 : 600);
     }
   };
 
@@ -429,13 +598,14 @@ export default function PlayPage() {
   const removePlayer = (idx: number) => {
     setRemoveOpen(false);
     setMenuOpen(false);
-    act({ type: 'REMOVE_PLAYER', playerIdx: idx, now: Date.now() });
+    const next = act({ type: 'REMOVE_PLAYER', playerIdx: idx, now: Date.now() });
+    if (!next.error && next.phase === 'over') celebrate(0);
   };
 
   const endGame = () => {
     setMenuOpen(false);
     const next = act({ type: 'END_GAME' });
-    if (!next.error) playCue('winner');
+    if (!next.error) celebrate(0);
   };
 
   const newGame = () => {
@@ -444,18 +614,20 @@ export default function PlayPage() {
     act({ type: 'RESET' });
     setNames(game.players.length >= MIN_PLAYERS ? [...game.players] : names);
     setLives(game.lives);
+    setFeetMode(game.feet);
   };
 
   const rematch = () => {
     setSavedUuid(null);
     setSaveError(null);
+    setStartStep('hands');
     act({ type: 'REMATCH' });
   };
 
   // ---- save as My Problem ----
   const problemHolds = useMemo(
-    () => toProblemHolds(game.starts, added, finishCount),
-    [game.starts, added, finishCount],
+    () => toProblemHolds(game.starts, added, finishCount, feet),
+    [game.starts, added, finishCount, feet],
   );
   const problemValidation = validateDraft(problemHolds);
 
@@ -628,9 +800,42 @@ export default function PlayPage() {
                 </Chip>
               ))}
             </div>
-            <p className="text-xs text-zinc-500">
-              Feet: any (honor rule). Fall and the hold you added is discarded.
-            </p>
+            <p className="text-xs text-zinc-500">Fall and the hold you added is discarded.</p>
+          </Card>
+
+          <Card className="p-4">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={feetMode}
+              data-testid="play-feet-toggle"
+              onClick={() => setFeetMode((f) => !f)}
+              className={`flex w-full min-h-[56px] items-center gap-3 text-left ${PRESSABLE_CLASSES}`}
+            >
+              <span className="flex-1">
+                <span className="flex items-center gap-2 text-base font-semibold text-white">
+                  <span aria-hidden className="h-3 w-3 rounded-full" style={{ backgroundColor: COLOR_FOOT }} />
+                  Add feet
+                </span>
+                <span className="block text-xs text-zinc-400">
+                  {feetMode
+                    ? 'Start: 2 hands + 1 foot. Each turn you may also add one foot (yellow).'
+                    : 'Each turn you may also add one foot (yellow). Off: feet are free.'}
+                </span>
+              </span>
+              <span
+                aria-hidden
+                className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${
+                  feetMode ? 'bg-orange-500' : 'bg-zinc-700'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+                    feetMode ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </span>
+            </button>
           </Card>
 
           {!namesCheck.valid && (
@@ -657,6 +862,13 @@ export default function PlayPage() {
 
   // ---------------- PICK STARTS ----------------
   if (game.phase === 'pickStarts') {
+    const footStep = game.feet && startStep === 'foot';
+    const ready = startsComplete(game);
+    const instruction = !game.feet
+      ? `Tap 1–${MAX_START} start holds`
+      : footStep
+        ? 'Pick 1 start foot'
+        : `Pick ${FEET_START_HANDS} start holds`;
     return (
       <div className="min-h-dvh bg-zinc-950 text-white pb-safe">
         <PageHeader
@@ -669,16 +881,56 @@ export default function PlayPage() {
           }
         />
         <main className="max-w-2xl mx-auto px-4 py-3 space-y-3">
-          <p className="text-sm text-zinc-400 text-center">
-            Tap 1–{MAX_START} start holds ({game.starts.length} picked)
+          {game.feet && (
+            <Segmented
+              label="Start hold type"
+              value={startStep}
+              onChange={setStartStep}
+              options={[
+                {
+                  value: 'hands',
+                  dot: COLOR_START,
+                  testid: 'play-step-hands',
+                  label: (
+                    <span>
+                      1 · Hands <span className="tabular-nums text-zinc-400">{game.starts.length}/{FEET_START_HANDS}</span>
+                    </span>
+                  ),
+                },
+                {
+                  value: 'foot',
+                  dot: COLOR_FOOT,
+                  testid: 'play-step-foot',
+                  label: (
+                    <span>
+                      2 · Foot <span className="tabular-nums text-zinc-400">{game.startFoot === null ? 0 : 1}/1</span>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          )}
+          <p
+            data-testid="play-starts-instruction"
+            className="text-center text-lg font-semibold"
+            style={{ color: footStep ? COLOR_FOOT : undefined }}
+          >
+            {instruction}
+            {!game.feet && (
+              <span className="block text-sm font-normal text-zinc-400">{game.starts.length} picked</span>
+            )}
           </p>
-          <PickBoard holdColors={holdColors} onPick={onPickStart} />
+          <PickBoard
+            holdColors={holdColors}
+            onPick={onPickStart}
+            eligible={footStep ? isFootPickable : isPickable}
+          />
           {errorBanner}
           <Button
             size="lg"
-            className="w-full min-h-[64px]"
+            className="w-full min-h-[64px] text-lg"
             data-testid="play-start-game"
-            disabled={game.starts.length === 0}
+            disabled={!ready}
             onClick={startGame}
           >
             Start game
@@ -700,11 +952,21 @@ export default function PlayPage() {
       .sort((a, b) => b.score - a.score || b.longestChain - a.longestChain);
     return (
       <div className="min-h-dvh bg-zinc-950 text-white pb-nav">
+        {w !== null && <Confetti />}
         <PageHeader back={{ href: '/', label: 'Home' }} title="Add-On" right={<SoundToggle />} />
         <main className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-          <h2 data-testid="play-winner" className="text-center text-2xl font-display font-bold text-orange-400">
-            {w === null ? 'Draw!' : `🏆 ${game.players[w]} wins`}
-          </h2>
+          <div className="play-pop text-center py-2">
+            <div aria-hidden className="text-6xl leading-none">
+              {w === null ? '🤝' : '🏆'}
+            </div>
+            <h2
+              data-testid="play-winner"
+              className="mt-2 font-display text-4xl font-black leading-tight break-words"
+              style={{ color: w === null ? '#fb923c' : playerColor(w) }}
+            >
+              {w === null ? 'Draw!' : `${game.players[w]} wins`}
+            </h2>
+          </div>
 
           <Card className="p-4 space-y-1">
             {ranking.map((r) => (
@@ -833,25 +1095,29 @@ export default function PlayPage() {
   const active = activePlayers(game);
   const myLives = livesLeft(game, game.currentIdx);
   const chain = game.starts.length + added.length;
+  const footTarget = game.feet && pickTarget === 'foot';
+
+  let pickHint: string;
+  if (footTarget) {
+    pickHint =
+      game.pendingFootId === null
+        ? 'Tap a foot hold (optional)'
+        : 'Foot added · tap it again to remove';
+  } else {
+    pickHint = game.pendingId === null ? 'Tap the hold you want to add' : 'Tap another hold to change it';
+  }
+  const confirmLabel =
+    game.feet && game.pendingFootId !== null ? 'Confirm hand + foot' : 'Confirm hold';
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-white pb-safe">
       <header className="sticky top-0 z-20 bg-surface-base/95 backdrop-blur border-b border-border-default">
         <div className="max-w-2xl mx-auto px-4 pt-safe pb-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p
-                data-testid="play-current-player"
-                className="truncate font-display text-lg font-bold"
-                style={{ color }}
-              >
-                {current}&apos;s turn
-              </p>
-              <p className="text-xs text-zinc-400">
-                <span aria-label={`${myLives} lives left`}>{'♥'.repeat(myLives)}</span>
-                {' · '}Chain {chain} · Score {playerScores[game.currentIdx]?.score ?? 0}
-              </p>
-            </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              {game.phase === 'climb' ? 'Climbing' : 'Picking'}
+              <TurnTimer startedAt={game.turnStartedAt} />
+            </span>
             <div className="flex items-center gap-1">
               <BleChip />
               <SoundToggle />
@@ -865,7 +1131,7 @@ export default function PlayPage() {
                     setMenuOpen((o) => !o);
                     setRemoveOpen(false);
                   }}
-                  className={`flex h-11 w-11 items-center justify-center rounded-full text-xl text-zinc-300 hover:bg-zinc-800 ${PRESSABLE_CLASSES}`}
+                  className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl text-zinc-300 hover:bg-zinc-800 ${PRESSABLE_CLASSES}`}
                 >
                   ⋯
                 </button>
@@ -903,14 +1169,57 @@ export default function PlayPage() {
               </div>
             </div>
           </div>
+
+          {/* Current player — readable from the wall. */}
+          <p data-testid="play-current-player" className="mt-1 min-w-0 leading-none">
+            <span
+              className="block truncate font-display font-black leading-[1.05] text-[clamp(2.5rem,13vw,3.75rem)]"
+              style={{ color }}
+            >
+              {current}
+            </span>
+            <span className="sr-only">&apos;s turn</span>
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span
+              data-testid="play-lives"
+              aria-label={`${myLives} ${myLives === 1 ? 'life' : 'lives'} left`}
+              className="flex items-center gap-2"
+            >
+              <LivesHearts left={myLives} total={game.lives} className="text-4xl" />
+              <span
+                className={`text-lg font-bold ${myLives === 1 && game.lives > 1 ? 'text-red-400' : 'text-zinc-200'}`}
+              >
+                {livesLabel(myLives, game.lives)}
+              </span>
+            </span>
+            <span className="text-sm text-zinc-400 tabular-nums">
+              Chain {chain} · {playerScores[game.currentIdx]?.score ?? 0} pts
+            </span>
+          </div>
+
           {/* Other players at a glance */}
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-zinc-500">
+          <div data-testid="play-others" className="mt-2 flex flex-wrap gap-1.5">
             {game.players.map((p, i) => {
+              if (i === game.currentIdx) return null;
               const out = !active.includes(i);
               return (
-                <span key={i} className={out ? 'line-through opacity-60' : ''}>
-                  <span style={{ color: playerColor(i) }}>●</span> {p} {playerScores[i]?.score ?? 0}
-                  {!out && game.lives > 1 ? ` ${'♥'.repeat(livesLeft(game, i))}` : ''}
+                <span
+                  key={i}
+                  className={`flex items-center gap-1.5 rounded-pill border border-border-default px-2.5 py-1 text-sm ${
+                    out ? 'line-through opacity-50' : 'text-zinc-200'
+                  }`}
+                >
+                  <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: playerColor(i) }} />
+                  <span className="max-w-[7rem] truncate">{p}</span>
+                  {out ? (
+                    <span className="text-xs text-zinc-500">out</span>
+                  ) : (
+                    <span aria-label={`${livesLeft(game, i)} lives`}>
+                      <LivesHearts left={livesLeft(game, i)} total={game.lives} className="text-base" />
+                    </span>
+                  )}
+                  <span className="tabular-nums text-xs text-zinc-400">{playerScores[i]?.score ?? 0}</span>
                 </span>
               );
             })}
@@ -922,8 +1231,16 @@ export default function PlayPage() {
         {rulesOpen && (
           <Card className="p-3 text-xs text-zinc-300 space-y-1" data-testid="play-rules">
             <p>Tap the next hold, confirm, then climb the whole sequence plus the new hold.</p>
-            <p>Your partner taps SENT or FELL. Sent: +1 and the hold stays. Fell: the hold is discarded and you lose a life.</p>
-            <p>Feet: any (honor rule). Last climber standing wins.</p>
+            <p>
+              Your partner taps SENT or FELL. Sent: +1 and the hold stays. Fell: the hold
+              {game.feet ? ' (and foot)' : ''} is discarded and you lose a life.
+            </p>
+            <p>
+              {game.feet
+                ? 'Feet: only the yellow holds. Each turn you may also add one foot.'
+                : 'Feet: any (honor rule).'}{' '}
+              Last climber standing wins.
+            </p>
             <button type="button" className="text-orange-400 min-h-[44px]" onClick={() => setRulesOpen(false)}>
               Close
             </button>
@@ -931,16 +1248,48 @@ export default function PlayPage() {
         )}
 
         {lastResult && (
-          <p data-testid="play-last-result" className="text-center text-sm text-zinc-300">
+          <p data-testid="play-last-result" className="text-center text-base font-semibold text-zinc-200">
             {lastResult}
           </p>
         )}
 
-        <PickBoard holdColors={holdColors} onPick={game.phase === 'pick' ? onPreview : undefined} />
+        {game.phase === 'pick' && game.feet && (
+          <Segmented
+            label="What are you adding"
+            value={pickTarget}
+            onChange={setPickTarget}
+            options={[
+              {
+                value: 'hand',
+                dot: COLOR_NEW,
+                testid: 'play-target-hand',
+                label: <span>Hand{game.pendingId !== null ? ' ✓' : ''}</span>,
+              },
+              {
+                value: 'foot',
+                dot: COLOR_FOOT,
+                testid: 'play-target-foot',
+                label: (
+                  <span>
+                    Foot{game.pendingFootId !== null ? ' ✓' : <span className="font-normal text-zinc-500"> · optional</span>}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        )}
 
-        <div className="flex items-center justify-between">
-          <TurnTimer startedAt={game.turnStartedAt} />
-          {game.phase === 'climb' && (
+        <PickBoard
+          holdColors={holdColors}
+          onPick={game.phase === 'pick' ? onPreview : undefined}
+          eligible={footTarget ? isFootPickable : isPickable}
+        />
+
+        {game.phase === 'climb' && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-zinc-400">
+              {game.feet && game.pendingFootId !== null ? 'New hand + foot in white' : 'New hold in white'}
+            </span>
             <button
               type="button"
               data-testid="play-change-hold"
@@ -949,16 +1298,40 @@ export default function PlayPage() {
             >
               Change hold
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {errorBanner}
 
         {game.phase === 'pick' ? (
           <>
-            <p className="text-center text-sm text-zinc-400">
-              {game.pendingId === null ? 'Tap the hold you want to add' : 'Tap another hold to change it'}
+            <p
+              data-testid="play-pick-hint"
+              className="text-center text-base"
+              style={{ color: footTarget ? COLOR_FOOT : '#a1a1aa' }}
+            >
+              {pickHint}
             </p>
+            {game.feet && !footTarget && game.pendingId !== null && game.pendingFootId === null && (
+              <Button
+                variant="secondary"
+                className="w-full min-h-[52px]"
+                data-testid="play-add-foot"
+                onClick={() => setPickTarget('foot')}
+              >
+                + Add a foot (optional)
+              </Button>
+            )}
+            {footTarget && game.pendingFootId !== null && (
+              <Button
+                variant="ghost"
+                className="w-full"
+                data-testid="play-remove-foot"
+                onClick={() => act({ type: 'CLEAR_FOOT' })}
+              >
+                Remove foot
+              </Button>
+            )}
             <Button
               size="lg"
               className="w-full min-h-[64px] text-lg"
@@ -966,7 +1339,7 @@ export default function PlayPage() {
               disabled={game.pendingId === null}
               onClick={confirmHold}
             >
-              Confirm hold
+              {game.pendingId === null && footTarget ? 'Pick a hand hold first' : confirmLabel}
             </Button>
           </>
         ) : (
