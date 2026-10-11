@@ -1,0 +1,108 @@
+{
+  "size_bytes": 62300160,
+  "discovery_visible_before": 173812,
+  "discovery_visible_after": 204559,
+  "board_fit_climbs_lost_vs_local": 309,
+  "climbs_without_stats": 0,
+  "top5_popularity_40deg": [
+    [
+      "D0E5387D5B974D38B4E93FC4DFD61EF6",
+      "Floats Your Boat",
+      40,
+      99680,
+      "6a/V3"
+    ],
+    [
+      "36E949A6395D4290AF08FDFBCC6010C1",
+      "Bell of the Wall",
+      40,
+      95729,
+      "6b/V4"
+    ],
+    [
+      "A9FCD0BC271D402F8C4C80DE885B7BCA",
+      "Lack of Faith",
+      40,
+      84210,
+      "6c/V5"
+    ],
+    [
+      "AC9FCF7F01FC44BD835CFC41CB2224DA",
+      "You Don’t Know Me",
+      40,
+      83962,
+      "6a/V3"
+    ],
+    [
+      "3779e36086a44812958fd726b4ca4f53",
+      "Drawing the Priest",
+      40,
+      74576,
+      "7a/V6"
+    ]
+  ],
+  "angles": [
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70
+  ],
+  "meta": {
+    "board": "{\"name\": \"Kilter Board Original 12x12 with kickboard\", \"layout_id\": 1, \"product_size_id\": 10, \"edge_left\": 0, \"edge_right\": 144, \"edge_bottom\": 0, \"edge_top\": 156}",
+    "built_at": "2026-10-11T08:58:06Z",
+    "counts": "{\"climbs\": 204559, \"climb_stats\": 332956, \"difficulty_grades\": 39, \"placements\": 692, \"holes\": 692, \"keep_uuids_requested\": 0, \"keep_uuids_found\": 0}",
+    "dropped": "{\"not_listed_or_draft_or_hidden\": 86876, \"animated\": 449, \"off_board\": 11805, \"bad_uuid\": 2949, \"bad_roles_or_unknown_placement\": 0}",
+    "local_climbs_last_sync": "2026-01-31 01:19:49.420866",
+    "local_file": "kilter.db",
+    "min_ascents": "1",
+    "roles_normalized": "392",
+    "script_version": "C001-1",
+    "snapshot_built_at": "2026-10-03T07:15:35.620Z",
+    "snapshot_file": "boardsesh_2026-10-03T07-15-35-620Z.db",
+    "snapshot_sha256": "b8fd728a91afe035eb0d7fb525ec337c1bcdf91831e14384e556a5edf0710a47",
+    "sources": "{\"snapshot_existing\": 222480, \"snapshot_new\": 61187, \"local_only\": 268}",
+    "stats_sources": "{\"snapshot\": 158201, \"local\": 174755}"
+  },
+  "problems": [],
+  "build": {
+    "counts": {
+      "climbs": 204559,
+      "climb_stats": 332956,
+      "difficulty_grades": 39,
+      "placements": 692,
+      "holes": 692,
+      "keep_uuids_requested": 0,
+      "keep_uuids_found": 0
+    },
+    "sources": {
+      "snapshot_existing": 222480,
+      "snapshot_new": 61187,
+      "local_only": 268
+    },
+    "stats_sources": {
+      "snapshot": 158201,
+      "local": 174755
+    },
+    "roles_normalized": 392,
+    "removed_below_min_ascents": 79376,
+    "dropped": {
+      "not_listed_or_draft_or_hidden": 86876,
+      "animated": 449,
+      "off_board": 11805,
+      "bad_uuid": 2949,
+      "bad_roles_or_unknown_placement": 0
+    }
+  },
+  "seconds": 8.6
+}

@@ -36,9 +36,9 @@ The native app wraps the Next.js frontend via Capacitor (iOS + Android), enablin
 └──────────┬────────────────┘
            │
 ┌──────────┴────────────────────────────────────────────┐
-│  SQLite (dev + prod*)          BoardLib SQLite DB      │
-│  users + video_uploads         ~189MB, gitignored      │
-│  *PostgreSQL planned           kilter.db (344k+ climbs)│
+│  SQLite (dev + prod*)          Board-only Kilter DB    │
+│  users + video_uploads         ~62MB, gitignored       │
+│  *PostgreSQL planned           kilter.db (12x12 only)  │
 │                                # hold_classifications   │
 │                                # (planned — HC-7)       │
 └───────────────────────────────────────────────────────┘
@@ -245,7 +245,7 @@ Frontend: climbritz.app (deployed via Vercel)
 Video storage: local filesystem (S3 planned)
 ```
 
-**Note:** SQLite is on a persistent Railway volume (`/data/climbritz`) — data survives redeploys. The startup command (in `backend/railway.toml`) checks for a valid BoardLib DB (`SELECT 1 FROM climbs`), re-downloads if missing or invalid (D014), then runs migrations and starts uvicorn. Migration to PostgreSQL is planned for Phase 7.
+**Note:** SQLite is on a persistent Railway volume (`/data/climbritz`) — data survives redeploys. The startup command (in `backend/railway.toml`) checks for a valid BoardLib DB (`SELECT 1 FROM climbs`), re-downloads if missing or invalid (D014), then runs migrations and starts uvicorn. **Since C001 (2026-10) the re-download is a dead path** (Aurora API shut down 2026-03): the DB is a board-only subset (Kilter Original 12x12 with kickboard, ~62 MB) built locally with `backend/scripts/build_board_db.py` from the previous DB + the public Boardsesh snapshot, then pushed with `POST /api/admin/upload-db` (atomic, no redeploy). Migration to PostgreSQL is planned for Phase 7.
 
 **Native app (Phase 3e):** Capacitor wraps the Next.js frontend → iOS App Store + Android Play Store. BLE connection via a custom protocol stack:
 
@@ -345,8 +345,8 @@ Protected page coverage (A019.16): ALL frontend pages require login except /sign
 
 Level 2 architecture (Phase 3):
 ```
-BoardLib SQLite DB (~189MB, local, gitignored)
-  │  344k+ climbs with grade, holds, angle, ascents
+Board-only Kilter SQLite DB (~62MB, local, gitignored — C001)
+  │  ~205k 12x12 climbs with grade, holds, angle, ascents
   │
   ▼
 GET /api/climbs/search?q={name}&angle={angle}

@@ -350,6 +350,6 @@ Source: `docs/audit-2026-05-19/AUDIT_REPORT.md` → re-scoped by the D018 audit 
 - pytest required for every new endpoint
 - Secrets in `.env` only · conventional commits, push after every feature
 - Clerk owns identity (don't reintroduce password storage in our DB)
-- BoardLib DB gitignored (~189MB) · hold classification data is proprietary, not open-sourced
+- Kilter DB gitignored (board-only, ~62MB, rebuilt with `build_board_db.py` — C001) · hold classification data is proprietary, not open-sourced
 - BLE via Capacitor (Web Bluetooth insufficient for iOS)
 - STOP gates on: `gemini_service.py`, `core/clerk.py`, Alembic migrations, video pipeline

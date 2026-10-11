@@ -39,6 +39,7 @@ Climbritz is a two-tier product: **Discovery (free)** + **Coach (paid, €7.99/m
 - Database is ~189MB with 344k+ climbs (larger than initial ~85MB estimate)
 - Command: `boardlib database kilter kilter.db`
 - Sync command updates existing DB with latest data
+- **Update 2026-10 (C001):** the Aurora API BoardLib synced from was shut down in March 2026 (BoardLib issue #78) — sync no longer works. Our DB is now a board-only subset (~62 MB) rebuilt with `backend/scripts/build_board_db.py` from the frozen local DB + the public Boardsesh daily snapshot.
 
 ### Database Schema (from reverse engineering)
 Key tables in the SQLite database:
@@ -273,5 +274,5 @@ AI Coaching Feedback
 ```
 
 ### Storage
-- BoardLib SQLite DB: `backend/data/kilter.db` (gitignored, ~189MB)
-- Periodic sync via `boardlib database kilter backend/data/kilter.db`
+- Board-only Kilter SQLite DB: `backend/data/kilter.db` (gitignored, ~62 MB, Kilter Original 12x12 with kickboard only)
+- Refresh via `python3 scripts/build_board_db.py --local data/kilter.db --out data/kilter.board.db` (Boardsesh snapshot; BoardLib sync dead since 2026-03), then `POST /api/admin/upload-db`

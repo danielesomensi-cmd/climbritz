@@ -18,7 +18,7 @@
 - Backend: Python 3.11 + FastAPI + SQLAlchemy + Alembic (SQLite dev/prod, PostgreSQL planned)
 - AI: Gemini 2.5 Flash (File API, `google.genai` SDK)
 - Auth: Clerk (hosted sign-in/sign-up, JWKS-verified)
-- Climb data: BoardLib (downloads the official Kilter Board SQLite DB, ~189MB, gitignored)
+- Climb data: board-only Kilter DB (Aurora-compatible SQLite, Kilter Original 12x12 with kickboard only, ~62 MB, gitignored), rebuilt with `backend/scripts/build_board_db.py` from the local DB + the public Boardsesh snapshot. The Aurora API that BoardLib synced from has been dead since 2026-03, so `boardlib database` no longer updates it.
 
 **Key asset — hold classification database:** every hold on the Kilter Board tagged by grip type (Jug / Good Crimp / Crimp / Sloper / Undercling / Pinch). No competitor has this. Enables grip-type filtering, session builder, problem generation, and BLE "illuminate only [type]".
 
@@ -96,13 +96,13 @@ Auth: protected routes accept `Authorization: Bearer <Clerk JWT>` (verified in `
 - `POST /api/classifications/import` body `{classifications: [{placement_id, category}, …]}` → `{total}`. Merge upsert (preserves unsent rows), cap 1000, tolerates+ignores `x`/`y`. `category` ∈ `jug | good_crimp | crimp | sloper | undercling | pinch`.
 
 **Admin**
-- `POST /api/admin/sync-db` (JWT) → runs `boardlib database kilter` · `POST /api/admin/upload-db` (ADMIN_SECRET) → upload DB to Railway volume
+- `POST /api/admin/sync-db` (JWT) → runs `boardlib database kilter` (**dead path** — Aurora API shut down 2026-03; refresh with `build_board_db.py` + `upload-db` instead) · `POST /api/admin/upload-db` (ADMIN_SECRET) → upload DB to Railway volume
 - `GET /api/admin/recent-users?limit=&include_devices=` (X-Admin-Secret) → newest Clerk sign-ups joined with in-app activity. Server-side join of the Clerk Backend API (email/name/created/last-sign-in/last-active + device-OS/city from session `latest_activity`) with our DB (climb_logs / videos / classifications / projects via the `users` shadow row; `has_local_row=false` ⇒ never used the app). Read-only. Clerk calls live in `services/clerk_admin_service.py` (httpx) — `core/clerk.py` untouched. Devices are best-effort ([] on any Clerk hiccup). 503 if `CLERK_SECRET_KEY` unset, 502 on Clerk API error.
 
 **Webhooks**
 - `POST /api/webhooks/clerk` → Svix-signed Clerk webhook. Verifies the signature against `CLERK_WEBHOOK_SECRET` (svix lib) and on `user.created` pushes a Telegram alert (`TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`) — automatic new-sign-up notification. Best-effort notify; 503 if secret unset, 400 on bad signature. Separate from `core/clerk.py` (different secret/library, no auth code touched). Setup steps: `docs/ADMIN_RUNBOOK.md`.
 
-**Deploy:** Backend on Railway (SQLite + kilter.db auto-downloaded on first boot, persistent volume `/data/climbritz`; startup re-downloads if `SELECT 1 FROM climbs` fails, `_validate_boardlib_db()` crashes prod on invalid DB). Frontend on Vercel. Health: `GET /health`.
+**Deploy:** Backend on Railway (SQLite + board-only kilter.db uploaded via `/api/admin/upload-db`; the BoardLib auto-download in `railway.toml` is a dead path since the Aurora shutdown, persistent volume `/data/climbritz`; startup re-downloads if `SELECT 1 FROM climbs` fails, `_validate_boardlib_db()` crashes prod on invalid DB). Frontend on Vercel. Health: `GET /health`.
 
 ---
 
@@ -150,7 +150,7 @@ climbritz/
 │   └── main.py
 ├── backend/alembic/versions/   001 initial · 002 video_form_analysis · 003 clerk_auth · 004 a021_climb_logging · 005 user_hold_classifications · 006 user_generated_climbs (A030)
 ├── backend/tests/              one test_*.py per api/service + fixtures/test_kilter.db
-├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot) · seed_review_accounts (A-STORE-PROD-002 — App Store reviewer accounts; idempotent, seeds via the live API, `--dry-run`, refuses `sk_test_`)
+├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot) · build_board_db (C001 — board-only Kilter DB from local DB + Boardsesh snapshot; stdlib, self-verifying) · seed_review_accounts (A-STORE-PROD-002 — App Store reviewer accounts; idempotent, seeds via the live API, `--dry-run`, refuses `sk_test_`)
 ├── app/ (Next.js frontend)
 │   ├── page.tsx · sign-in · sign-up · login(redirect) · dashboard · upload
 │   ├── generate/       page ("AI Create": A026 filters → remix → board + BLE → re-roll; A030 one-tap Save; A031 name-on-generate + Edit + Start-from-blank)
