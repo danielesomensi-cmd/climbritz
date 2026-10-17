@@ -73,17 +73,16 @@ in `ios/App/App/Info.plist` — no manual "Missing Compliance" click expected (t
 
 ---
 
-## ❗ Why `Terminal.app` and NOT Claude Code
+## ❗ Running from Claude Code vs Terminal.app
 
-- **Code signing requires keychain access tied to the interactive login session.**
-- **Background shells cannot see Xcode's logged-in account state** — this includes
-  Claude Code's shell, non-interactive SSH, tmux/screen sessions, and daemons.
-  The archive step can succeed (it signs with the *development* cert from the
-  keychain), but the **app-store export step fails** because it needs the logged-in
-  account to mint the *distribution* provisioning profile.
-- **Daniele runs the script himself in Terminal.app. Claude Code never runs the
-  deploy script** — it can prep (bump version, validate `npm run build:mobile`,
-  do the doc sync + tag afterwards), but the upload itself is a human-in-Terminal step.
+Since build 22 (2026-10-11) the script runs fine from Claude Code's shell, in
+the background — Claude launches it itself after a bump. The one requirement
+is an **unlocked login keychain**: if the archive fails with
+`errSecInternalComponent`, run `security unlock-keychain ~/Library/Keychains/login.keychain-db`
+(asks for the Mac password — in Claude Code use `! <command>`) and re-run.
+`security show-keychain-info ~/Library/Keychains/login.keychain-db` prints
+`no-timeout` when it is unlocked. Terminal.app stays the fallback if the export
+step ever fails on Xcode account state.
 
 ---
 

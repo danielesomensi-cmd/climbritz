@@ -10,6 +10,45 @@
 
 ---
 
+## ⚡ Quick release — new TestFlight + Play build (the 10-minute path)
+
+Use this for every "bump + ship" (no store submission). Secrets are never in
+the repo — this table says only **where they live**.
+
+### Keys & credentials
+
+| What | Where | Used by | If it breaks |
+|---|---|---|---|
+| Apple app-specific password | `APP_PASSWORD=` line in `~/deploy_climbritz.sh` (home dir) | `altool` upload | `-22910` → new one at account.apple.com → Sign-In & Security → App-Specific Passwords, paste into the script |
+| Apple ID / Team ID | `daniele.somensi@icloud.com` / `KSD2RSAZP2` (defaults in the script) | archive + upload | — |
+| iOS signing certs | macOS **login keychain** + Xcode → Settings → Apple Accounts | `xcodebuild archive/export` | `errSecInternalComponent` → keychain locked: `security unlock-keychain ~/Library/Keychains/login.keychain-db` (Mac password), re-run. `No Accounts` / no Distribution cert → see `IOS_DEPLOY_RUNBOOK.md` |
+| Apple agreements | App Store Connect → Business | upload | `403 CONTRACT_NOT_VALID` → accept the pending agreement |
+| Android upload keystore | `~/kilter-up-release.keystore` (legacy name, **not** `climbritz-release.keystore`) | `./gradlew bundleRelease` | — |
+| Android keystore passwords + alias | `android/keystore.properties` (gitignored) | Gradle signing | — |
+| Android testers | Google Group `climbritz-testers@googlegroups.com` | Play closed testing | testers must join the group **and** opt in (`/get` explains both steps) |
+
+Back up the keystore + `keystore.properties` off this Mac: losing the
+upload key means a Play Console key-reset request (days).
+
+### Steps
+
+1. **Green suites:** `cd backend && pytest` · `npx jest` · `npx tsc --noEmit` · `npm run build`.
+2. **Bump** (build numbers only; marketing version only for a new public version — Part B):
+   - iOS: `CURRENT_PROJECT_VERSION` +1 in `ios/App/App.xcodeproj/project.pbxproj` (**2 occurrences**).
+   - Android: `versionCode` +1 in `android/app/build.gradle` (never reuse a code).
+3. **Commit + push** (pre-push hook runs `npm run build`).
+4. **iOS → TestFlight:** `bash ~/deploy_climbritz.sh <build>` — runs `build:mobile` + `cap sync ios` + archive + export + upload (~5–10 min; works from Claude Code's shell if the keychain is unlocked). Success = `UPLOAD SUCCEEDED` + a `Delivery UUID`. The script restores `project.pbxproj`/`Info.plist` from backup at the end — `git status` must be clean afterwards.
+5. **TestFlight external group:** App Store Connect → TestFlight → External Testing → **"Public Beta"** → Builds → **+** → pick the build. Skip it and the public link says "This beta isn't accepting any new testers".
+6. **Android AAB** (after step 4, so `out/` is fresh): `npx cap sync android && cd android && ./gradlew bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`.
+7. **Play Console:** Closed testing → Create release → upload AAB → Review release → **Start rollout** (upload alone ships nothing; ~up to 2h to reach testers).
+8. **Tag** `v<marketing>-build<N>`, add a row to `PROJECT_STATUS.md` (Delivery UUID), send the "what to test" notes.
+
+### Traps already paid for
+- `build:mobile` failing silently behind a `| tail` ships a stale `out/` (build 17). Check the exit code / grep the bundle for the new feature before syncing.
+- Local `main` behind `origin/main` (work pushed from another session) → the build ships without it. `git pull --ff-only` before bumping.
+
+---
+
 ## Part A — Pre-submission gate
 
 Everything here must be green *before* an archive is uploaded for review.
