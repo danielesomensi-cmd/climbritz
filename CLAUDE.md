@@ -161,7 +161,7 @@ climbritz/
 │   ├── classify/       page (cloud-synced; ✨ Review AI suggestions mode) · state · review (pure queue: 20 unclassified holds nearest the user's done ones) · ble-test/ (presets · board-preview)
 │   ├── play/           page (Add-On game) · game-state (pure reducer: setup → pickStarts → pick → climb → over; lives; optional feet mode; informative turn timer) · hold-pick (tap → nearest pickable hold) · led-commands · game-storage (localStorage resume + prefs)
 │   ├── arcade/         page (ARCADE-001 — full-screen iframe → /arcade/deadpoint.html?lang=en&embed=1, slim back header, no BottomNav)
-│   ├── settings/       page (Delete account: 2-step confirm, type-DELETE, clears web storage + Clerk signOut + hard redirect; Sounds toggle; Invite a friend: static QR `public/invite/get-qr.svg` → `climbritz.app/get` + Copy link, store-neutral copy. Reached in 1 tap via the ⚙️ next to the avatar on `/`)
+│   ├── settings/       page (Delete account: 2-step confirm, type-DELETE, clears web storage + Clerk signOut + hard redirect; Sounds toggle; Invite a friend: static QR `public/invite/get-qr.svg` → `climbritz.app/get` + Share (native sheet where `navigator.share` exists) + Copy link, store-neutral copy. Reached in 1 tap via the ⚙️ next to the avatar on `/`)
 │   ├── get/            page (public, no AuthGuard: smart install link — iOS `location.replace`s to TestFlight; Android stays and shows 2 steps (join tester Google Group → Play opt-in, which refuses non-members); desktop stays; URLs in `lib/installLinks.ts`; never redirects inside the native app)
 │   ├── board-map · videos/detail · privacy · debug
 │   ├── lib/            api.ts (Clerk JWT per call, 401-retry-once) · clerk.d.ts · grades.ts · angles.ts (shared board angles)
