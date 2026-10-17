@@ -12,10 +12,12 @@ export const INVITE_URL = 'https://climbritz.app/get';
 
 export const IOS_INSTALL_URL = 'https://testflight.apple.com/join/m61nAQ53';
 
-// Play closed-testing opt-in. No opt-in URL or Google Group is documented in
-// the repo (docs/, PROJECT_STATUS.md, ROADMAP_ACTIVE.md, android/), so this is
-// the standard Play pattern for package `app.climbritz` — confirm it against
-// Play Console → Testing → Closed testing → "Join on the web".
+// Play closed testing (track "Closed testing - Alpha"). Only members of the
+// Google Group can opt in, so Android is a two-step flow: join the group
+// (public — anyone with a Google account can join), then opt in.
+// Both URLs verified in Play Console → Closed testing → Testers on 2026-10-17
+// ("Join on the web" link + testers list = climbritz-testers@googlegroups.com).
+export const ANDROID_GROUP_URL = 'https://groups.google.com/g/climbritz-testers';
 export const ANDROID_INSTALL_URL = 'https://play.google.com/apps/testing/app.climbritz';
 
 export type Platform = 'ios' | 'android' | 'other';
@@ -33,13 +35,16 @@ export function detectPlatform(ua: string, maxTouchPoints = 0): Platform {
   return 'other';
 }
 
-/** Install page for a platform; `null` when there is nothing to redirect to. */
+/**
+ * Where /get auto-redirects a platform; `null` = stay on the page.
+ *
+ * Android stays on /get on purpose: the Play opt-in page refuses anyone who is
+ * not yet in the tester Google Group, so the page shows the two steps instead.
+ */
 export function installUrlFor(platform: Platform): string | null {
   switch (platform) {
     case 'ios':
       return IOS_INSTALL_URL;
-    case 'android':
-      return ANDROID_INSTALL_URL;
     default:
       return null;
   }

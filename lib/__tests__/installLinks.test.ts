@@ -1,4 +1,5 @@
 import {
+  ANDROID_GROUP_URL,
   ANDROID_INSTALL_URL,
   INVITE_URL,
   IOS_INSTALL_URL,
@@ -52,9 +53,14 @@ describe('detectPlatform', () => {
 });
 
 describe('installUrlFor', () => {
-  it('maps each platform to its install page', () => {
+  it('auto-redirects iOS only; Android stays on /get for the group step', () => {
     expect(installUrlFor('ios')).toBe(IOS_INSTALL_URL);
-    expect(installUrlFor('android')).toBe(ANDROID_INSTALL_URL);
+    expect(installUrlFor('android')).toBeNull();
+  });
+
+  it('pins the verified Android URLs', () => {
+    expect(ANDROID_GROUP_URL).toBe('https://groups.google.com/g/climbritz-testers');
+    expect(ANDROID_INSTALL_URL).toBe('https://play.google.com/apps/testing/app.climbritz');
   });
 
   it('returns null for other (no redirect on desktop)', () => {

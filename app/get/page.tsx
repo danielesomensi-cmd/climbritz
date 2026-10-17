@@ -5,7 +5,9 @@
 //
 // - Public: no AuthGuard (like /privacy). Static route, no dynamic segment,
 //   no next/image — Capacitor static-export safe.
-// - On mount: iPhone/iPad → TestFlight, Android → Play, desktop → stay here.
+// - On mount: iPhone/iPad → TestFlight. Android and desktop stay here: Play's
+//   opt-in refuses non-members of the tester Google Group, so Android gets
+//   the two steps (join group → opt in) on the page.
 // - Never redirects inside the native app: the route ships in the static
 //   bundle too and must not yank the WebView off to an install page.
 // - The buttons are plain <a> links pre-rendered into the HTML, so the page
@@ -18,6 +20,7 @@ import { Capacitor } from '@capacitor/core';
 import AuthShell from '@/components/AuthShell';
 import { PRESSABLE_CLASSES } from '@/components/ui/pressable';
 import {
+  ANDROID_GROUP_URL,
   ANDROID_INSTALL_URL,
   IOS_INSTALL_URL,
   detectPlatform,
@@ -62,13 +65,29 @@ export default function GetPage() {
         <p className="mt-2 text-center text-sm text-text-tertiary">
           Install the free TestFlight app first, then tap Accept → Install.
         </p>
+        <p className="mt-8 text-center text-sm font-semibold text-text-secondary">
+          On Android — two quick steps
+        </p>
+        <a
+          href={ANDROID_GROUP_URL}
+          data-testid="get-android-group-link"
+          className={`${LINK_BUTTON_CLASSES} mt-2`}
+        >
+          1 · Join the tester group
+        </a>
+        <p className="mt-2 text-center text-sm text-text-tertiary">
+          Sign in with your Google account and tap Join group.
+        </p>
         <a
           href={ANDROID_INSTALL_URL}
           data-testid="get-android-link"
-          className={`${LINK_BUTTON_CLASSES} mt-6`}
+          className={`${LINK_BUTTON_CLASSES} mt-4`}
         >
-          Get it on Android
+          2 · Get it on Android
         </a>
+        <p className="mt-2 text-center text-sm text-text-tertiary">
+          Tap Become a tester, then Download it on Google Play.
+        </p>
       </div>
     </AuthShell>
   );

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { ANDROID_INSTALL_URL, IOS_INSTALL_URL } from '@/lib/installLinks';
+import { ANDROID_GROUP_URL, ANDROID_INSTALL_URL, IOS_INSTALL_URL } from '@/lib/installLinks';
 
 let mockNative = false;
 jest.mock('@capacitor/core', () => ({
@@ -52,10 +52,10 @@ describe('/get — smart install link (A032)', () => {
     expect(replaceMock).toHaveBeenCalledWith(IOS_INSTALL_URL);
   });
 
-  it('redirects an Android phone to the Android install page', () => {
+  it('keeps an Android phone on the page (group join must come first)', () => {
     setDevice(UA.android, 5);
     render(<GetPage />);
-    expect(replaceMock).toHaveBeenCalledWith(ANDROID_INSTALL_URL);
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 
   it('stays on the page on desktop', () => {
@@ -79,7 +79,11 @@ describe('/get — smart install link (A032)', () => {
       'href',
       IOS_INSTALL_URL,
     );
-    expect(screen.getByRole('link', { name: 'Get it on Android' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '1 · Join the tester group' })).toHaveAttribute(
+      'href',
+      ANDROID_GROUP_URL,
+    );
+    expect(screen.getByRole('link', { name: '2 · Get it on Android' })).toHaveAttribute(
       'href',
       ANDROID_INSTALL_URL,
     );
