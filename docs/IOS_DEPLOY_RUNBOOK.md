@@ -47,6 +47,13 @@
    + `ROADMAP_ACTIVE.md` for the build.
 6. **Apple processing** takes ~10–45 min before the build shows as
    "Ready to Test" in TestFlight.
+7. **Distribute to external testers.** App Store Connect → TestFlight → External
+   Testing → group **"Public Beta"** → Builds → **+** → pick the new build →
+   What to Test → Submit. The first build of a **new marketing version**
+   (e.g. 1.0.0 → 1.1.0) goes through **Beta App Review** (usually < 24h). Until a
+   build is approved in this group, the public link shows "This beta isn't
+   accepting any new testers". Internal testers (Daniele) see every build
+   immediately, which hides the problem. Builds expire after **90 days**.
 
 The export-compliance prompt is auto-resolved by `ITSAppUsesNonExemptEncryption=false`
 in `ios/App/App/Info.plist` — no manual "Missing Compliance" click expected (true since build 3).
@@ -62,6 +69,7 @@ in `ios/App/App/Info.plist` — no manual "Missing Compliance" click expected (t
 | `Team: Unknown Name (KSD2RSAZP2)` shown **in red** in Signing & Capabilities | Same root cause — no account logged into Xcode | Add the account (as above) |
 | Build worked before but **fails now** | **Distribution cert expired** (~12-month lifetime) | Regenerate: Manage Certificates → `+` → Apple Distribution |
 | `altool` **rejects the app-specific password** | Password revoked/invalidated by Apple | Generate a fresh one at `appleid.apple.com` → update the `APP_PASSWORD` line in `~/deploy_climbritz.sh` |
+| Public TestFlight link (`climbritz.app/get` → TestFlight) shows **"This beta isn't accepting any new testers"**, while Daniele (internal tester) installs fine | No build is approved in the external **"Public Beta"** group: the new build was never added to it, it is still in Beta App Review (first build of a new marketing version), or the last added build expired (90 days) | Standard flow step 7: External Testing → "Public Beta" → Builds → **+** → pick the build → Submit; wait for Beta App Review approval |
 
 ---
 
