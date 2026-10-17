@@ -11,7 +11,7 @@
 //
 // Capacitor-safe: static route (no dynamic segment), SPA nav, no next/image.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { deleteAccount } from '@/app/lib/api';
 import AuthGuard from '@/components/AuthGuard';
@@ -19,8 +19,90 @@ import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/ui/PageHeader';
 import Button from '@/components/ui/Button';
 import { isSoundEnabled, playCue, setSoundEnabled, unlockAudio } from '@/lib/feedback/sound';
+import { INVITE_URL } from '@/lib/installLinks';
 
 const CONFIRM_WORD = 'DELETE';
+
+// A032 — shown under the QR; the copy button copies the full https URL.
+const INVITE_LABEL = INVITE_URL.replace(/^https:\/\//, '');
+
+// A032 — Invite a friend. The QR is a static asset (public/invite/get-qr.svg,
+// generated once from INVITE_URL) so there is no runtime QR dependency. It sits
+// on a white card in every theme so phone cameras can read it.
+// Copy stays store-neutral (App Store Guideline 2.2): where /get sends people
+// is a web-side decision, never described in the app.
+function InviteSection() {
+  const [copied, setCopied] = useState(false);
+  const linkRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(t);
+  }, [copied]);
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(INVITE_URL);
+      setCopied(true);
+    } catch {
+      // No clipboard (insecure context / permission denied / old WebView):
+      // select the link text so a long-press copy is one step away.
+      const el = linkRef.current;
+      const selection = typeof window !== 'undefined' ? window.getSelection() : null;
+      if (el && selection) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  }
+
+  return (
+    <section data-testid="settings-invite">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-text-tertiary">
+        Invite a friend
+      </h2>
+      <div className="mt-3 flex flex-col items-center rounded-card border border-border-default p-4">
+        <div className="rounded-card bg-white p-4">
+          {/* Plain <img> instead of next/image — works in Capacitor static export */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/invite/get-qr.svg"
+            alt="QR code to get Climbritz"
+            width={220}
+            height={220}
+            data-testid="settings-invite-qr"
+            className="block h-[220px] w-[220px]"
+          />
+        </div>
+        <p className="mt-4 text-center text-sm text-text-secondary">
+          Scan with your phone camera to get Climbritz.
+        </p>
+        <div className="mt-3 flex w-full items-center justify-between gap-3">
+          <span
+            ref={linkRef}
+            data-testid="settings-invite-link"
+            className="select-text font-medium text-text-primary"
+          >
+            {INVITE_LABEL}
+          </span>
+          <Button
+            variant="secondary"
+            data-testid="settings-invite-copy"
+            onClick={copyLink}
+          >
+            {copied ? 'Copied' : 'Copy link'}
+          </Button>
+        </div>
+        <span aria-live="polite" className="sr-only">
+          {copied ? 'Link copied' : ''}
+        </span>
+      </div>
+    </section>
+  );
+}
 
 export default function SettingsPage() {
   return (
@@ -160,6 +242,8 @@ function SettingsPageInner() {
             </li>
           </ul>
         </section>
+
+        <InviteSection />
 
         <section>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-text-tertiary">

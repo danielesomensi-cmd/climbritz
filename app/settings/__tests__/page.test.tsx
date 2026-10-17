@@ -153,3 +153,67 @@ describe('Settings — Sounds toggle (NATIVE-001)', () => {
     expect(localStorage.getItem('climbritz.sound.enabled')).toBeNull();
   });
 });
+
+describe('Settings — Invite a friend (A032)', () => {
+  const realClipboard = navigator.clipboard;
+
+  afterEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: realClipboard,
+      configurable: true,
+    });
+  });
+
+  function mockClipboard(writeText: jest.Mock) {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+  }
+
+  it('renders the invite section with the static QR asset', () => {
+    render(<SettingsPage />);
+    const section = screen.getByTestId('settings-invite');
+    expect(section).toHaveTextContent('Invite a friend');
+    expect(section).toHaveTextContent('Scan with your phone camera to get Climbritz.');
+    const qr = screen.getByAltText('QR code to get Climbritz');
+    expect(qr.tagName).toBe('IMG');
+    expect(qr).toHaveAttribute('src', '/invite/get-qr.svg');
+    expect(screen.getByTestId('settings-invite-link')).toHaveTextContent('climbritz.app/get');
+  });
+
+  it('sits above the Account section', () => {
+    render(<SettingsPage />);
+    const invite = screen.getByTestId('settings-invite');
+    const del = screen.getByTestId('delete-account-button');
+    expect(
+      invite.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('keeps the copy store-neutral (Guideline 2.2)', () => {
+    render(<SettingsPage />);
+    expect(screen.getByTestId('settings-invite').textContent).not.toMatch(
+      /beta|testflight|testing/i,
+    );
+  });
+
+  it('copies the full invite URL and confirms inline', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByTestId('settings-invite-copy'));
+    expect(writeText).toHaveBeenCalledWith('https://climbritz.app/get');
+    await waitFor(() =>
+      expect(screen.getByTestId('settings-invite-copy')).toHaveTextContent('Copied'),
+    );
+  });
+
+  it('selects the link text when the clipboard is unavailable', async () => {
+    mockClipboard(jest.fn().mockRejectedValue(new Error('denied')));
+    render(<SettingsPage />);
+    fireEvent.click(screen.getByTestId('settings-invite-copy'));
+    await waitFor(() => expect(window.getSelection()?.toString()).toBe('climbritz.app/get'));
+    expect(screen.getByTestId('settings-invite-copy')).toHaveTextContent('Copy link');
+  });
+});
