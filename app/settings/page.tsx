@@ -33,7 +33,15 @@ const INVITE_LABEL = INVITE_URL.replace(/^https:\/\//, '');
 // is a web-side decision, never described in the app.
 function InviteSection() {
   const [copied, setCopied] = useState(false);
+  // Native share sheet (WhatsApp, Messages, …) where the WebView exposes the
+  // Web Share API (iOS WKWebView, mobile Safari/Chrome). Android's WebView
+  // doesn't — Copy link alone there. Detected after mount (static export).
+  const [canShare, setCanShare] = useState(false);
   const linkRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+  }, []);
 
   useEffect(() => {
     if (!copied) return;
@@ -56,6 +64,18 @@ function InviteSection() {
         selection.removeAllRanges();
         selection.addRange(range);
       }
+    }
+  }
+
+  async function shareLink() {
+    try {
+      await navigator.share({
+        title: 'Climbritz',
+        text: 'Try Climbritz for the Kilter Board',
+        url: INVITE_URL,
+      });
+    } catch {
+      // User dismissed the sheet (AbortError) or share failed — nothing to do.
     }
   }
 
@@ -88,13 +108,20 @@ function InviteSection() {
           >
             {INVITE_LABEL}
           </span>
-          <Button
-            variant="secondary"
-            data-testid="settings-invite-copy"
-            onClick={copyLink}
-          >
-            {copied ? 'Copied' : 'Copy link'}
-          </Button>
+          <div className="flex gap-2">
+            {canShare && (
+              <Button data-testid="settings-invite-share" onClick={shareLink}>
+                Share
+              </Button>
+            )}
+            <Button
+              variant="secondary"
+              data-testid="settings-invite-copy"
+              onClick={copyLink}
+            >
+              {copied ? 'Copied' : 'Copy link'}
+            </Button>
+          </div>
         </div>
         <span aria-live="polite" className="sr-only">
           {copied ? 'Link copied' : ''}

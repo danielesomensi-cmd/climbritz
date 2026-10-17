@@ -216,4 +216,39 @@ describe('Settings — Invite a friend (A032)', () => {
     await waitFor(() => expect(window.getSelection()?.toString()).toBe('climbritz.app/get'));
     expect(screen.getByTestId('settings-invite-copy')).toHaveTextContent('Copy link');
   });
+
+  it('hides Share where the Web Share API is missing (Android WebView)', () => {
+    render(<SettingsPage />);
+    expect(screen.queryByTestId('settings-invite-share')).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-invite-copy')).toBeInTheDocument();
+  });
+
+  it('opens the native share sheet with the invite URL when available', async () => {
+    const share = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+    try {
+      render(<SettingsPage />);
+      fireEvent.click(await screen.findByTestId('settings-invite-share'));
+      await waitFor(() =>
+        expect(share).toHaveBeenCalledWith(
+          expect.objectContaining({ url: 'https://climbritz.app/get' }),
+        ),
+      );
+    } finally {
+      delete (navigator as unknown as { share?: unknown }).share;
+    }
+  });
+
+  it('swallows a dismissed share sheet', async () => {
+    const share = jest.fn().mockRejectedValue(new DOMException('x', 'AbortError'));
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+    try {
+      render(<SettingsPage />);
+      fireEvent.click(await screen.findByTestId('settings-invite-share'));
+      await waitFor(() => expect(share).toHaveBeenCalled());
+      expect(screen.getByTestId('settings-invite')).toBeInTheDocument();
+    } finally {
+      delete (navigator as unknown as { share?: unknown }).share;
+    }
+  });
 });
