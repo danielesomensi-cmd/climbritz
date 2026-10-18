@@ -21,26 +21,36 @@ export const KILTER_BOARD_UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcc
 // Nordic UART TX characteristic — write target for LED packets.
 export const KILTER_BOARD_WRITE_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
-// Pacing delay between consecutive BLE chunk writes (ms).
-// writeWithoutResponse has no flow control: firing all chunks back-to-back
-// overruns the board's UART buffer on large payloads (e.g. the 476-LED
-// diagnostic ≈ 78 chunks) → the board silently drops packets and only half
-// the board lights up, or a congested write trips the plugin's 5s timeout.
-// A short gap lets the board drain between writes. ~6 chunks for a normal
-// climb → imperceptible (~110ms); the full board → ~1.5s.
+// Pacing delay between consecutive BLE chunk writes (ms), without-response
+// path. writeWithoutResponse has no flow control: firing all chunks
+// back-to-back overruns the board's UART buffer on large payloads (e.g. the
+// 476-LED diagnostic ≈ 78 chunks) → the board silently drops packets and only
+// half the board lights up, or a congested write trips the plugin's 5s
+// timeout. A short gap lets the board drain between writes. ~6 chunks for a
+// normal climb → imperceptible (~110ms); the full board → ~1.5s.
 const CHUNK_PACING_MS = 18;
+
+// Pacing on the with-response path: the official Kilter app writes every
+// chunk with response, 100 ms apart (Boardsesh does the same for the
+// Kilter-built box). A climb is 2–3 chunks → still well under half a second.
+const WITH_RESPONSE_PACING_MS = 100;
 
 // Upper bound for the advertised-name scan run when the picked device's name
 // has no "@<apiLevel>" suffix. Stops as soon as the board is seen (usually
 // well under a second).
 const ADVERTISED_NAME_SCAN_MS = 2500;
 
-// Used whenever no name carries an explicit "@<level>" suffix. The official app
-// reads a missing suffix as level 2, but level 3 is what boards speak in
-// practice (Climbdex / Boardsesh send only v3), and a suffix-less name on iOS
-// is usually just the cached GAP name of an API 3 board. Only an explicit
-// "@2" / "@1" selects the v2 encoding.
+// Used only when the board exposes no name at all. A name without "@<level>"
+// is API level 2 — the official app's rule, and the signature of the newer
+// Kilter-built LED box, which advertises a bare "Kilter Board" (no serial, no
+// level).
 const DEFAULT_API_LEVEL = 3;
+
+// How LED chunks are written. The Kilter-built box's write characteristic
+// supports only write-with-response; iOS silently DROPS a write-without-
+// response to such a characteristic (no error), so nothing lights. Picked per
+// device from the characteristic's properties on connect.
+export type WriteMode = 'withResponse' | 'withoutResponse';
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -55,6 +65,79 @@ export interface ConnectedKilterBoard {
 // Per-device caches (keyed by deviceId)
 const apiLevelCache = new Map<string, number>();
 const nameCache = new Map<string, string>();
+const writeModeCache = new Map<string, WriteMode>();
+
+// What the app saw on connect + the outcome of the last write, for the
+// /ble-test diagnostics panel (field debugging without a Mac attached).
+export interface LastWrite {
+  ok: boolean;
+  apiLevel: number;
+  writeMode: WriteMode;
+  chunks: number;
+  ms: number;
+  error?: string;
+}
+
+export interface BleDiagnostics {
+  pickedName: string | null;
+  advertisedName: string | null;
+  apiLevel: number;
+  writeMode: WriteMode;
+  /** Properties of the UART write characteristic, or why they are unknown. */
+  writeProps: string;
+  lastWrite: LastWrite | null;
+}
+
+const connectInfoCache = new Map<
+  string,
+  { pickedName: string | null; advertisedName: string | null; writeProps: string }
+>();
+const lastWriteCache = new Map<string, LastWrite>();
+
+/**
+ * Without-response only when the write characteristic advertises it; any
+ * doubt → with-response, which every box accepts (the official app uses it
+ * unconditionally).
+ */
+async function detectWriteMode(deviceId: string): Promise<{ mode: WriteMode; props: string }> {
+  try {
+    const services = await transport.getServices(deviceId);
+    const uart = services.find((s) => s.uuid.toLowerCase() === KILTER_BOARD_UART_SERVICE_UUID);
+    const char = uart?.characteristics.find(
+      (c) => c.uuid.toLowerCase() === KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
+    );
+    if (!char) {
+      const found = services.map((s) => s.uuid).join(', ') || 'none';
+      return { mode: 'withResponse', props: `write characteristic not found (services: ${found})` };
+    }
+    const props = Object.entries(char.properties)
+      .filter(([, on]) => on)
+      .map(([k]) => k)
+      .join(', ');
+    return {
+      mode: char.properties.writeWithoutResponse ? 'withoutResponse' : 'withResponse',
+      props: props || 'none',
+    };
+  } catch (err) {
+    return { mode: 'withResponse', props: `lookup failed: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export function getBleDiagnostics(deviceId: string): BleDiagnostics | null {
+  const info = connectInfoCache.get(deviceId);
+  if (!info) return null;
+  return {
+    ...info,
+    apiLevel: apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL,
+    writeMode: writeModeCache.get(deviceId) ?? 'withResponse',
+    lastWrite: lastWriteCache.get(deviceId) ?? null,
+  };
+}
+
+/** Manual write-mode override (diagnostics). Applies to the next writes. */
+export function setWriteMode(deviceId: string, mode: WriteMode): void {
+  writeModeCache.set(deviceId, mode);
+}
 
 export async function connectToKilterBoard(
   onDisconnect: () => void,
@@ -67,6 +150,7 @@ export async function connectToKilterBoard(
   // suffix) → read the live advertisement. Must run before connecting: the
   // plugin's scan skips peripherals that are already connected.
   let resolvedName = device.name ?? null;
+  let advertisedName: string | null = null;
   let apiLevel = DEFAULT_API_LEVEL;
   if (resolvedName && hasApiLevelSuffix(resolvedName)) {
     apiLevel = parseApiLevel(resolvedName);
@@ -76,40 +160,80 @@ export async function connectToKilterBoard(
       [KILTER_BOARD_SERVICE_UUID],
       ADVERTISED_NAME_SCAN_MS,
     );
+    advertisedName = advertised;
     if (advertised) resolvedName = advertised;
-    if (advertised && hasApiLevelSuffix(advertised)) apiLevel = parseApiLevel(advertised);
+    // Bare name (no "@N") → level 2: official-app rule, Kilter-built box.
+    if (resolvedName) apiLevel = parseApiLevel(resolvedName);
   }
 
   await transport.connect(device.deviceId, onDisconnect);
+  const { mode: writeMode, props: writeProps } = await detectWriteMode(device.deviceId);
 
   const name = resolvedName ?? 'Kilter Board';
   apiLevelCache.set(device.deviceId, apiLevel);
   nameCache.set(device.deviceId, name);
+  writeModeCache.set(device.deviceId, writeMode);
+  connectInfoCache.set(device.deviceId, { pickedName: device.name ?? null, advertisedName, writeProps });
+  lastWriteCache.delete(device.deviceId);
+  console.log(`[BLE] connected → device="${name}" apiLevel=${apiLevel} write=${writeMode} props=[${writeProps}]`);
 
   return { deviceId: device.deviceId, name, apiLevel };
+}
+
+/**
+ * Manual protocol override (user toggle): the API level is inferred from the
+ * board name, and a wrong guess makes the board silently ignore every packet.
+ * Applies to the next writes.
+ */
+export function setApiLevel(deviceId: string, apiLevel: number): void {
+  apiLevelCache.set(deviceId, apiLevel);
 }
 
 export async function disconnectFromKilterBoard(deviceId: string): Promise<void> {
   apiLevelCache.delete(deviceId);
   nameCache.delete(deviceId);
+  writeModeCache.delete(deviceId);
+  connectInfoCache.delete(deviceId);
+  lastWriteCache.delete(deviceId);
   await transport.disconnect(deviceId);
 }
 
 /**
- * Write chunks to the board's UART TX characteristic, pacing consecutive
- * writes so large payloads don't overrun the board (see CHUNK_PACING_MS).
+ * Write chunks to the board's UART TX characteristic with the device's write
+ * mode, pacing consecutive writes so large payloads don't overrun the board.
  */
 async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void> {
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-    await transport.writeWithoutResponse(
-      deviceId,
-      KILTER_BOARD_UART_SERVICE_UUID,
-      KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
-      dataView,
-    );
-    if (i < chunks.length - 1) await delay(CHUNK_PACING_MS);
+  const writeMode = writeModeCache.get(deviceId) ?? 'withResponse';
+  const withResponse = writeMode === 'withResponse';
+  const write = withResponse ? transport.write : transport.writeWithoutResponse;
+  const pacing = withResponse ? WITH_RESPONSE_PACING_MS : CHUNK_PACING_MS;
+  const record: LastWrite = {
+    ok: false,
+    apiLevel: apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL,
+    writeMode,
+    chunks: chunks.length,
+    ms: 0,
+  };
+  const started = Date.now();
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+      await write(
+        deviceId,
+        KILTER_BOARD_UART_SERVICE_UUID,
+        KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
+        dataView,
+      );
+      if (i < chunks.length - 1) await delay(pacing);
+    }
+    record.ok = true;
+  } catch (err) {
+    record.error = err instanceof Error ? err.message : String(err);
+    throw err;
+  } finally {
+    record.ms = Date.now() - started;
+    lastWriteCache.set(deviceId, record);
   }
 }
 

@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useBle } from '@/components/BleProvider';
 import { PRESETS } from './presets';
 import { BoardPreview } from './board-preview';
+import { DiagnosticsPanel } from './diagnostics-panel';
 import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
+import BleProtocolToggle from '@/components/BleProtocolToggle';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import PageHeader from '@/components/ui/PageHeader';
@@ -104,9 +106,7 @@ function BleTestContent() {
             {connectedDevice && (
               <div className="text-xs text-text-tertiary truncate">
                 {connectedDevice.name}
-                {connectedDevice.apiLevel && (
-                  <span className="ml-1 text-text-muted">API v{connectedDevice.apiLevel}</span>
-                )}
+                <BleProtocolToggle />
               </div>
             )}
           </div>
@@ -155,6 +155,10 @@ function BleTestContent() {
               &times;
             </button>
           </div>
+        )}
+
+        {isConnected && (
+          <DiagnosticsPanel holds={activeHolds.length > 0 ? activeHolds : PRESETS[0].holds} />
         )}
 
         {/* Illumina board button */}

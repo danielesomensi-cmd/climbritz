@@ -1,11 +1,15 @@
-// API level resolution on connect + level-aware LED writes.
-// Regression: iOS returned the cached GAP name "Kilter Board" (no "@3") on
-// reconnect → the app treated an API 3 board as API 2 and refused every write.
+// API level resolution + write mode on connect, level-aware LED writes.
+// Regressions: (1) iOS returns the cached GAP name on reconnect → read the
+// advertised name; (2) the Kilter-built LED box (bare name "Kilter Board",
+// API 2) only supports write-with-response, and iOS silently drops
+// write-without-response to it → nothing lit with either encoding.
 
 const requestDeviceMock = jest.fn();
 const scanForLocalNameMock = jest.fn();
 const connectMock = jest.fn();
 const writeMock = jest.fn();
+const writeNoRespMock = jest.fn();
+const getServicesMock = jest.fn();
 
 jest.mock('../transport', () => ({
   initialize: jest.fn(() => Promise.resolve()),
@@ -13,14 +17,28 @@ jest.mock('../transport', () => ({
   scanForLocalName: (...args: unknown[]) => scanForLocalNameMock(...args),
   connect: (...args: unknown[]) => connectMock(...args),
   disconnect: jest.fn(() => Promise.resolve()),
-  writeWithoutResponse: (...args: unknown[]) => writeMock(...args),
+  write: (...args: unknown[]) => writeMock(...args),
+  writeWithoutResponse: (...args: unknown[]) => writeNoRespMock(...args),
+  getServices: (...args: unknown[]) => getServicesMock(...args),
 }));
+
+const UART = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+const WRITE_CHAR = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+/** GATT table with the UART write characteristic and the given properties. */
+function servicesWith(props: { write: boolean; writeWithoutResponse: boolean }) {
+  return [
+    {
+      uuid: UART.toUpperCase(),
+      characteristics: [{ uuid: WRITE_CHAR.toUpperCase(), properties: props, descriptors: [] }],
+    },
+  ];
+}
 
 import { connectToKilterBoard, sendLEDPreset } from '../kilter-board-service';
 
 /** Packet marker of the first written chunk (byte after the 4-byte header). */
-function firstMarker(): number {
-  const view = writeMock.mock.calls[0][3] as DataView;
+function firstMarker(mock: jest.Mock = writeMock): number {
+  const view = mock.mock.calls[0][3] as DataView;
   return view.getUint8(4);
 }
 
@@ -29,6 +47,9 @@ beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   connectMock.mockResolvedValue(undefined);
   writeMock.mockResolvedValue(undefined);
+  writeNoRespMock.mockResolvedValue(undefined);
+  // Default: Kilter-built box — write-with-response only.
+  getServicesMock.mockResolvedValue(servicesWith({ write: true, writeWithoutResponse: false }));
 });
 
 test('name with @3 suffix → API 3, no extra scan', async () => {
@@ -53,14 +74,35 @@ test('cached GAP name without suffix → advertised name wins (iOS reconnect)', 
   expect(firstMarker()).toBe(84); // 'T' — API 3
 });
 
-test('no suffix anywhere → API 3 (v3 packets), not a guessed level 2', async () => {
+test('Kilter-built box: bare "Kilter Board" → API 2 + write WITH response', async () => {
   requestDeviceMock.mockResolvedValue({ deviceId: 'e', name: 'Kilter Board' });
   scanForLocalNameMock.mockResolvedValue('Kilter Board');
   const board = await connectToKilterBoard(() => {});
-  expect(board).toEqual({ deviceId: 'e', name: 'Kilter Board', apiLevel: 3 });
+  expect(board).toEqual({ deviceId: 'e', name: 'Kilter Board', apiLevel: 2 });
 
   await sendLEDPreset('e', [{ position: 1, role_id: 12 }]);
-  expect(firstMarker()).toBe(84); // 'T' — API 3
+  expect(writeNoRespMock).not.toHaveBeenCalled();
+  expect(firstMarker()).toBe(80); // 'P' — API 2
+});
+
+test('characteristic with write-without-response → keeps the no-response path', async () => {
+  requestDeviceMock.mockResolvedValue({ deviceId: 'f', name: 'Gym Board#42@3' });
+  getServicesMock.mockResolvedValue(servicesWith({ write: true, writeWithoutResponse: true }));
+  await connectToKilterBoard(() => {});
+
+  await sendLEDPreset('f', [{ position: 1, role_id: 12 }]);
+  expect(writeMock).not.toHaveBeenCalled();
+  expect(firstMarker(writeNoRespMock)).toBe(84); // 'T' — API 3
+});
+
+test('GATT lookup failing → falls back to write with response', async () => {
+  requestDeviceMock.mockResolvedValue({ deviceId: 'g', name: 'Gym Board@3' });
+  getServicesMock.mockRejectedValue(new Error('not discovered'));
+  await connectToKilterBoard(() => {});
+
+  await sendLEDPreset('g', [{ position: 1, role_id: 12 }]);
+  expect(writeMock).toHaveBeenCalled();
+  expect(writeNoRespMock).not.toHaveBeenCalled();
 });
 
 test('explicit @2 in the advertised name → API 2 board, v2 packets', async () => {

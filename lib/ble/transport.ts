@@ -3,7 +3,7 @@
 // characteristic UUID, connect, disconnect. Kilter-specific logic lives in
 // kilter-board-service.ts.
 
-import { BleClient, type BleDevice } from '@capacitor-community/bluetooth-le';
+import { BleClient, type BleDevice, type BleService } from '@capacitor-community/bluetooth-le';
 import { Capacitor } from '@capacitor/core';
 
 let initialized = false;
@@ -65,6 +65,20 @@ export async function disconnect(deviceId: string): Promise<void> {
 // services. Used by the app-resume state sync (B035) — never connects.
 export async function getConnectedDevices(serviceUUIDs: string[]): Promise<BleDevice[]> {
   return BleClient.getConnectedDevices(serviceUUIDs);
+}
+
+export async function write(
+  deviceId: string,
+  service: string,
+  characteristic: string,
+  value: DataView,
+): Promise<void> {
+  await BleClient.write(deviceId, service, characteristic, value);
+}
+
+// GATT services discovered on connect (read from the plugin's cache).
+export async function getServices(deviceId: string): Promise<BleService[]> {
+  return BleClient.getServices(deviceId);
 }
 
 export async function writeWithoutResponse(

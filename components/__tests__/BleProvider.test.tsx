@@ -10,6 +10,7 @@ const connectToKilterBoardMock = jest.fn();
 const disconnectFromKilterBoardMock = jest.fn();
 const sendLEDPresetMock = jest.fn();
 const sendAllOffMock = jest.fn();
+const setApiLevelMock = jest.fn();
 
 jest.mock('@/lib/ble/kilter-board-service', () => ({
   KILTER_BOARD_SERVICE_UUID: 'kilter-service-uuid',
@@ -17,6 +18,7 @@ jest.mock('@/lib/ble/kilter-board-service', () => ({
   disconnectFromKilterBoard: (...args: unknown[]) => disconnectFromKilterBoardMock(...args),
   sendLEDPreset: (...args: unknown[]) => sendLEDPresetMock(...args),
   sendAllOff: (...args: unknown[]) => sendAllOffMock(...args),
+  setApiLevel: (...args: unknown[]) => setApiLevelMock(...args),
 }));
 
 const getConnectedDevicesMock = jest.fn();
@@ -70,6 +72,7 @@ async function connectVia(label: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  window.localStorage.clear();
   mockIsNative = true;
   resumeHandler = null;
   transportOnDisconnect = null;
@@ -256,5 +259,45 @@ describe('BleProvider — non-native web build', () => {
     await waitFor(() => expect(screen.getByTestId('status')).toHaveTextContent('error'));
     expect(screen.getByTestId('error')).toHaveTextContent('This feature requires the Climbritz app.');
     expect(connectToKilterBoardMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('BleProvider — protocol override (API v2 ⇄ v3 toggle)', () => {
+  function ProtocolConsumer() {
+    const { connectedDevice, connect, setProtocol } = useBle();
+    return (
+      <div>
+        <span data-testid="api">{connectedDevice?.apiLevel ?? 'none'}</span>
+        <button onClick={() => void connect()}>connect</button>
+        <button onClick={() => setProtocol(2)}>use-v2</button>
+      </div>
+    );
+  }
+
+  it('switches the encoding, updates consumers and persists per device', async () => {
+    render(
+      <BleProvider>
+        <ProtocolConsumer />
+      </BleProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'connect' }));
+    await waitFor(() => expect(screen.getByTestId('api')).toHaveTextContent('3'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'use-v2' }));
+    expect(setApiLevelMock).toHaveBeenCalledWith('dev-1', 2);
+    expect(screen.getByTestId('api')).toHaveTextContent('2');
+    expect(window.localStorage.getItem('climbritz.ble.apiLevel.dev-1')).toBe('2');
+  });
+
+  it('a saved override is re-applied on the next connect', async () => {
+    window.localStorage.setItem('climbritz.ble.apiLevel.dev-1', '2');
+    render(
+      <BleProvider>
+        <ProtocolConsumer />
+      </BleProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'connect' }));
+    await waitFor(() => expect(screen.getByTestId('api')).toHaveTextContent('2'));
+    expect(setApiLevelMock).toHaveBeenCalledWith('dev-1', 2);
   });
 });

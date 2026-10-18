@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useBle } from '@/components/BleProvider';
+import BleProtocolToggle from '@/components/BleProtocolToggle';
 import type { EncoderHold } from '@/lib/ble/kilter-protocol';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -111,9 +112,7 @@ export default function ClimbBleControls({
           {connectedDevice && (
             <div className="text-xs text-text-muted truncate">
               {connectedDevice.name}
-              {connectedDevice.apiLevel != null && (
-                <span className="ml-1 text-zinc-600">API v{connectedDevice.apiLevel}</span>
-              )}
+              <BleProtocolToggle />
             </div>
           )}
         </div>

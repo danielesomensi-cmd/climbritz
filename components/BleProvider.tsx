@@ -32,6 +32,7 @@ import {
   disconnectFromKilterBoard,
   sendLEDPreset,
   sendAllOff,
+  setApiLevel,
   KILTER_BOARD_SERVICE_UUID,
   type ConnectedKilterBoard,
 } from '@/lib/ble/kilter-board-service';
@@ -57,11 +58,36 @@ export interface BleContextValue {
   disconnect: () => Promise<void>;
   sendLEDs: (holds: EncoderHold[]) => Promise<void>;
   sendAllOffLEDs: () => Promise<void>;
+  /** Force the packet encoding (API level 2 or 3) for the connected board. */
+  setProtocol: (apiLevel: number) => void;
   clearError: () => void;
   isCapacitorNative: boolean;
 }
 
 const BleContext = createContext<BleContextValue | null>(null);
+
+// Per-device protocol override chosen with the API toggle — survives
+// reconnects and app restarts. Storage can throw (private mode) → ignored.
+// Key renamed from build 26's `climbritz.ble.protocol.` so a v3 override saved
+// while the real fault was the write type (see writeChunks) is dropped.
+const PROTOCOL_KEY_PREFIX = 'climbritz.ble.apiLevel.';
+
+function readProtocolOverride(deviceId: string): number | null {
+  try {
+    const v = Number(window.localStorage.getItem(PROTOCOL_KEY_PREFIX + deviceId));
+    return v === 2 || v === 3 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeProtocolOverride(deviceId: string, apiLevel: number): void {
+  try {
+    window.localStorage.setItem(PROTOCOL_KEY_PREFIX + deviceId, String(apiLevel));
+  } catch {
+    // best-effort
+  }
+}
 
 export function BleProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<BleStatus>('idle');
@@ -101,8 +127,13 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     setStatus('requesting');
     try {
       setStatus('scanning');
-      const device = await connectToKilterBoard(handleDisconnected);
+      let device = await connectToKilterBoard(handleDisconnected);
       setStatus('connecting');
+      const override = readProtocolOverride(device.deviceId);
+      if (override !== null && override !== device.apiLevel) {
+        setApiLevel(device.deviceId, override);
+        device = { ...device, apiLevel: override };
+      }
       deviceIdRef.current = device.deviceId;
       setConnectedDevice(device);
       setStatus('connected');
@@ -175,6 +206,14 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     return next;
   }, []);
 
+  const setProtocol = useCallback((apiLevel: number) => {
+    const id = deviceIdRef.current;
+    if (!id) return;
+    setApiLevel(id, apiLevel);
+    writeProtocolOverride(id, apiLevel);
+    setConnectedDevice((d) => (d ? { ...d, apiLevel } : d));
+  }, []);
+
   // App-resume sync — STRICTLY READ-ONLY. iOS can silently kill the link
   // while the app is suspended without delivering onDisconnect until later;
   // on resume we ask the plugin which devices are actually connected and flip
@@ -231,6 +270,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       disconnect,
       sendLEDs,
       sendAllOffLEDs,
+      setProtocol,
       clearError,
       isCapacitorNative,
     }),
@@ -243,6 +283,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       disconnect,
       sendLEDs,
       sendAllOffLEDs,
+      setProtocol,
       clearError,
       isCapacitorNative,
     ],
