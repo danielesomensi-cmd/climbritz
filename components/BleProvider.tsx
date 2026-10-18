@@ -68,7 +68,9 @@ const BleContext = createContext<BleContextValue | null>(null);
 
 // Per-device protocol override chosen with the API toggle — survives
 // reconnects and app restarts. Storage can throw (private mode) → ignored.
-const PROTOCOL_KEY_PREFIX = 'climbritz.ble.protocol.';
+// Key renamed from build 26's `climbritz.ble.protocol.` so a v3 override saved
+// while the real fault was the write type (see writeChunks) is dropped.
+const PROTOCOL_KEY_PREFIX = 'climbritz.ble.apiLevel.';
 
 function readProtocolOverride(deviceId: string): number | null {
   try {

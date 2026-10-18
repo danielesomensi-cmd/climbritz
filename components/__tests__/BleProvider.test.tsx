@@ -286,11 +286,11 @@ describe('BleProvider — protocol override (API v2 ⇄ v3 toggle)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'use-v2' }));
     expect(setApiLevelMock).toHaveBeenCalledWith('dev-1', 2);
     expect(screen.getByTestId('api')).toHaveTextContent('2');
-    expect(window.localStorage.getItem('climbritz.ble.protocol.dev-1')).toBe('2');
+    expect(window.localStorage.getItem('climbritz.ble.apiLevel.dev-1')).toBe('2');
   });
 
   it('a saved override is re-applied on the next connect', async () => {
-    window.localStorage.setItem('climbritz.ble.protocol.dev-1', '2');
+    window.localStorage.setItem('climbritz.ble.apiLevel.dev-1', '2');
     render(
       <BleProvider>
         <ProtocolConsumer />
