@@ -15,13 +15,14 @@ jest.mock('next/navigation', () => ({
 
 const sendLEDs = jest.fn(() => Promise.resolve());
 const connect = jest.fn();
+const MOCK_BLE_DEFAULT = { status: 'idle', isCapacitorNative: false, lastError: null as string | null };
+let mockBle = { ...MOCK_BLE_DEFAULT };
 jest.mock('@/components/BleProvider', () => ({
   useBle: () => ({
-    status: 'idle',
+    ...mockBle,
     sendLEDs,
     sendAllOffLEDs: jest.fn(() => Promise.resolve()),
     connect,
-    isCapacitorNative: false,
   }),
 }));
 
@@ -72,6 +73,7 @@ let nowSpy: jest.SpyInstance<number, []>;
 beforeEach(() => {
   window.localStorage.clear();
   tapQueue.length = 0;
+  mockBle = { ...MOCK_BLE_DEFAULT };
   jest.clearAllMocks();
   clock = 1_000_000;
   nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => clock);
@@ -100,6 +102,39 @@ async function startTwoPlayerGame() {
 }
 
 describe('/play', () => {
+  it('connected: board chip re-sends the current holds (manual light up)', async () => {
+    mockBle = { ...MOCK_BLE_DEFAULT, status: 'connected', isCapacitorNative: true };
+    await startTwoPlayerGame();
+    const chip = screen.getByTestId('play-ble-chip');
+    expect(chip).toHaveTextContent('Light up');
+    sendLEDs.mockClear();
+    fireEvent.click(chip);
+    expect(sendLEDs).toHaveBeenCalledTimes(1);
+    expect((sendLEDs.mock.calls[0] as unknown[])[0]).toHaveLength(1); // the start hold
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('connected with a failed write: chip shows the failure and retries on tap', async () => {
+    mockBle = { status: 'connected', isCapacitorNative: true, lastError: 'write failed' };
+    await startTwoPlayerGame();
+    const chip = screen.getByTestId('play-ble-chip');
+    expect(chip).toHaveTextContent('LEDs failed · retry');
+    expect(chip).toHaveAttribute('title', 'write failed');
+    sendLEDs.mockClear();
+    fireEvent.click(chip);
+    expect(sendLEDs).toHaveBeenCalledTimes(1);
+  });
+
+  it('disconnected: chip connects, never sends', async () => {
+    mockBle = { ...MOCK_BLE_DEFAULT, isCapacitorNative: true };
+    await startTwoPlayerGame();
+    const chip = screen.getByTestId('play-ble-chip');
+    expect(chip).toHaveTextContent('tap to connect');
+    fireEvent.click(chip);
+    expect(connect).toHaveBeenCalledTimes(1);
+    expect(sendLEDs).not.toHaveBeenCalled();
+  });
+
   it('setup: lives default 1, sound off by default, Easy option, names required', async () => {
     await renderPage();
     expect(screen.getByTestId('play-lives-1')).toHaveAttribute('aria-pressed', 'true');

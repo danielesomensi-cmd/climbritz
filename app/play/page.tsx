@@ -163,25 +163,33 @@ function TurnTimer({ startedAt }: { startedAt: number | null }) {
   );
 }
 
-function BleChip() {
-  const { status, connect, isCapacitorNative } = useBle();
+// Disconnected → tap to connect. Connected (with a frame on screen) → tap to
+// re-send the current holds; a failed write shows here instead of failing
+// silently, and the same tap retries it.
+function BleChip({ onLightUp }: { onLightUp?: () => void }) {
+  const { status, connect, isCapacitorNative, lastError } = useBle();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   // Web: the game works on screen only — no board chip.
   if (!mounted || !isCapacitorNative) return null;
   const canConnect = status === 'idle' || status === 'error';
+  const canLightUp = status === 'connected' && onLightUp !== undefined;
   const busy = BUSY_STATUSES.includes(status);
+  let label = STATUS_LABELS[status];
+  if (canConnect) label = 'Board · tap to connect';
+  else if (canLightUp) label = lastError ? 'LEDs failed · retry' : '💡 Light up';
   return (
     <button
       type="button"
       data-testid="play-ble-chip"
       // Manual tap only — never auto-connect (gym etiquette).
-      onClick={canConnect ? () => void connect() : undefined}
+      onClick={canConnect ? () => void connect() : canLightUp ? onLightUp : undefined}
       disabled={busy}
+      title={lastError ?? undefined}
       className={`flex min-h-[44px] items-center gap-1.5 rounded-pill border border-border-strong px-3 text-xs text-zinc-300 ${PRESSABLE_CLASSES}`}
     >
-      <StatusDot status={status} className="!w-2.5 !h-2.5" />
-      {canConnect ? 'Board · tap to connect' : STATUS_LABELS[status]}
+      <StatusDot status={lastError && canLightUp ? 'error' : status} className="!w-2.5 !h-2.5" />
+      {label}
     </button>
   );
 }
@@ -517,6 +525,16 @@ export default function PlayPage() {
     }, BLE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [frameKey, isConnected, sendLEDs, sendAllOffLEDs]);
+
+  // Manual re-send of the current frame (chip tap): recovers a write that
+  // failed or a board someone else repainted. Supersedes any blink in flight.
+  const lightUp = () => {
+    const f = frameRef.current;
+    if (!f) return;
+    genRef.current++;
+    effectRef.current = null;
+    void (f.length === 0 ? sendAllOffLEDs() : sendLEDs(f));
+  };
 
   const turnOffBoard = () => {
     genRef.current++;
@@ -941,7 +959,7 @@ export default function PlayPage() {
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-page-title font-display">Start holds</h1>
               <div className="flex items-center gap-1">
-                <BleChip />
+                <BleChip onLightUp={lightUp} />
                 <SoundToggle />
               </div>
             </div>
@@ -1202,7 +1220,7 @@ export default function PlayPage() {
               <TurnTimer startedAt={game.turnStartedAt} />
             </span>
             <div className="flex items-center gap-1">
-              <BleChip />
+              <BleChip onLightUp={lightUp} />
               <SoundToggle />
               <div className="relative">
                 <button
