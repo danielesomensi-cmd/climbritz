@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 import type { BleStatus } from '@/components/BleProvider';
@@ -11,6 +11,7 @@ const sendAllOffMock = jest.fn().mockResolvedValue(undefined);
 const connectMock = jest.fn();
 const disconnectMock = jest.fn();
 const clearErrorMock = jest.fn();
+const setProtocolMock = jest.fn();
 
 let mockStatus: BleStatus = 'connected';
 let mockIsCapacitorNative = true;
@@ -26,6 +27,7 @@ jest.mock('@/components/BleProvider', () => ({
     sendLEDs: sendLEDsMock,
     sendAllOffLEDs: sendAllOffMock,
     clearError: clearErrorMock,
+    setProtocol: setProtocolMock,
     isCapacitorNative: mockIsCapacitorNative,
   }),
 }));
@@ -133,5 +135,15 @@ describe('ClimbBleControls — auto-send on climbKey change (A014)', () => {
     render(<ClimbBleControls ledCommands={[mkHold(10)]} climbKey="uuid-A" autoSendOnKeyChange />);
     expect(screen.queryByTestId('climb-ble-controls')).not.toBeInTheDocument();
     expect(screen.getByText(/installed Climbritz app/)).toBeInTheDocument();
+  });
+});
+
+describe('ClimbBleControls — protocol toggle', () => {
+  it('shows the API level and switches v3 → v2 on tap', () => {
+    render(<ClimbBleControls ledCommands={[mkHold(10)]} climbKey="uuid-A" />);
+    const toggle = screen.getByTestId('ble-protocol-toggle');
+    expect(toggle).toHaveTextContent('API v3');
+    fireEvent.click(toggle);
+    expect(setProtocolMock).toHaveBeenCalledWith(2);
   });
 });
