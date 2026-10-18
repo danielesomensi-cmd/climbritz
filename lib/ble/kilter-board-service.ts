@@ -35,8 +35,11 @@ const CHUNK_PACING_MS = 18;
 // well under a second).
 const ADVERTISED_NAME_SCAN_MS = 2500;
 
-// Used when the API level can't be read from any name: level 3 is by far the
-// most common, and on iOS a suffix-less name is often just the cached GAP name.
+// Used whenever no name carries an explicit "@<level>" suffix. The official app
+// reads a missing suffix as level 2, but level 3 is what boards speak in
+// practice (Climbdex / Boardsesh send only v3), and a suffix-less name on iOS
+// is usually just the cached GAP name of an API 3 board. Only an explicit
+// "@2" / "@1" selects the v2 encoding.
 const DEFAULT_API_LEVEL = 3;
 
 function delay(ms: number): Promise<void> {
@@ -73,11 +76,8 @@ export async function connectToKilterBoard(
       [KILTER_BOARD_SERVICE_UUID],
       ADVERTISED_NAME_SCAN_MS,
     );
-    if (advertised) {
-      resolvedName = advertised;
-      // Advertised name without suffix → level 2, same rule as the official app.
-      apiLevel = parseApiLevel(advertised);
-    }
+    if (advertised) resolvedName = advertised;
+    if (advertised && hasApiLevelSuffix(advertised)) apiLevel = parseApiLevel(advertised);
   }
 
   await transport.connect(device.deviceId, onDisconnect);

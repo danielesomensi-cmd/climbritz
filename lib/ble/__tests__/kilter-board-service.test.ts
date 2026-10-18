@@ -53,9 +53,19 @@ test('cached GAP name without suffix → advertised name wins (iOS reconnect)', 
   expect(firstMarker()).toBe(84); // 'T' — API 3
 });
 
-test('advertised name without suffix → genuine API 2 board, v2 packets', async () => {
+test('no suffix anywhere → API 3 (v3 packets), not a guessed level 2', async () => {
+  requestDeviceMock.mockResolvedValue({ deviceId: 'e', name: 'Kilter Board' });
+  scanForLocalNameMock.mockResolvedValue('Kilter Board');
+  const board = await connectToKilterBoard(() => {});
+  expect(board).toEqual({ deviceId: 'e', name: 'Kilter Board', apiLevel: 3 });
+
+  await sendLEDPreset('e', [{ position: 1, role_id: 12 }]);
+  expect(firstMarker()).toBe(84); // 'T' — API 3
+});
+
+test('explicit @2 in the advertised name → API 2 board, v2 packets', async () => {
   requestDeviceMock.mockResolvedValue({ deviceId: 'c', name: 'Old Board' });
-  scanForLocalNameMock.mockResolvedValue('Old Board');
+  scanForLocalNameMock.mockResolvedValue('Old Board@2');
   const board = await connectToKilterBoard(() => {});
   expect(board.apiLevel).toBe(2);
 
