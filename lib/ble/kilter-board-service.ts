@@ -50,7 +50,7 @@ const DEFAULT_API_LEVEL = 3;
 // supports only write-with-response; iOS silently DROPS a write-without-
 // response to such a characteristic (no error), so nothing lights. Picked per
 // device from the characteristic's properties on connect.
-type WriteMode = 'withResponse' | 'withoutResponse';
+export type WriteMode = 'withResponse' | 'withoutResponse';
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,22 +67,76 @@ const apiLevelCache = new Map<string, number>();
 const nameCache = new Map<string, string>();
 const writeModeCache = new Map<string, WriteMode>();
 
+// What the app saw on connect + the outcome of the last write, for the
+// /ble-test diagnostics panel (field debugging without a Mac attached).
+export interface LastWrite {
+  ok: boolean;
+  apiLevel: number;
+  writeMode: WriteMode;
+  chunks: number;
+  ms: number;
+  error?: string;
+}
+
+export interface BleDiagnostics {
+  pickedName: string | null;
+  advertisedName: string | null;
+  apiLevel: number;
+  writeMode: WriteMode;
+  /** Properties of the UART write characteristic, or why they are unknown. */
+  writeProps: string;
+  lastWrite: LastWrite | null;
+}
+
+const connectInfoCache = new Map<
+  string,
+  { pickedName: string | null; advertisedName: string | null; writeProps: string }
+>();
+const lastWriteCache = new Map<string, LastWrite>();
+
 /**
  * Without-response only when the write characteristic advertises it; any
  * doubt → with-response, which every box accepts (the official app uses it
  * unconditionally).
  */
-async function detectWriteMode(deviceId: string): Promise<WriteMode> {
+async function detectWriteMode(deviceId: string): Promise<{ mode: WriteMode; props: string }> {
   try {
     const services = await transport.getServices(deviceId);
     const uart = services.find((s) => s.uuid.toLowerCase() === KILTER_BOARD_UART_SERVICE_UUID);
     const char = uart?.characteristics.find(
       (c) => c.uuid.toLowerCase() === KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
     );
-    return char?.properties.writeWithoutResponse ? 'withoutResponse' : 'withResponse';
-  } catch {
-    return 'withResponse';
+    if (!char) {
+      const found = services.map((s) => s.uuid).join(', ') || 'none';
+      return { mode: 'withResponse', props: `write characteristic not found (services: ${found})` };
+    }
+    const props = Object.entries(char.properties)
+      .filter(([, on]) => on)
+      .map(([k]) => k)
+      .join(', ');
+    return {
+      mode: char.properties.writeWithoutResponse ? 'withoutResponse' : 'withResponse',
+      props: props || 'none',
+    };
+  } catch (err) {
+    return { mode: 'withResponse', props: `lookup failed: ${err instanceof Error ? err.message : String(err)}` };
   }
+}
+
+export function getBleDiagnostics(deviceId: string): BleDiagnostics | null {
+  const info = connectInfoCache.get(deviceId);
+  if (!info) return null;
+  return {
+    ...info,
+    apiLevel: apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL,
+    writeMode: writeModeCache.get(deviceId) ?? 'withResponse',
+    lastWrite: lastWriteCache.get(deviceId) ?? null,
+  };
+}
+
+/** Manual write-mode override (diagnostics). Applies to the next writes. */
+export function setWriteMode(deviceId: string, mode: WriteMode): void {
+  writeModeCache.set(deviceId, mode);
 }
 
 export async function connectToKilterBoard(
@@ -96,6 +150,7 @@ export async function connectToKilterBoard(
   // suffix) → read the live advertisement. Must run before connecting: the
   // plugin's scan skips peripherals that are already connected.
   let resolvedName = device.name ?? null;
+  let advertisedName: string | null = null;
   let apiLevel = DEFAULT_API_LEVEL;
   if (resolvedName && hasApiLevelSuffix(resolvedName)) {
     apiLevel = parseApiLevel(resolvedName);
@@ -105,19 +160,22 @@ export async function connectToKilterBoard(
       [KILTER_BOARD_SERVICE_UUID],
       ADVERTISED_NAME_SCAN_MS,
     );
+    advertisedName = advertised;
     if (advertised) resolvedName = advertised;
     // Bare name (no "@N") → level 2: official-app rule, Kilter-built box.
     if (resolvedName) apiLevel = parseApiLevel(resolvedName);
   }
 
   await transport.connect(device.deviceId, onDisconnect);
-  const writeMode = await detectWriteMode(device.deviceId);
+  const { mode: writeMode, props: writeProps } = await detectWriteMode(device.deviceId);
 
   const name = resolvedName ?? 'Kilter Board';
   apiLevelCache.set(device.deviceId, apiLevel);
   nameCache.set(device.deviceId, name);
   writeModeCache.set(device.deviceId, writeMode);
-  console.log(`[BLE] connected → device="${name}" apiLevel=${apiLevel} write=${writeMode}`);
+  connectInfoCache.set(device.deviceId, { pickedName: device.name ?? null, advertisedName, writeProps });
+  lastWriteCache.delete(device.deviceId);
+  console.log(`[BLE] connected → device="${name}" apiLevel=${apiLevel} write=${writeMode} props=[${writeProps}]`);
 
   return { deviceId: device.deviceId, name, apiLevel };
 }
@@ -135,6 +193,8 @@ export async function disconnectFromKilterBoard(deviceId: string): Promise<void>
   apiLevelCache.delete(deviceId);
   nameCache.delete(deviceId);
   writeModeCache.delete(deviceId);
+  connectInfoCache.delete(deviceId);
+  lastWriteCache.delete(deviceId);
   await transport.disconnect(deviceId);
 }
 
@@ -143,19 +203,37 @@ export async function disconnectFromKilterBoard(deviceId: string): Promise<void>
  * mode, pacing consecutive writes so large payloads don't overrun the board.
  */
 async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void> {
-  const withResponse = (writeModeCache.get(deviceId) ?? 'withResponse') === 'withResponse';
+  const writeMode = writeModeCache.get(deviceId) ?? 'withResponse';
+  const withResponse = writeMode === 'withResponse';
   const write = withResponse ? transport.write : transport.writeWithoutResponse;
   const pacing = withResponse ? WITH_RESPONSE_PACING_MS : CHUNK_PACING_MS;
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-    await write(
-      deviceId,
-      KILTER_BOARD_UART_SERVICE_UUID,
-      KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
-      dataView,
-    );
-    if (i < chunks.length - 1) await delay(pacing);
+  const record: LastWrite = {
+    ok: false,
+    apiLevel: apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL,
+    writeMode,
+    chunks: chunks.length,
+    ms: 0,
+  };
+  const started = Date.now();
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const dataView = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+      await write(
+        deviceId,
+        KILTER_BOARD_UART_SERVICE_UUID,
+        KILTER_BOARD_WRITE_CHARACTERISTIC_UUID,
+        dataView,
+      );
+      if (i < chunks.length - 1) await delay(pacing);
+    }
+    record.ok = true;
+  } catch (err) {
+    record.error = err instanceof Error ? err.message : String(err);
+    throw err;
+  } finally {
+    record.ms = Date.now() - started;
+    lastWriteCache.set(deviceId, record);
   }
 }
 
