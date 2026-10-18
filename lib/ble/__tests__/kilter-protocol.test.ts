@@ -1,8 +1,10 @@
 import {
   encodeColor,
+  encodeColorV2,
   encodePreset,
   encodeAllOffEmpty,
   encodeAllOffBlackout,
+  hasApiLevelSuffix,
   parseApiLevel,
   PLACEMENT_ROLES,
   type EncoderHold,
@@ -284,5 +286,105 @@ describe('parseApiLevel', () => {
 
   test('device name with # serial and @3 → 3', () => {
     expect(parseApiLevel('KB#12345@3')).toBe(3);
+  });
+});
+
+describe('hasApiLevelSuffix', () => {
+  test('true only with an explicit @<level> suffix', () => {
+    expect(hasApiLevelSuffix('mykilterboard@3')).toBe(true);
+    expect(hasApiLevelSuffix('KB#12345@2')).toBe(true);
+    expect(hasApiLevelSuffix('Kilter Board')).toBe(false);
+    expect(hasApiLevelSuffix('board@')).toBe(false);
+  });
+});
+
+// --- API level 2 ---
+// Layout per fake_kilter_board DataDecoder (API_LEVEL < 3):
+//   position = byte0 + ((byte1 & 0b11) << 8)
+//   R = (byte1 >> 6) & 3, G = (byte1 >> 4) & 3, B = (byte1 >> 2) & 3
+
+describe('encodeColorV2', () => {
+  test('channels land in the upper 6 bits, low 2 bits free', () => {
+    expect(encodeColorV2('FF0000')).toBe(0b11000000);
+    expect(encodeColorV2('00FF00')).toBe(0b00110000);
+    expect(encodeColorV2('0000FF')).toBe(0b00001100);
+    expect(encodeColorV2('FFFFFF')).toBe(0b11111100);
+    expect(encodeColorV2('#000000')).toBe(0);
+  });
+
+  test('Foot role FFB600 → R=3, G=floor(182/64)=2, B=0', () => {
+    expect(encodeColorV2(PLACEMENT_ROLES[15])).toBe((3 << 6) | (2 << 4));
+  });
+});
+
+describe('encodePreset (API level 2)', () => {
+  test('All Corners reference vector: 2 bytes per hold, P marker', () => {
+    const holds: EncoderHold[] = [
+      { position: 33, role_id: 12 },
+      { position: 476, role_id: 14 },
+    ];
+    const chunks = encodePreset(holds, 2);
+    expect(chunks).toHaveLength(1);
+
+    // Body: [P=80, 33, green=0b00110000 (48), 476&255=220, (476>>8)=1 | magenta 0b11001100 (204) = 205]
+    // Checksum: (80+33+48+220+205) & 255 = 586 & 255 = 74 → ~74 & 255 = 181
+    expect(chunks[0]).toEqual(new Uint8Array([1, 5, 181, 2, 80, 33, 48, 220, 205, 3]));
+  });
+
+  test('decodes back to the same positions and roles (fake board decoder)', () => {
+    const holds: EncoderHold[] = [
+      { position: 0, role_id: 12 },
+      { position: 300, role_id: 13 },
+      { position: 1023, role_id: 15 },
+    ];
+    const flat = Array.from(encodePreset(holds, 2)[0]);
+    const body = flat.slice(5, flat.length - 1);
+    const decoded = [];
+    for (let i = 0; i < body.length; i += 2) {
+      decoded.push({
+        position: body[i] + ((body[i + 1] & 0b11) << 8),
+        rgb: [(body[i + 1] >> 6) & 3, (body[i + 1] >> 4) & 3, (body[i + 1] >> 2) & 3],
+      });
+    }
+    expect(decoded).toEqual([
+      { position: 0, rgb: [0, 3, 0] },    // start — green
+      { position: 300, rgb: [0, 3, 3] },  // middle — cyan
+      { position: 1023, rgb: [3, 2, 0] }, // foot — orange
+    ]);
+  });
+
+  test('multi-packet message uses N / M / O markers', () => {
+    // 476 holds × 2 bytes = 952 bytes → 4 bodies of ≤255 bytes
+    const holds: EncoderHold[] = Array.from({ length: 476 }, (_, i) => ({ position: i, color: 'FFFFFF' }));
+    const flat: number[] = [];
+    for (const c of encodePreset(holds, 2)) flat.push(...Array.from(c));
+
+    const markers: number[] = [];
+    let i = 0;
+    while (i < flat.length) {
+      const len = flat[i + 1];
+      expect(len).toBeLessThanOrEqual(255);
+      markers.push(flat[i + 4]);
+      i += len + 5;
+    }
+    expect(markers[0]).toBe(78); // N
+    expect(markers[markers.length - 1]).toBe(79); // O
+    expect(markers.slice(1, -1).every((m) => m === 77)).toBe(true); // M
+  });
+
+  test('position above 10 bits throws instead of lighting the wrong LED', () => {
+    expect(() => encodePreset([{ position: 1024, role_id: 12 }], 2)).toThrow(/API level 2/);
+  });
+
+  test('all-off packets use the P marker', () => {
+    expect(encodeAllOffEmpty(2)[0]).toEqual(new Uint8Array([1, 1, 175, 2, 80, 3]));
+    const blackout = Array.from(encodeAllOffBlackout([5], 2)[0]);
+    expect(blackout.slice(4, 7)).toEqual([80, 5, 0]);
+  });
+
+  test('API level 3 stays the default', () => {
+    expect(encodePreset([{ position: 1, role_id: 12 }])).toEqual(
+      encodePreset([{ position: 1, role_id: 12 }], 3),
+    );
   });
 });

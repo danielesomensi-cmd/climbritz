@@ -2,7 +2,14 @@
 // on top of the generic transport.
 
 import * as transport from './transport';
-import { encodePreset, encodeAllOffEmpty, encodeAllOffBlackout, parseApiLevel, type EncoderHold } from './kilter-protocol';
+import {
+  encodePreset,
+  encodeAllOffEmpty,
+  encodeAllOffBlackout,
+  hasApiLevelSuffix,
+  parseApiLevel,
+  type EncoderHold,
+} from './kilter-protocol';
 
 // Aurora Climbing advertisement service UUID (filter for requestDevice).
 // Source: @hangtime/grip-connect kilterboard.model.ts
@@ -23,15 +30,17 @@ export const KILTER_BOARD_WRITE_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e
 // climb → imperceptible (~110ms); the full board → ~1.5s.
 const CHUNK_PACING_MS = 18;
 
+// Upper bound for the advertised-name scan run when the picked device's name
+// has no "@<apiLevel>" suffix. Stops as soon as the board is seen (usually
+// well under a second).
+const ADVERTISED_NAME_SCAN_MS = 2500;
+
+// Used when the API level can't be read from any name: level 3 is by far the
+// most common, and on iOS a suffix-less name is often just the cached GAP name.
+const DEFAULT_API_LEVEL = 3;
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export class UnsupportedBoardError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'UnsupportedBoardError';
-  }
 }
 
 export interface ConnectedKilterBoard {
@@ -49,10 +58,31 @@ export async function connectToKilterBoard(
 ): Promise<ConnectedKilterBoard> {
   await transport.initialize();
   const device = await transport.requestDevice([KILTER_BOARD_SERVICE_UUID]);
+
+  // The API level lives in the advertised name ("board@3"). iOS hands back the
+  // cached GAP name after the first connection (e.g. "Kilter Board", no
+  // suffix) → read the live advertisement. Must run before connecting: the
+  // plugin's scan skips peripherals that are already connected.
+  let resolvedName = device.name ?? null;
+  let apiLevel = DEFAULT_API_LEVEL;
+  if (resolvedName && hasApiLevelSuffix(resolvedName)) {
+    apiLevel = parseApiLevel(resolvedName);
+  } else {
+    const advertised = await transport.scanForLocalName(
+      device.deviceId,
+      [KILTER_BOARD_SERVICE_UUID],
+      ADVERTISED_NAME_SCAN_MS,
+    );
+    if (advertised) {
+      resolvedName = advertised;
+      // Advertised name without suffix → level 2, same rule as the official app.
+      apiLevel = parseApiLevel(advertised);
+    }
+  }
+
   await transport.connect(device.deviceId, onDisconnect);
 
-  const name = device.name ?? 'Kilter Board';
-  const apiLevel = parseApiLevel(name);
+  const name = resolvedName ?? 'Kilter Board';
   apiLevelCache.set(device.deviceId, apiLevel);
   nameCache.set(device.deviceId, name);
 
@@ -83,44 +113,32 @@ async function writeChunks(deviceId: string, chunks: Uint8Array[]): Promise<void
   }
 }
 
-function assertApiLevel3(deviceId: string): void {
-  const apiLevel = apiLevelCache.get(deviceId);
-  if (apiLevel !== undefined && apiLevel < 3) {
-    throw new UnsupportedBoardError(
-      'Kilter Board API level 2 is not supported. Update your board firmware to API level 3.',
-    );
-  }
-}
-
 /** Send LED placement data to the connected board. */
 export async function sendLEDPreset(
   deviceId: string,
   holds: EncoderHold[],
 ): Promise<void> {
-  assertApiLevel3(deviceId);
   const name = nameCache.get(deviceId) ?? deviceId;
-  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  const apiLevel = apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL;
   console.log(`[BLE] sendLEDPreset → device="${name}" apiLevel=${apiLevel} holds=${holds.length}`);
-  const chunks = encodePreset(holds);
+  const chunks = encodePreset(holds, apiLevel);
   await writeChunks(deviceId, chunks);
 }
 
 /** Turn off all LEDs on the connected board (empty packet, primary approach). */
 export async function sendAllOff(deviceId: string): Promise<void> {
-  assertApiLevel3(deviceId);
   const name = nameCache.get(deviceId) ?? deviceId;
-  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  const apiLevel = apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL;
   console.log(`[BLE] sendAllOff (empty) → device="${name}" apiLevel=${apiLevel}`);
-  const chunks = encodeAllOffEmpty();
+  const chunks = encodeAllOffEmpty(apiLevel);
   await writeChunks(deviceId, chunks);
 }
 
 /** Turn off all LEDs — blackout fallback (sends color 0x00 to every position). */
 export async function sendAllOffBlackout(deviceId: string, positions: number[]): Promise<void> {
-  assertApiLevel3(deviceId);
   const name = nameCache.get(deviceId) ?? deviceId;
-  const apiLevel = apiLevelCache.get(deviceId) ?? '?';
+  const apiLevel = apiLevelCache.get(deviceId) ?? DEFAULT_API_LEVEL;
   console.log(`[BLE] sendAllOff (blackout) → device="${name}" apiLevel=${apiLevel} positions=${positions.length}`);
-  const chunks = encodeAllOffBlackout(positions);
+  const chunks = encodeAllOffBlackout(positions, apiLevel);
   await writeChunks(deviceId, chunks);
 }

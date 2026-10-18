@@ -18,6 +18,38 @@ export async function requestDevice(serviceUUIDs: string[]): Promise<BleDevice> 
   return BleClient.requestDevice({ services: serviceUUIDs });
 }
 
+/**
+ * Short scan that returns the name the device is advertising right now
+ * (`localName`), or null if it isn't seen within `timeoutMs`. On iOS
+ * `BleDevice.name` from requestDevice is the GAP name iOS cached after the
+ * first connection, which can differ from the advertised one; the scan
+ * result's `localName` is read from the live advertisement.
+ * Always stops the scan before resolving, so a connect can follow directly.
+ */
+export async function scanForLocalName(
+  deviceId: string,
+  serviceUUIDs: string[],
+  timeoutMs: number,
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (name: string | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      BleClient.stopLEScan()
+        .catch(() => {})
+        .finally(() => resolve(name));
+    };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    // allowDuplicates: keep receiving the device until an advertisement
+    // carrying the local name arrives (it can be in the scan response).
+    BleClient.requestLEScan({ services: serviceUUIDs, allowDuplicates: true }, (result) => {
+      if (result.device.deviceId === deviceId && result.localName) finish(result.localName);
+    }).catch(() => finish(null));
+  });
+}
+
 export async function connect(
   deviceId: string,
   onDisconnect?: (deviceId: string) => void,
