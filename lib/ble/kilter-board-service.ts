@@ -89,6 +89,15 @@ export async function connectToKilterBoard(
   return { deviceId: device.deviceId, name, apiLevel };
 }
 
+/**
+ * Manual protocol override (user toggle): the API level is inferred from the
+ * board name, and a wrong guess makes the board silently ignore every packet.
+ * Applies to the next writes.
+ */
+export function setApiLevel(deviceId: string, apiLevel: number): void {
+  apiLevelCache.set(deviceId, apiLevel);
+}
+
 export async function disconnectFromKilterBoard(deviceId: string): Promise<void> {
   apiLevelCache.delete(deviceId);
   nameCache.delete(deviceId);
