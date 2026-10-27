@@ -9,7 +9,9 @@
 //
 // Behavior contract (agreed with Daniele — do not deviate):
 // 1. NEVER actively disconnect except on an explicit user "Disconnect" tap.
-//    No disconnect on route change / unmount / app background.
+//    No disconnect on route change / unmount / app background. (The one
+//    other teardown: on a Connect tap, a link the UI already shows as gone is
+//    released first — see releaseStaleLink. It never touches a live link.)
 // 2. NEVER auto-reconnect. If the OS or another user drops the connection,
 //    reconnection is always a manual tap (gym etiquette — auto-reconnect
 //    would kick off whoever connected to the board in the meantime).
@@ -34,6 +36,7 @@ import {
   sendAllOff,
   setApiLevel,
   KILTER_BOARD_SERVICE_UUID,
+  KILTER_BOARD_UART_SERVICE_UUID,
   type ConnectedKilterBoard,
 } from '@/lib/ble/kilter-board-service';
 import { getConnectedDevices } from '@/lib/ble/transport';
@@ -95,6 +98,10 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
   const [connectedDevice, setConnectedDevice] = useState<ConnectedKilterBoard | null>(null);
   const deviceIdRef = useRef<string | null>(null);
+  // Last board this app process connected to. Survives an OS/resume-detected
+  // drop (only an explicit Disconnect clears it) so the next Connect tap can
+  // release a link the OS may still hold — see releaseStaleLink.
+  const lastDeviceIdRef = useRef<string | null>(null);
   // Serialize BLE writes — each new send chains after the previous one settles.
   // Prevents chunk interleaving when auto-apply taps arrive during an in-flight send.
   const sendChainRef = useRef<Promise<void>>(Promise.resolve());
@@ -104,13 +111,39 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     setLastError(null);
   }, []);
 
-  // Wired as the transport-level onDisconnect callback: fires when the OS or
-  // another user (board takeover) drops the link → every page flips to
-  // "Disconnected". Per contract, no reconnect is ever attempted from here.
+  // Flip every page to "Disconnected". Per contract, no reconnect is ever
+  // attempted from here.
   const handleDisconnected = useCallback(() => {
     deviceIdRef.current = null;
     setConnectedDevice(null);
     setStatus('idle');
+  }, []);
+
+  // Wired as the transport-level onDisconnect callback: fires when the OS or
+  // another user (board takeover) drops the link. Only the current link
+  // counts — the event for a stale link released by a Connect tap arrives
+  // mid-connect and must not reset the in-flight state.
+  const handleTransportDisconnect = useCallback(
+    (deviceId: string) => {
+      if (deviceIdRef.current === deviceId) handleDisconnected();
+    },
+    [handleDisconnected],
+  );
+
+  // A board that is still connected at OS level doesn't advertise, so the
+  // picker can't find it until the app is killed. If the UI lost track of a
+  // link (resume check, missed event), drop it before scanning. Disconnecting
+  // an already-closed link resolves immediately in the plugin; any failure is
+  // ignored and the scan runs anyway.
+  const releaseStaleLink = useCallback(async () => {
+    const stale = lastDeviceIdRef.current;
+    if (!stale) return;
+    lastDeviceIdRef.current = null;
+    try {
+      await disconnectFromKilterBoard(stale);
+    } catch {
+      // best-effort
+    }
   }, []);
 
   const connect = useCallback(async () => {
@@ -126,8 +159,9 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     setLastError(null);
     setStatus('requesting');
     try {
+      await releaseStaleLink();
       setStatus('scanning');
-      let device = await connectToKilterBoard(handleDisconnected);
+      let device = await connectToKilterBoard(handleTransportDisconnect);
       setStatus('connecting');
       const override = readProtocolOverride(device.deviceId);
       if (override !== null && override !== device.apiLevel) {
@@ -135,6 +169,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
         device = { ...device, apiLevel: override };
       }
       deviceIdRef.current = device.deviceId;
+      lastDeviceIdRef.current = device.deviceId;
       setConnectedDevice(device);
       setStatus('connected');
     } catch (err) {
@@ -144,7 +179,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       deviceIdRef.current = null;
       setConnectedDevice(null);
     }
-  }, [isCapacitorNative, status, handleDisconnected]);
+  }, [isCapacitorNative, status, releaseStaleLink, handleTransportDisconnect]);
 
   // The ONLY place that actively tears the connection down — reached
   // exclusively from the user's explicit "Disconnect" tap.
@@ -164,6 +199,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     deviceIdRef.current = null;
+    lastDeviceIdRef.current = null;
     setConnectedDevice(null);
     setStatus('idle');
   }, []);
@@ -218,11 +254,20 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   // while the app is suspended without delivering onDisconnect until later;
   // on resume we ask the plugin which devices are actually connected and flip
   // the UI to Disconnected if ours is gone. Never issues a connect call.
+  // iOS matches the query against the peripheral's GATT services, and the
+  // Kilter UUID is the advertisement filter, not necessarily a GATT service:
+  // querying it alone can come back empty while the link is alive → false
+  // "Disconnected", and the board (still connected, so not advertising)
+  // vanishes from the picker until the app is killed. The UART service is the
+  // one we write to, so it is always in GATT.
   const syncConnectionState = useCallback(async () => {
     const id = deviceIdRef.current;
     if (!id) return;
     try {
-      const devices = await getConnectedDevices([KILTER_BOARD_SERVICE_UUID]);
+      const devices = await getConnectedDevices([
+        KILTER_BOARD_SERVICE_UUID,
+        KILTER_BOARD_UART_SERVICE_UUID,
+      ]);
       const stillConnected = devices.some((d) => d.deviceId === id);
       // Re-check the ref: a user disconnect may have raced the async query.
       if (!stillConnected && deviceIdRef.current === id) {

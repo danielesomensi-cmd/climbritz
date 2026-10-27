@@ -14,6 +14,7 @@ const setApiLevelMock = jest.fn();
 
 jest.mock('@/lib/ble/kilter-board-service', () => ({
   KILTER_BOARD_SERVICE_UUID: 'kilter-service-uuid',
+  KILTER_BOARD_UART_SERVICE_UUID: 'kilter-uart-uuid',
   connectToKilterBoard: (...args: unknown[]) => connectToKilterBoardMock(...args),
   disconnectFromKilterBoard: (...args: unknown[]) => disconnectFromKilterBoardMock(...args),
   sendLEDPreset: (...args: unknown[]) => sendLEDPresetMock(...args),
@@ -49,7 +50,7 @@ const DEVICE = { deviceId: 'dev-1', name: 'mykilterboard@3', apiLevel: 3 };
 
 // onDisconnect callback handed to connectToKilterBoard — the transport-level
 // disconnect signal (board takeover, OS drop).
-let transportOnDisconnect: (() => void) | null = null;
+let transportOnDisconnect: ((deviceId: string) => void) | null = null;
 
 function Consumer({ label }: { label: string }) {
   const { status, connectedDevice, connect, disconnect } = useBle();
@@ -76,7 +77,7 @@ beforeEach(() => {
   mockIsNative = true;
   resumeHandler = null;
   transportOnDisconnect = null;
-  connectToKilterBoardMock.mockImplementation(async (onDisconnect: () => void) => {
+  connectToKilterBoardMock.mockImplementation(async (onDisconnect: (deviceId: string) => void) => {
     transportOnDisconnect = onDisconnect;
     return DEVICE;
   });
@@ -158,7 +159,7 @@ describe('BleProvider — shared connection state (B035)', () => {
     await connectVia('a');
 
     act(() => {
-      transportOnDisconnect?.();
+      transportOnDisconnect?.('dev-1');
     });
     expect(screen.getByTestId('a-status')).toHaveTextContent('idle');
     expect(screen.getByTestId('a-device')).toHaveTextContent('none');
@@ -180,7 +181,9 @@ describe('BleProvider — shared connection state (B035)', () => {
     await act(async () => {
       resumeHandler!();
     });
-    expect(getConnectedDevicesMock).toHaveBeenCalledWith(['kilter-service-uuid']);
+    // UART is queried too: iOS matches GATT services, and the Kilter UUID is
+    // only the advertisement filter.
+    expect(getConnectedDevicesMock).toHaveBeenCalledWith(['kilter-service-uuid', 'kilter-uart-uuid']);
     expect(screen.getByTestId('a-status')).toHaveTextContent('idle');
     expect(connectToKilterBoardMock).toHaveBeenCalledTimes(1);
   });
@@ -227,6 +230,82 @@ describe('BleProvider — shared connection state (B035)', () => {
       resumeHandler!();
     });
     expect(screen.getByTestId('a-status')).toHaveTextContent('connected');
+  });
+
+  it('a disconnect event for another (stale) device is ignored', async () => {
+    render(
+      <BleProvider>
+        <Consumer label="a" />
+      </BleProvider>,
+    );
+    await connectVia('a');
+    act(() => {
+      transportOnDisconnect?.('old-device');
+    });
+    expect(screen.getByTestId('a-status')).toHaveTextContent('connected');
+  });
+
+  it('connect after a drop first releases the stale link so the board advertises again', async () => {
+    render(
+      <BleProvider>
+        <Consumer label="a" />
+      </BleProvider>,
+    );
+    await waitFor(() => expect(resumeHandler).not.toBeNull());
+    await connectVia('a');
+
+    // Resume check lost the link — the OS may still hold it.
+    getConnectedDevicesMock.mockResolvedValue([]);
+    await act(async () => {
+      resumeHandler!();
+    });
+    expect(screen.getByTestId('a-status')).toHaveTextContent('idle');
+    expect(disconnectFromKilterBoardMock).not.toHaveBeenCalled();
+
+    await connectVia('a');
+    expect(disconnectFromKilterBoardMock).toHaveBeenCalledTimes(1);
+    expect(disconnectFromKilterBoardMock).toHaveBeenCalledWith('dev-1');
+    expect(disconnectFromKilterBoardMock.mock.invocationCallOrder[0]).toBeLessThan(
+      connectToKilterBoardMock.mock.invocationCallOrder[1],
+    );
+  });
+
+  it('a failing stale-link release does not block the connect', async () => {
+    render(
+      <BleProvider>
+        <Consumer label="a" />
+      </BleProvider>,
+    );
+    await connectVia('a');
+    act(() => {
+      transportOnDisconnect?.('dev-1');
+    });
+    disconnectFromKilterBoardMock.mockRejectedValueOnce(new Error('Device not found'));
+    await connectVia('a');
+    expect(connectToKilterBoardMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('connect after an explicit Disconnect does not release anything', async () => {
+    render(
+      <BleProvider>
+        <Consumer label="a" />
+      </BleProvider>,
+    );
+    await connectVia('a');
+    fireEvent.click(screen.getByRole('button', { name: 'disconnect-a' }));
+    await waitFor(() => expect(screen.getByTestId('a-status')).toHaveTextContent('idle'));
+    await connectVia('a');
+    expect(disconnectFromKilterBoardMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('the first connect of the session releases nothing', async () => {
+    render(
+      <BleProvider>
+        <Consumer label="a" />
+      </BleProvider>,
+    );
+    await connectVia('a');
+    expect(disconnectFromKilterBoardMock).not.toHaveBeenCalled();
   });
 
   it('useBle outside the provider throws a clear error', () => {

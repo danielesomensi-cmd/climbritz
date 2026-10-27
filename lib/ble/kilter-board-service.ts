@@ -140,7 +140,7 @@ export function setWriteMode(deviceId: string, mode: WriteMode): void {
 }
 
 export async function connectToKilterBoard(
-  onDisconnect: () => void,
+  onDisconnect: (deviceId: string) => void,
 ): Promise<ConnectedKilterBoard> {
   await transport.initialize();
   const device = await transport.requestDevice([KILTER_BOARD_SERVICE_UUID]);
