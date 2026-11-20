@@ -59,7 +59,7 @@ describe('Home Page', () => {
     render(<Home />);
     const link = screen.getByText('Deadpoint').closest('a');
     expect(link).toHaveAttribute('href', '/arcade');
-    expect(screen.getByText('Mini-game: catch the deadpoint')).toBeInTheDocument();
+    expect(screen.getByText('Mini-game: board and sport routes on rock')).toBeInTheDocument();
   });
 
   // B034 v4 — the hero's top safe-area padding comes from an inline style
