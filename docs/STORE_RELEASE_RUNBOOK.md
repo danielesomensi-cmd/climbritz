@@ -39,7 +39,7 @@ upload key means a Play Console key-reset request (days).
 3. **Commit + push** (pre-push hook runs `npm run build`).
 4. **iOS → TestFlight:** `bash ~/deploy_climbritz.sh <build>` — runs `build:mobile` + `cap sync ios` + archive + export + upload (~5–10 min; works from Claude Code's shell if the keychain is unlocked). Success = `UPLOAD SUCCEEDED` + a `Delivery UUID`. The script restores `project.pbxproj`/`Info.plist` from backup at the end — `git status` must be clean afterwards.
 5. **TestFlight external group:** App Store Connect → TestFlight → External Testing → **"Public Beta"** → Builds → **+** → pick the build. Skip it and the public link says "This beta isn't accepting any new testers".
-6. **Android AAB** (after step 4, so `out/` is fresh): `npx cap sync android && cd android && ./gradlew bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`.
+6. **Android AAB** (after step 4, so `out/` is fresh): `npx cap sync android && cd android && ./gradlew bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`. `SDK location not found` → the SDK on this Mac is the Homebrew one: prefix with `ANDROID_HOME=/opt/homebrew/share/android-commandlinetools`.
 7. **Play Console:** Closed testing → Create release → upload AAB → Review release → **Start rollout** (upload alone ships nothing; ~up to 2h to reach testers).
 8. **Tag** `v<marketing>-build<N>`, add a row to `PROJECT_STATUS.md` (Delivery UUID), send the "what to test" notes.
 
