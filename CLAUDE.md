@@ -171,6 +171,7 @@ climbritz/
 │   └── ui/             B033 design-system primitives: Button (keeps label + spinner while loading) · Chip · Card · PageHeader · EmptyState · LoadingState · StatusDot · Toast (auto-dismiss, optional action e.g. Undo, aria-live) · pressable (shared press feedback + touch classes) (no ComingSoonBadge — dropped)
 ├── lib/                ble/ (kilter-protocol · kilter-board-service · transport · status) · feedback/ (haptics · keep-awake · sound — dynamic native imports, no-op on web, never throw; sound muted by default) · auth/last-email.ts (`climbritz:auth:last-email` in localStorage — email only, never the password; cleared by Delete account, kept on sign-out) · installLinks.ts (INVITE_URL + per-platform install URLs + pure detectPlatform/installUrlFor; only the targets change at public launch, never the QR)
 ├── public/arcade/      deadpoint.html (vendored Deadpoint build, single file) · VERSION (deadpoint git SHA + dates)
+├── public/.well-known/ apple-app-site-association (iOS password AutoFill: `webcredentials` for `KSD2RSAZP2.app.climbritz`; pairs with `ios/App/App/App.entitlements`, served as JSON via `vercel.json`)
 ├── public/invite/      get-qr.svg (static QR for https://climbritz.app/get, generated once with `npx qrcode -t svg -e M`)
 ├── scripts/            sync-deadpoint.sh (build ~/Projects/deadpoint or a path arg → public/arcade/) · git-hooks/ · trim_roadmap.py
 ├── capacitor.config.ts · android/ · ios/
