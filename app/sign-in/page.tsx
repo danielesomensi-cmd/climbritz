@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { SignIn } from "@clerk/clerk-react";
 import AuthShell, { clerkAppearance } from "@/components/AuthShell";
+import { getLastEmail } from "@/lib/auth/last-email";
 
 // A019: Clerk widget for static-export builds.
 // We deliberately import from @clerk/clerk-react (not @clerk/nextjs) —
@@ -15,10 +17,29 @@ import AuthShell, { clerkAppearance } from "@/components/AuthShell";
 //
 // B033 Phase 2.6: wrapped in <AuthShell> (wordmark + brand) and given the
 // shared brand `appearance` so the first-impression screen is on-brand.
+//
+// B-AUTH-PERSIST: the last email used on this device is prefilled. Clerk reads
+// `initialValues` only when the widget mounts, and localStorage does not exist
+// during the static prerender — so the widget is rendered after the first
+// client effect, once the stored email is known.
 export default function SignInPage() {
+  const [ready, setReady] = useState(false);
+  const [lastEmail, setLastEmail] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    setLastEmail(getLastEmail());
+    setReady(true);
+  }, []);
+
   return (
     <AuthShell>
-      <SignIn routing="hash" appearance={clerkAppearance} />
+      {ready && (
+        <SignIn
+          routing="hash"
+          appearance={clerkAppearance}
+          initialValues={lastEmail ? { emailAddress: lastEmail } : undefined}
+        />
+      )}
     </AuthShell>
   );
 }

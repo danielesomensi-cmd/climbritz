@@ -32,6 +32,7 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   localStorage.setItem('climbritz:discover:filters', '{"angle":40}');
+  localStorage.setItem('climbritz:auth:last-email', 'climber@example.com');
   sessionStorage.setItem('climbritz:create:draft', '{"frames":"x"}');
   (window as unknown as { Clerk?: unknown }).Clerk = { signOut: signOutMock };
   // jsdom refuses a real navigation; swap in a settable stub so the
@@ -100,6 +101,8 @@ describe('Settings — account deletion (Guideline 5.1.1(v))', () => {
 
     expect(signOutMock).toHaveBeenCalled();
     expect(localStorage.length).toBe(0);
+    // B-AUTH-PERSIST: the remembered sign-in email goes with the account.
+    expect(localStorage.getItem('climbritz:auth:last-email')).toBeNull();
     expect(sessionStorage.length).toBe(0);
   });
 

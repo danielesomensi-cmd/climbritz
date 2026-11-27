@@ -78,6 +78,33 @@ http://localhost                 # dev
 
 ---
 
+## Gate 4 — clerk-js navigation on a non-http origin (B-AUTH-PERSIST, Nov 2026)
+
+Not an allowlist problem, so none of the three gates above catches it:
+
+- **clerk-js only navigates to `http:`/`https:` URLs.** Anything else is replaced
+  with `/` and a console warning (`"capacitor:" is not a valid protocol.
+  Redirecting to "/" instead`). On iOS (`capacitor://app.climbritz.app`) the
+  **Sign up** link therefore went `/` → `AuthGuard` → `/sign-in`: nobody could
+  register from the iOS app. Sign-in "worked" only because its redirect target
+  *is* `/`. **Fix:** `allowedRedirectProtocols={['capacitor:']}` on
+  `ClerkProvider` (`components/ClerkSpaProvider.tsx`).
+- **The origin-only URL has an empty path.** Once the protocol is allowed, the
+  post-sign-in target is `capacitor://app.climbritz.app` (no trailing slash);
+  clerk-js strips the origin and calls `routerPush("")`, which leaves the user on
+  `/sign-in` with a blank widget. **Fix:** `toAppPath()` maps `""` to `/`.
+- **Session persistence is fine as-is.** Measured on an iOS debug build: the Clerk
+  `client` id and the session survive an app kill (cookie-based, no Native API
+  needed). Being asked to log in again comes from the Clerk **session maximum
+  lifetime (7 days)** — a dashboard setting, not an app bug.
+
+How it was reproduced without Safari Web Inspector: debug build on the iOS
+Simulator with a temporary script injected into the synced `ios/App/App/public`
+copy (never committed) that logs Clerk fetches + `history` calls to a local
+server. Android has a real `https` origin, so this gate does not apply there.
+
+---
+
 ## Pre-flight checklist — ANY change to Clerk keys / origins / capacitor server
 
 1. [ ] Confirm the **exact** WebView origin per platform: in the WebView console

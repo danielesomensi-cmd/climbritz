@@ -139,6 +139,8 @@ Legacy redirect pages (`discover/[climb_uuid]/`, `videos/[id]/`) redirect to the
 
 **Auth gating (A019.16):** ALL frontend pages above require login except `Sign in`, `Sign up`, `Privacy`, and `Debug`. The `<AuthGuard>` component (using Clerk's `useAuth()`) wraps every protected page and redirects to `/sign-in` when the user isn't authenticated. Discovery is still the free tier (no payment), but the app has no anonymous mode — per-user logging features (send/project, A021) need a guaranteed `user_id` and a guest mode would dead-end the UX.
 
+**Clerk navigation on iOS (B-AUTH-PERSIST):** `ClerkSpaProvider` passes `allowedRedirectProtocols={['capacitor:']}` — clerk-js otherwise rewrites every redirect on the `capacitor://app.climbritz.app` origin to `/` (the Sign up link bounced back to `/sign-in`). `toAppPath()` turns the origin-only post-sign-in target (empty path) into `/`. `RememberEmail` (mounted in the provider) stores the signed-in primary email in `localStorage` `climbritz:auth:last-email`; `/sign-in` passes it to `<SignIn initialValues>` after the first client effect. Only the email is stored, never the password; Delete account clears it, a normal sign-out keeps it.
+
 ### Database (SQLite / PostgreSQL)
 
 | Table | Key Columns | Notes |

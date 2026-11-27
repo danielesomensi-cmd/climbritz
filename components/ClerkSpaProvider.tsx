@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from '@clerk/clerk-react';
 import { useRouter } from 'next/navigation';
+import RememberEmail from './RememberEmail';
 
 // A019: client-only ClerkProvider for static-export builds.
 //
@@ -14,6 +15,24 @@ import { useRouter } from 'next/navigation';
 // We also wire routerPush/routerReplace to next/navigation so Clerk's
 // internal redirects (after sign-in, after sign-up) keep using SPA-style
 // navigation instead of full page reloads.
+// B-AUTH-PERSIST: the iOS WebView origin is `capacitor://app.climbritz.app`
+// (WKWebView reserves https, see docs/CLERK_CAPACITOR_AUTH.md). clerk-js only
+// navigates to http(s) URLs by default and silently rewrites anything else to
+// "/" ("capacitor:" is not a valid protocol) — on iOS that sent the "Sign up"
+// link straight back to /sign-in, so nobody could register from the app.
+// Android (https origin) and the web are unaffected by this list.
+export const CLERK_ALLOWED_REDIRECT_PROTOCOLS = ['capacitor:'];
+
+// With `capacitor:` allowed, clerk-js hands the router the URL minus its
+// origin. The post-sign-in target on iOS is `capacitor://app.climbritz.app`
+// with NO trailing slash (a non-http URL may have an empty path), so the router
+// receives "" — and `router.push("")` stays on /sign-in with a blank widget.
+// Normalise to an absolute in-app path before handing it to Next.
+export function toAppPath(url: string): string {
+  if (!url) return '/';
+  return url.startsWith('/') ? url : `/${url}`;
+}
+
 export default function ClerkSpaProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -38,15 +57,17 @@ export default function ClerkSpaProvider({ children }: { children: React.ReactNo
   return (
     <ClerkProvider
       publishableKey={publishableKey}
-      routerPush={(url) => router.push(url)}
-      routerReplace={(url) => router.replace(url)}
+      routerPush={(url) => router.push(toAppPath(url))}
+      routerReplace={(url) => router.replace(toAppPath(url))}
       signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/sign-in'}
       signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || '/sign-up'}
       signInForceRedirectUrl={signInForceRedirectUrl}
       signUpForceRedirectUrl={signUpForceRedirectUrl}
       signInFallbackRedirectUrl="/"
       signUpFallbackRedirectUrl="/"
+      allowedRedirectProtocols={CLERK_ALLOWED_REDIRECT_PROTOCOLS}
     >
+      <RememberEmail />
       {children}
     </ClerkProvider>
   );
