@@ -152,7 +152,7 @@ climbritz/
 ├── backend/tests/              one test_*.py per api/service + fixtures/test_kilter.db
 ├── backend/scripts/            regenerate_board_assets · seed_a019_test_fixtures · seed_a022_test_fixtures · seed_a026_test_fixtures · analyze_a026_corpus (Phase 0 one-shot) · build_board_db (C001 — board-only Kilter DB from local DB + Boardsesh snapshot; stdlib, self-verifying) · seed_review_accounts (A-STORE-PROD-002 — App Store reviewer accounts; idempotent, seeds via the live API, `--dry-run`, refuses `sk_test_`)
 ├── app/ (Next.js frontend)
-│   ├── page.tsx · sign-in (prefills the last email used on this device) · sign-up · login(redirect) · dashboard · upload
+│   ├── page.tsx · sign-in (prefills the last email used on this device; with none stored shows a "Create an account" entry) · sign-up (password rules stated under the widget) · login(redirect) · dashboard · upload
 │   ├── generate/       page ("AI Create": A026 filters → remix → board + BLE → re-roll; A030 one-tap Save; A031 name-on-generate + Edit + Start-from-blank)
 │   ├── create/         page (A031 hold editor: palette+paint, live BLE, validation) · editor-state (pure transitions) · draft-storage (sessionStorage hand-off)
 │   ├── my-problems/    page (A030 — saved problems list) · detail/page (board + BLE + LogSection + inline edit + Edit holds (A031) + delete)

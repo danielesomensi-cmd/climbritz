@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { SignIn } from "@clerk/clerk-react";
 import AuthShell, { clerkAppearance } from "@/components/AuthShell";
 import { getLastEmail } from "@/lib/auth/last-email";
@@ -22,6 +23,11 @@ import { getLastEmail } from "@/lib/auth/last-email";
 // `initialValues` only when the widget mounts, and localStorage does not exist
 // during the static prerender — so the widget is rendered after the first
 // client effect, once the stored email is known.
+//
+// A device with no remembered email is most likely a new user: this is the
+// first screen they see and the widget only asks for an email, so a plain
+// "Create an account" entry sits above it (Clerk's own link is in the footer,
+// easy to miss). Returning users don't get the extra line.
 export default function SignInPage() {
   const [ready, setReady] = useState(false);
   const [lastEmail, setLastEmail] = useState<string | undefined>(undefined);
@@ -33,6 +39,18 @@ export default function SignInPage() {
 
   return (
     <AuthShell>
+      {ready && !lastEmail && (
+        <p className="mb-4 text-sm text-zinc-300 text-center">
+          New to Climbritz?{" "}
+          <Link
+            href="/sign-up"
+            className="font-semibold underline underline-offset-4 py-2"
+            style={{ color: "var(--brand-orange)" }}
+          >
+            Create an account
+          </Link>
+        </p>
+      )}
       {ready && (
         <SignIn
           routing="hash"
