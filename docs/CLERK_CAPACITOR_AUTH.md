@@ -98,7 +98,10 @@ Not an allowlist problem, so none of the three gates above catches it:
   needed). Being asked to log in again comes from the Clerk **session maximum
   lifetime (7 days)** — a dashboard setting, not an app bug.
 
-- **Password AutoFill (iOS).** `ios/App/App/App.entitlements` declares
+- **Password AutoFill (iOS) — prepared, not shipped.** The entitlement is not
+  wired into the build yet: the wildcard provisioning profile lacks Associated
+  Domains and Xcode needs a signed-in account to regenerate it.
+  `ios/App/App/App.entitlements` declares
   `webcredentials:climbritz.app`; the site answers at
   `/.well-known/apple-app-site-association` (`KSD2RSAZP2.app.climbritz`, JSON
   content type set in `vercel.json`). A password saved in Safari on

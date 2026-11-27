@@ -22,9 +22,14 @@ describe('iOS password AutoFill wiring', () => {
     expect(rule.headers).toContainEqual({ key: 'Content-Type', value: 'application/json' });
   });
 
-  it('declares the webcredentials domain in the iOS entitlements, wired in both configs', () => {
+  // The entitlement file is ready but NOT wired into the build yet: the wildcard
+  // provisioning profile lacks Associated Domains and Xcode has no signed-in
+  // account to regenerate it (build 31 archive failed on exactly this). Wire
+  // `CODE_SIGN_ENTITLEMENTS = App/App.entitlements` back in once the capability
+  // is enabled for the App ID — then flip this expectation to 2.
+  it('keeps the webcredentials entitlement file ready, not yet wired into signing', () => {
     expect(read('ios/App/App/App.entitlements')).toContain('webcredentials:climbritz.app');
     const pbx = read('ios/App/App.xcodeproj/project.pbxproj');
-    expect(pbx.match(/CODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;/g)).toHaveLength(2);
+    expect(pbx.match(/CODE_SIGN_ENTITLEMENTS/g)).toBeNull();
   });
 });
